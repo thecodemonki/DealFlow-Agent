@@ -1,0 +1,10 @@
+.env
+agent_config.yaml
+uploads/
+__pycache__/
+*.pyc
+.venv/
+.uv/
+*.egg-info/
+dist/
+.pytest_cache/

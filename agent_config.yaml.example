@@ -1,0 +1,27 @@
+# Register each agent in Band (band.ai/agents → New Agent → External Agent)
+# Then paste the agent_id and api_key for each below.
+# Copy this file to agent_config.yaml and fill in real values.
+
+orchestrator:
+  agent_id: "replace-with-orchestrator-uuid"
+  api_key: "replace-with-orchestrator-api-key"
+
+document_parser:
+  agent_id: "replace-with-document-parser-uuid"
+  api_key: "replace-with-document-parser-api-key"
+
+financial_analyst:
+  agent_id: "replace-with-financial-analyst-uuid"
+  api_key: "replace-with-financial-analyst-api-key"
+
+legal_risk:
+  agent_id: "replace-with-legal-risk-uuid"
+  api_key: "replace-with-legal-risk-api-key"
+
+web_research:
+  agent_id: "replace-with-web-research-uuid"
+  api_key: "replace-with-web-research-api-key"
+
+synthesis:
+  agent_id: "replace-with-synthesis-uuid"
+  api_key: "replace-with-synthesis-api-key"
