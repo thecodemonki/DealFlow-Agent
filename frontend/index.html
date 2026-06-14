@@ -566,7 +566,9 @@
       position: absolute;
       inset: 0;
       z-index: 40;
-      background: rgba(17, 24, 39, 0.25);
+      background: rgba(15, 23, 42, 0.38);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       display: none;
       align-items: center;
       justify-content: center;
@@ -574,43 +576,130 @@
     }
     .results-overlay.visible { display: flex; }
     .results-card {
-      background: #fff;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+      border: 1px solid rgba(15, 23, 42, 0.06);
       border-radius: 16px;
-      max-width: 480px;
+      max-width: 440px;
       width: 100%;
-      padding: 28px 24px;
-      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+      padding: 32px 28px 28px;
+      box-shadow:
+        0 25px 50px -12px rgba(15, 23, 42, 0.22),
+        0 0 0 1px rgba(255, 255, 255, 0.9) inset;
+      text-align: center;
     }
-    .results-card h2 { font-size: 18px; color: #111827; margin-bottom: 8px; }
-    .results-card .rec-line { font-size: 14px; color: #6b7280; margin-bottom: 16px; }
-    .results-card .rec-value { font-size: 28px; font-weight: 800; color: #d97706; margin-bottom: 8px; }
-    #memo-summary { color: #6b7280 !important; }
+    .results-success-icon {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 18px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #ecfdf5, #d1fae5);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #059669;
+      font-size: 26px;
+      font-weight: 800;
+      line-height: 1;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.2);
+    }
+    .results-kicker {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #64748b;
+      margin-bottom: 10px;
+    }
+    .results-rec-value {
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+      margin-bottom: 12px;
+    }
+    .results-rec-value--invest { color: #059669; }
+    .results-rec-value--conditional { color: #d97706; }
+    .results-rec-value--pass { color: #dc2626; }
+    .results-key-finding {
+      font-size: 14px;
+      font-weight: 500;
+      color: #475569;
+      line-height: 1.5;
+      margin: 0 0 18px;
+      max-width: 36em;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .results-stat-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .results-chip {
+      font-size: 12px;
+      font-weight: 600;
+      color: #475569;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 999px;
+      padding: 7px 12px;
+      white-space: nowrap;
+    }
+    .results-detail {
+      font-size: 13px;
+      color: #64748b;
+      line-height: 1.55;
+      margin: 0 0 20px;
+      text-align: left;
+    }
     .btn-download {
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      gap: 10px;
       width: 100%;
-      margin-top: 16px;
-      padding: 12px;
-      font-weight: 600;
+      margin-top: 0;
+      padding: 14px 16px;
+      font-weight: 700;
       font-size: 14px;
       color: #fff;
       text-decoration: none;
-      border-radius: 10px;
-      background: linear-gradient(135deg, #059669, #047857);
+      border-radius: 12px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 45%, #047857 100%);
+      box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35);
+      border: none;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
-    .results-close {
-      margin-top: 12px;
-      width: 100%;
-      padding: 8px;
+    .btn-download:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 22px rgba(5, 150, 105, 0.4);
+    }
+    .btn-download svg { flex-shrink: 0; opacity: 0.95; }
+    .results-band-link {
+      display: inline-block;
+      margin-top: 14px;
       font-size: 13px;
-      color: #6b7280;
-      background: #fff;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
+      font-weight: 600;
+      color: #4f6ef7;
+      text-decoration: none;
+    }
+    .results-band-link:hover { text-decoration: underline; color: #3d5bd9; }
+    .results-close {
+      margin-top: 18px;
+      width: 100%;
+      padding: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #64748b;
+      background: transparent;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
       cursor: pointer;
     }
-    .results-close:hover { background: #f9fafb; color: #111827; }
+    .results-close:hover { background: #f8fafc; color: #334155; }
   </style>
 </head>
 <body>
@@ -690,11 +779,21 @@
     </div>
     <div class="results-overlay" id="resultsOverlay">
       <div class="results-card">
-        <h2>Analysis complete</h2>
-        <div class="rec-value" id="recValue">CONDITIONAL</div>
-        <div class="rec-line" id="recConfidence"></div>
-        <p style="font-size: 13px; color: #334155; line-height: 1.5; margin-top: 12px" id="memo-summary"></p>
-        <a class="btn-download" id="downloadBtn" href="#" target="_blank">Download investment memo PDF</a>
+        <div class="results-success-icon" aria-hidden="true">✓</div>
+        <div class="results-kicker">Analysis Complete</div>
+        <div class="rec-value results-rec-value results-rec-value--conditional" id="recValue">CONDITIONAL</div>
+        <p class="results-key-finding" id="resultsKeyFinding"></p>
+        <div class="results-stat-chips">
+          <span class="results-chip" id="resultsChipConfidence">Medium confidence</span>
+          <span class="results-chip" id="resultsChipSources">Web + Documents</span>
+          <span class="results-chip" id="resultsChipTime">~0:00</span>
+        </div>
+        <p class="results-detail" id="memo-summary"></p>
+        <a class="btn-download" id="downloadBtn" href="#" target="_blank" rel="noopener noreferrer">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Download investment memo PDF</span>
+        </a>
+        <a class="results-band-link" id="bandRoomLink" href="https://band.ai" target="_blank" rel="noopener noreferrer">View in Band →</a>
         <button type="button" class="results-close" id="resultsCloseBtn">Close</button>
       </div>
     </div>
@@ -734,7 +833,7 @@
 <script>
 const API = window.location.origin;
 const CHATS_KEY = 'dealflow_chats';
-let currentDealId = null, pollTimer = null, activityStep = 0, runTimerInterval = null, stepTimeoutId = null;
+let currentDealId = null, pollTimer = null, activityStep = 0, runTimerInterval = null, stepTimeoutId = null, lastAnalysisDurationSec = 0;
 const speechTimers = {};
 const AGENT_CHAT_CLASS = { orchestrator: 'chat-msg--orchestrator', webresearch: 'chat-msg--webresearch', documentparser: 'chat-msg--documentparser', financialanalyst: 'chat-msg--financialanalyst', legalrisk: 'chat-msg--legalrisk', synthesis: 'chat-msg--synthesis' };
 const AGENT_AVATAR_SRC = { orchestrator: '/characters/conductor.png', webresearch: '/characters/detective.png', documentparser: '/characters/librarian.png', financialanalyst: '/characters/banker.png', legalrisk: '/characters/judge.png', synthesis: '/characters/wizard.png' };
@@ -762,10 +861,12 @@ function clearRunTimer() {
 }
 function startRunTimer() {
   clearRunTimer();
+  lastAnalysisDurationSec = 0;
   var el = document.getElementById('analyzeTimer');
   if (!el) return;
   var sec = 0;
   function r() {
+    lastAnalysisDurationSec = sec;
     var str = Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
     el.textContent = str;
     var cc = document.getElementById('analyzeTimerChat');
@@ -773,6 +874,13 @@ function startRunTimer() {
   }
   r();
   runTimerInterval = setInterval(function () { sec++; r(); }, 1000);
+}
+function formatAnalysisDuration(sec) {
+  if (sec <= 0) return '~ under a minute';
+  if (sec < 60) return '~' + sec + ' second' + (sec === 1 ? '' : 's');
+  var m = Math.floor(sec / 60);
+  var s2 = sec % 60;
+  return '~' + m + ':' + String(s2).padStart(2, '0');
 }
 function stripHtml(html) { var d = document.createElement('div'); d.innerHTML = html; return d.textContent || d.innerText || ''; }
 function inferAgentFromHtml(html) {
@@ -982,10 +1090,21 @@ function showResults() {
   document.body.classList.remove('app-running');
   var company = (document.getElementById('companyName').value || '').trim() || 'Unknown company';
   var industry = (document.getElementById('industry').value || '').trim() || 'your industry';
-  document.getElementById('recValue').textContent = 'CONDITIONAL';
-  document.getElementById('recConfidence').textContent = 'Medium confidence · Web-only analysis · ' + company + ' · ' + industry;
-  document.getElementById('memo-summary').textContent = company + ' is a leading player in ' + industry + '. Based on available signals, the business shows differentiated positioning within its sector; full diligence would validate revenue quality, margin structure, and governance.';
+  var rec = 'CONDITIONAL';
+  var recLower = rec.toLowerCase();
+  var recEl = document.getElementById('recValue');
+  recEl.textContent = rec;
+  recEl.className = 'rec-value results-rec-value results-rec-value--' + recLower;
+  document.getElementById('resultsKeyFinding').textContent = company + ' shows differentiated positioning in ' + industry + ' on open-web signals — validate unit economics and governance with management.';
+  var fileInput = document.getElementById('fileInput');
+  var nFiles = fileInput && fileInput.files ? fileInput.files.length : 0;
+  document.getElementById('resultsChipConfidence').textContent = 'Medium confidence';
+  document.getElementById('resultsChipSources').textContent = nFiles > 0 ? 'Web + Documents' : 'Web only';
+  document.getElementById('resultsChipTime').textContent = formatAnalysisDuration(lastAnalysisDurationSec);
+  document.getElementById('memo-summary').textContent = 'Based on available signals, ' + company + ' appears well-positioned in ' + industry + '; full diligence would stress-test revenue quality, margins, and contractual risk.';
   document.getElementById('downloadBtn').href = API + '/memo/latest';
+  var bandLink = document.getElementById('bandRoomLink');
+  if (bandLink) bandLink.href = 'https://band.ai';
   document.getElementById('resultsOverlay').classList.add('visible');
   var messages = serializeChatFeed();
   var entry = { id: String(Date.now()), company: company, industry: industry, timestamp: Date.now(), messages: messages };
