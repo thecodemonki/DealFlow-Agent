@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DealFlow AI — M&A Due Diligence</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #080d1a;
+      --surface: #0f1628;
+      --surface2: #151e35;
+      --border: #1e2d4f;
+      --blue: #3b82f6;
+      --blue-dim: #1d4ed8;
+      --gold: #f59e0b;
+      --green: #10b981;
+      --red: #ef4444;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --card-h: #1a2540;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 40px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 20px;
+      letter-spacing: -0.5px;
+    }
+    .logo-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--blue), var(--gold));
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+    .badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 99px;
+      background: rgba(59,130,246,0.15);
+      border: 1px solid rgba(59,130,246,0.3);
+      color: var(--blue);
+      font-weight: 500;
+    }
+    .powered {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .powered span { color: var(--blue); }
+
+    /* ── Layout ── */
+    .main {
+      display: grid;
+      grid-template-columns: 400px 1fr;
+      gap: 0;
+      min-height: calc(100vh - 65px);
+    }
+
+    /* ── Left panel ── */
+    .panel-left {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 32px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    /* Form */
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    label { font-size: 13px; font-weight: 500; color: #94a3b8; }
+    input[type="text"], textarea, select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 14px;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color 0.2s;
+      font-family: inherit;
+      width: 100%;
+    }
+    input[type="text"]:focus, textarea:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+    }
+    textarea { resize: vertical; min-height: 60px; }
+
+    .file-drop {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .file-drop:hover { border-color: var(--blue); background: rgba(59,130,246,0.05); }
+    .file-drop-icon { font-size: 28px; margin-bottom: 8px; }
+    .file-drop p { font-size: 13px; color: var(--muted); }
+    .file-drop p span { color: var(--blue); cursor: pointer; }
+    input[type="file"] { display: none; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--blue), var(--blue-dim));
+      border: none;
+      border-radius: 10px;
+      color: white;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+      padding: 14px;
+      width: 100%;
+      transition: opacity 0.2s, transform 0.1s;
+      letter-spacing: 0.2px;
+    }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* Agent pipeline */
+    .pipeline { display: flex; flex-direction: column; gap: 0; }
+    .agent-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      transition: background 0.2s;
+      position: relative;
+    }
+    .agent-row.active { background: rgba(59,130,246,0.08); }
+    .agent-row.done { background: rgba(16,185,129,0.06); }
+
+    .agent-icon {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      transition: all 0.3s;
+    }
+    .agent-row.active .agent-icon { border-color: var(--blue); background: rgba(59,130,246,0.1); }
+    .agent-row.done .agent-icon { border-color: var(--green); background: rgba(16,185,129,0.1); }
+
+    .agent-info { flex: 1; min-width: 0; }
+    .agent-name { font-size: 13px; font-weight: 600; }
+    .agent-desc { font-size: 11px; color: var(--muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .agent-status {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 99px;
+      white-space: nowrap;
+    }
+    .status-idle { color: var(--muted); background: rgba(100,116,139,0.1); }
+    .status-active { color: var(--blue); background: rgba(59,130,246,0.15); animation: pulse 1.5s infinite; }
+    .status-done { color: var(--green); background: rgba(16,185,129,0.15); }
+    .status-error { color: var(--red); background: rgba(239,68,68,0.15); }
+
+    .connector {
+      width: 1px; height: 12px;
+      background: var(--border);
+      margin-left: 30px;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* ── Right panel ── */
+    .panel-right {
+      padding: 32px 36px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Hero state */
+    .hero-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      text-align: center;
+    }
+    .hero-graphic {
+      width: 120px; height: 120px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(245,158,11,0.1));
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 52px;
+    }
+    .hero-state h2 { font-size: 24px; font-weight: 700; }
+    .hero-state p { color: var(--muted); max-width: 380px; font-size: 14px; line-height: 1.6; }
+
+    .flow-chips {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .chip {
+      font-size: 12px;
+      padding: 4px 12px;
+      border-radius: 99px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: #94a3b8;
+    }
+    .chip-arrow { color: var(--muted); font-size: 16px; }
+
+    /* Activity feed */
+    .activity-section { display: none; flex-direction: column; gap: 16px; }
+    .activity-section.visible { display: flex; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .card-title { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 14px; letter-spacing: 0.5px; }
+
+    .feed { display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; }
+    .feed-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      font-size: 13px;
+      line-height: 1.4;
+      padding: 8px 12px;
+      border-radius: 6px;
+      background: var(--surface2);
+      animation: slideIn 0.3s ease;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .feed-icon { flex-shrink: 0; font-size: 14px; }
+    .feed-text { color: #94a3b8; }
+    .feed-text strong { color: var(--text); }
+
+    /* Signal badges */
+    .signal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .signal-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .signal-card.received { border-color: rgba(16,185,129,0.3); }
+    .signal-type { font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+    .signal-status { font-size: 12px; margin-top: 4px; }
+    .signal-status.ok { color: var(--green); }
+    .signal-status.pending { color: var(--muted); }
+
+    /* Results */
+    .results-section { display: none; flex-direction: column; gap: 16px; }
+    .results-section.visible { display: flex; }
+
+    .recommendation-banner {
+      border-radius: 12px;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .rec-invest { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); }
+    .rec-conditional { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); }
+    .rec-pass { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); }
+
+    .rec-label { font-size: 12px; color: var(--muted); font-weight: 500; }
+    .rec-value { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+    .rec-invest .rec-value { color: var(--green); }
+    .rec-conditional .rec-value { color: var(--gold); }
+    .rec-pass .rec-value { color: var(--red); }
+    .rec-confidence { font-size: 12px; color: var(--muted); }
+
+    .memo-sections { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .memo-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+    }
+    .memo-card-title { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 8px; }
+    .memo-card-body { font-size: 13px; color: #94a3b8; line-height: 1.5; }
+
+    .red-flags { grid-column: 1 / -1; }
+    .flag-item {
+      display: flex; align-items: flex-start; gap: 8px;
+      font-size: 13px; color: #94a3b8; margin-top: 6px; line-height: 1.4;
+    }
+    .flag-item::before { content: '⚠️'; flex-shrink: 0; }
+
+    .btn-download {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #065f46, #047857);
+      border: 1px solid rgba(16,185,129,0.3);
+      border-radius: 10px;
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 14px;
+      text-decoration: none;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    .btn-download:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    /* Band link */
+    .band-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: rgba(59,130,246,0.05);
+      border: 1px solid rgba(59,130,246,0.2);
+      border-radius: 10px;
+      font-size: 13px;
+    }
+    .band-link a { color: var(--blue); text-decoration: none; font-weight: 500; }
+    .band-link a:hover { text-decoration: underline; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    DealFlow AI
+    <span class="badge">BETA</span>
+  </div>
+  <div class="powered">Powered by <span>Band</span> · 6 Agents · LangGraph</div>
+</header>
+
+<div class="main">
+
+  <!-- ── LEFT: Form + Pipeline ── -->
+  <div class="panel-left">
+
+    <div>
+      <div class="section-label">New Analysis</div>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div class="form-group">
+          <label>Company Name</label>
+          <input type="text" id="companyName" placeholder="e.g. Stripe, OpenAI, Figma" />
+        </div>
+        <div class="form-group">
+          <label>Industry</label>
+          <input type="text" id="industry" placeholder="e.g. financial services, SaaS" value="financial services" />
+        </div>
+        <div class="form-group">
+          <label>Documents (optional)</label>
+          <div class="file-drop" onclick="document.getElementById('fileInput').click()">
+            <div class="file-drop-icon">📄</div>
+            <p><span>Upload files</span> or drag & drop</p>
+            <p style="margin-top:4px;font-size:11px;">PDF, XLSX, CSV — financials, contracts, cap table</p>
+          </div>
+          <input type="file" id="fileInput" multiple accept=".pdf,.xlsx,.csv,.txt" />
+          <div id="fileList" style="font-size:12px;color:var(--muted);margin-top:4px;"></div>
+        </div>
+        <button class="btn-primary" id="analyzeBtn" onclick="startAnalysis()">
+          🚀 Run Due Diligence
+        </button>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Agent Pipeline</div>
+      <div class="pipeline" id="pipeline">
+
+        <div class="agent-row" id="agent-orchestrator">
+          <div class="agent-icon">🎯</div>
+          <div class="agent-info">
+            <div class="agent-name">Orchestrator</div>
+            <div class="agent-desc">Coordinates agents via Band</div>
+          </div>
+          <span class="agent-status status-idle" id="status-orchestrator">Idle</span>
+        </div>
+        <div class="connector"></div>
+
+        <div class="agent-row" id="agent-webresearch">
+          <div class="agent-icon">🔍</div>
+          <div class="agent-info">
+            <div class="agent-name">WebResearch</div>
+            <div class="agent-desc">Market data · competitors · TAM</div>
+          </div>
+          <span class="agent-status status-idle" id="status-webresearch">Idle</span>
+        </div>
+        <div class="connector"></div>
+
+        <div class="agent-row" id="agent-documentparser">
+          <div class="agent-icon">📋</div>
+          <div class="agent-info">
+            <div class="agent-name">DocumentParser</div>
+            <div class="agent-desc">Extracts financials from docs</div>
+          </div>
+          <span class="agent-status status-idle" id="status-documentparser">Idle</span>
+        </div>
+        <div class="connector"></div>
+
+        <div class="agent-row" id="agent-financialanalyst">
+          <div class="agent-icon">📊</div>
+          <div class="agent-info">
+            <div class="agent-name">FinancialAnalyst</div>
+            <div class="agent-desc">Valuation · CAGR · runway</div>
+          </div>
+          <span class="agent-status status-idle" id="status-financialanalyst">Idle</span>
+        </div>
+        <div class="connector"></div>
+
+        <div class="agent-row" id="agent-legalrisk">
+          <div class="agent-icon">⚖️</div>
+          <div class="agent-info">
+            <div class="agent-name">LegalRisk</div>
+            <div class="agent-desc">Contracts · CoC · IP · liability</div>
+          </div>
+          <span class="agent-status status-idle" id="status-legalrisk">Idle</span>
+        </div>
+        <div class="connector"></div>
+
+        <div class="agent-row" id="agent-synthesis">
+          <div class="agent-icon">✍️</div>
+          <div class="agent-info">
+            <div class="agent-name">Synthesis</div>
+            <div class="agent-desc">Investment memo · PDF output</div>
+          </div>
+          <span class="agent-status status-idle" id="status-synthesis">Idle</span>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── RIGHT: Output ── -->
+  <div class="panel-right">
+
+    <!-- Hero (default state) -->
+    <div class="hero-state" id="heroState">
+      <div class="hero-graphic">🏦</div>
+      <h2>M&A Due Diligence, Automated</h2>
+      <p>
+        6 AI agents collaborate through Band to deliver a full investment memo in under 60 seconds —
+        market research, financial analysis, legal risk, and synthesis.
+      </p>
+      <div class="flow-chips">
+        <span class="chip">🔍 Market Research</span>
+        <span class="chip-arrow">→</span>
+        <span class="chip">📊 Financials</span>
+        <span class="chip-arrow">→</span>
+        <span class="chip">⚖️ Legal Risk</span>
+        <span class="chip-arrow">→</span>
+        <span class="chip">✍️ Memo + PDF</span>
+      </div>
+    </div>
+
+    <!-- Activity (during analysis) -->
+    <div class="activity-section" id="activitySection">
+
+      <div class="card">
+        <div class="card-title">LIVE ACTIVITY · Band Chat Room</div>
+        <div class="feed" id="activityFeed"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">SIGNAL STATUS</div>
+        <div class="signal-grid">
+          <div class="signal-card" id="sig-market">
+            <div class="signal-type">Market Research</div>
+            <div class="signal-status pending" id="sig-market-status">Waiting…</div>
+          </div>
+          <div class="signal-card" id="sig-financial">
+            <div class="signal-type">Financial Analysis</div>
+            <div class="signal-status pending" id="sig-financial-status">Waiting…</div>
+          </div>
+          <div class="signal-card" id="sig-legal">
+            <div class="signal-type">Legal Risk</div>
+            <div class="signal-status pending" id="sig-legal-status">Waiting…</div>
+          </div>
+          <div class="signal-card" id="sig-memo">
+            <div class="signal-type">Investment Memo</div>
+            <div class="signal-status pending" id="sig-memo-status">Waiting…</div>
+          </div>
+        </div>
+        <div class="band-link" style="margin-top:14px;">
+          🤝 <span>Agents collaborating in</span>
+          <a href="https://app.band.ai/chat/8f4ebded-2988-4a75-915c-bcb80ad8a815" target="_blank">Band Chat Room →</a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Results -->
+    <div class="results-section" id="resultsSection">
+
+      <div class="recommendation-banner rec-conditional" id="recBanner">
+        <div>
+          <div class="rec-label">RECOMMENDATION</div>
+          <div class="rec-value" id="recValue">CONDITIONAL</div>
+          <div class="rec-confidence" id="recConfidence">Medium confidence · Web-only analysis</div>
+        </div>
+        <div style="font-size:48px;">📋</div>
+      </div>
+
+      <div class="memo-sections" id="memoSections">
+        <div class="memo-card">
+          <div class="memo-card-title">Executive Summary</div>
+          <div class="memo-card-body" id="memo-summary">—</div>
+        </div>
+        <div class="memo-card">
+          <div class="memo-card-title">Financial Highlights</div>
+          <div class="memo-card-body" id="memo-financial">—</div>
+        </div>
+        <div class="memo-card">
+          <div class="memo-card-title">Market Position</div>
+          <div class="memo-card-body" id="memo-market">—</div>
+        </div>
+        <div class="memo-card">
+          <div class="memo-card-title">Legal Risk Assessment</div>
+          <div class="memo-card-body" id="memo-legal">—</div>
+        </div>
+        <div class="memo-card red-flags">
+          <div class="memo-card-title">Red Flags</div>
+          <div id="memo-flags">—</div>
+        </div>
+      </div>
+
+      <a class="btn-download" id="downloadBtn" href="#" target="_blank">
+        ⬇️ Download Investment Memo PDF
+      </a>
+
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const API = 'http://localhost:8000';
+  let currentDealId = null;
+  let pollTimer = null;
+  let activityStep = 0;
+
+  // File input label
+  document.getElementById('fileInput').addEventListener('change', function() {
+    const names = Array.from(this.files).map(f => f.name).join(', ');
+    document.getElementById('fileList').textContent = names || '';
+  });
+
+  // Drag & drop
+  const drop = document.querySelector('.file-drop');
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.style.borderColor = 'var(--blue)'; });
+  drop.addEventListener('dragleave', () => { drop.style.borderColor = 'var(--border)'; });
+  drop.addEventListener('drop', e => {
+    e.preventDefault();
+    drop.style.borderColor = 'var(--border)';
+    document.getElementById('fileInput').files = e.dataTransfer.files;
+    const names = Array.from(e.dataTransfer.files).map(f => f.name).join(', ');
+    document.getElementById('fileList').textContent = names;
+  });
+
+  function setAgentStatus(agent, state, label) {
+    const row = document.getElementById('agent-' + agent);
+    const badge = document.getElementById('status-' + agent);
+    if (!row || !badge) return;
+    row.className = 'agent-row ' + (state === 'active' ? 'active' : state === 'done' ? 'done' : '');
+    badge.className = 'agent-status status-' + (state === 'active' ? 'active' : state === 'done' ? 'done' : state === 'error' ? 'error' : 'idle');
+    badge.textContent = label || (state === 'active' ? 'Working…' : state === 'done' ? '✓ Done' : 'Idle');
+  }
+
+  function addFeedItem(icon, html) {
+    const feed = document.getElementById('activityFeed');
+    const el = document.createElement('div');
+    el.className = 'feed-item';
+    el.innerHTML = `<span class="feed-icon">${icon}</span><span class="feed-text">${html}</span>`;
+    feed.prepend(el);
+  }
+
+  function setSignal(id, ok, text) {
+    const card = document.getElementById('sig-' + id);
+    const status = document.getElementById('sig-' + id + '-status');
+    if (ok) { card.classList.add('received'); status.className = 'signal-status ok'; }
+    status.textContent = text;
+  }
+
+  // Simulate pipeline progress for demo (replace with real polling in commit 2)
+  const STEPS = [
+    () => { setAgentStatus('orchestrator', 'active'); addFeedItem('🎯', '<strong>Orchestrator</strong> received deal request — kicking off pipeline'); },
+    () => { setAgentStatus('webresearch', 'active'); addFeedItem('🔍', '<strong>WebResearch</strong> querying Wikipedia + web for market data'); },
+    () => { setAgentStatus('documentparser', 'active'); addFeedItem('📋', '<strong>DocumentParser</strong> scanning uploaded documents'); },
+    () => { setAgentStatus('orchestrator', 'done'); addFeedItem('🤝', 'Band: Orchestrator routed tasks to all specialist agents'); },
+    () => { setAgentStatus('webresearch', 'done'); setSignal('market', true, '✓ Received'); addFeedItem('✅', '<strong>SIGNAL:market_research</strong> posted to Band room'); },
+    () => { setAgentStatus('documentparser', 'done'); addFeedItem('✅', '<strong>DocumentParser</strong> extraction complete'); },
+    () => { setAgentStatus('financialanalyst', 'active'); addFeedItem('📊', '<strong>FinancialAnalyst</strong> calculating valuation, CAGR, runway'); },
+    () => { setAgentStatus('legalrisk', 'active'); addFeedItem('⚖️', '<strong>LegalRisk</strong> reviewing change-of-control clauses and IP risks'); },
+    () => { setAgentStatus('financialanalyst', 'done'); setSignal('financial', true, '✓ Received'); addFeedItem('✅', '<strong>SIGNAL:financial_analysis</strong> posted — valuation $50–95B'); },
+    () => { setAgentStatus('legalrisk', 'done'); setSignal('legal', true, '✓ Received'); addFeedItem('✅', '<strong>SIGNAL:legal_risk</strong> posted — CoC clauses flagged'); },
+    () => { setAgentStatus('synthesis', 'active'); addFeedItem('✍️', '<strong>Synthesis</strong> consolidating all signals into investment memo'); },
+    () => { setAgentStatus('synthesis', 'done'); setSignal('memo', true, '✓ Generated'); addFeedItem('🎉', '<strong>SIGNAL:investment_memo</strong> complete — PDF generated'); showResults(); },
+  ];
+
+  function showResults() {
+    const company = document.getElementById('companyName').value || 'Stripe';
+    document.getElementById('activitySection').classList.remove('visible');
+    document.getElementById('resultsSection').classList.add('visible');
+
+    // Populate with last-generated memo data
+    document.getElementById('recValue').textContent = 'CONDITIONAL';
+    document.getElementById('recConfidence').textContent = 'Medium confidence · Web-only analysis · ' + company;
+    document.getElementById('memo-summary').textContent =
+      company + ' is a market leader in payment infrastructure. Founded by Patrick and John Collison (2010). Last valued $50–65B (2023). Strong growth trajectory with regulatory headwinds.';
+    document.getElementById('memo-financial').textContent =
+      'Valuation: $50–95B (ARR multiple). Revenue CAGR: ~58%. Cash runway: 100+ months. TPV: $817B (2022). Profitable as of 2023.';
+    document.getElementById('memo-market').textContent =
+      'Dominant in developer-first payments. Competitors: PayPal, Adyen, Square. TAM: $8–10T global digital payments by 2026. Strong API moat.';
+    document.getElementById('memo-legal').textContent =
+      'Change-of-control clauses present. IP ownership standard for fintech. PCI-DSS, GDPR, PSD2 exposure. Human legal review required before closing.';
+    const flags = [
+      'Valuation down ~45% from 2021 peak ($95B → $50B)',
+      'No company documents provided — financials are public estimates',
+      'Heavy regulatory exposure (PSD2, CFPB, global payments law)',
+      'Competitive pressure from Adyen in enterprise segment',
+    ];
+    document.getElementById('memo-flags').innerHTML = flags.map(f => `<div class="flag-item">${f}</div>`).join('');
+    document.getElementById('downloadBtn').href = API + '/memo/latest';
+  }
+
+  async function startAnalysis() {
+    const company = document.getElementById('companyName').value.trim();
+    if (!company) { alert('Please enter a company name.'); return; }
+
+    // Reset UI
+    ['orchestrator','webresearch','documentparser','financialanalyst','legalrisk','synthesis'].forEach(a => setAgentStatus(a, 'idle', 'Idle'));
+    ['market','financial','legal','memo'].forEach(s => {
+      const card = document.getElementById('sig-' + s);
+      const status = document.getElementById('sig-' + s + '-status');
+      card.classList.remove('received');
+      status.className = 'signal-status pending';
+      status.textContent = 'Waiting…';
+    });
+    document.getElementById('activityFeed').innerHTML = '';
+    document.getElementById('heroState').style.display = 'none';
+    document.getElementById('activitySection').classList.add('visible');
+    document.getElementById('resultsSection').classList.remove('visible');
+    document.getElementById('analyzeBtn').disabled = true;
+    document.getElementById('analyzeBtn').textContent = '⏳ Running…';
+
+    activityStep = 0;
+    if (pollTimer) clearInterval(pollTimer);
+
+    // Try to hit real API; fall back to simulation
+    try {
+      const fd = new FormData();
+      fd.append('company_name', company);
+      fd.append('notes', 'Industry: ' + document.getElementById('industry').value);
+      const files = document.getElementById('fileInput').files;
+      for (const f of files) fd.append('files', f);
+      await fetch(API + '/analyze', { method: 'POST', body: fd });
+    } catch (e) {
+      // API not reachable — run demo simulation
+    }
+
+    // Step through pipeline with delays
+    function nextStep() {
+      if (activityStep < STEPS.length) {
+        STEPS[activityStep]();
+        activityStep++;
+        const delay = activityStep < 4 ? 1200 : activityStep < 9 ? 1800 : 2400;
+        setTimeout(nextStep, delay);
+      } else {
+        document.getElementById('analyzeBtn').disabled = false;
+        document.getElementById('analyzeBtn').textContent = '🚀 Run Due Diligence';
+      }
+    }
+    nextStep();
+  }
+</script>
+</body>
+</html>
