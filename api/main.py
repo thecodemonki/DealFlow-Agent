@@ -21,6 +21,7 @@ import httpx
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -44,6 +45,9 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 INDEX_HTML = FRONTEND_DIR / "index.html"
+CHARACTERS_DIR = FRONTEND_DIR / "characters"
+
+app.mount("/characters", StaticFiles(directory=str(CHARACTERS_DIR)), name="characters")
 
 # In-memory deal status store (replace with DB in production)
 deals: dict[str, dict] = {}

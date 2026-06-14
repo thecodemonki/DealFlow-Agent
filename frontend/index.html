@@ -453,68 +453,48 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      --sphere-light: #ef4444;
-      --sphere-dark: #7f1d1d;
       --glow-rgb: 127, 29, 29;
     }
-    .blob-wrap--webresearch { --sphere-light: #818cf8; --sphere-dark: #1e1b4b; --glow-rgb: 30, 27, 75; }
-    .blob-wrap--documentparser { --sphere-light: #fbbf24; --sphere-dark: #78350f; --glow-rgb: 120, 53, 15; }
-    .blob-wrap--financialanalyst { --sphere-light: #34d399; --sphere-dark: #14532d; --glow-rgb: 20, 83, 45; }
-    .blob-wrap--legalrisk { --sphere-light: #c084fc; --sphere-dark: #3b0764; --glow-rgb: 59, 7, 100; }
-    .blob-wrap--synthesis { --sphere-light: #2dd4bf; --sphere-dark: #134e4a; --glow-rgb: 19, 78, 74; }
+    .blob-wrap--webresearch { --glow-rgb: 30, 27, 75; }
+    .blob-wrap--documentparser { --glow-rgb: 120, 53, 15; }
+    .blob-wrap--financialanalyst { --glow-rgb: 20, 83, 45; }
+    .blob-wrap--legalrisk { --glow-rgb: 59, 7, 100; }
+    .blob-wrap--synthesis { --glow-rgb: 19, 78, 74; }
     @keyframes blob-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
     @keyframes blob-float-fast { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-    .blob-sphere {
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
+    .blob-agent {
       position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: radial-gradient(circle at 35% 35%, var(--sphere-light), var(--sphere-dark));
-      box-shadow:
-        inset -8px -8px 20px rgba(0, 0, 0, 0.35),
-        inset 3px 3px 10px rgba(255, 255, 255, 0.2),
-        0 8px 32px rgba(0, 0, 0, 0.15),
-        0 10px 30px rgba(0, 0, 0, 0.12);
+      width: 90px;
+      height: 90px;
       animation: blob-float 3s ease-in-out infinite;
-      transition: filter 0.35s ease, box-shadow 0.35s ease;
+      transition: filter 0.35s ease;
     }
-    .blob-sphere::after {
-      content: '';
-      position: absolute;
-      top: 15%;
-      left: 20%;
-      width: 30px;
-      height: 20px;
-      border-radius: 50%;
-      background: radial-gradient(ellipse, rgba(255, 255, 255, 0.45), transparent 70%);
+    .blob-agent img {
+      width: 90px;
+      height: 90px;
+      object-fit: contain;
+      display: block;
       pointer-events: none;
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
+      transition: filter 0.35s ease;
     }
-    .blob-layer .blob-wrap:nth-of-type(1) .blob-sphere { animation-delay: 0s; }
-    .blob-layer .blob-wrap:nth-of-type(2) .blob-sphere { animation-delay: 0.5s; }
-    .blob-layer .blob-wrap:nth-of-type(3) .blob-sphere { animation-delay: 1s; }
-    .blob-layer .blob-wrap:nth-of-type(4) .blob-sphere { animation-delay: 1.5s; }
-    .blob-layer .blob-wrap:nth-of-type(5) .blob-sphere { animation-delay: 2s; }
-    .blob-layer .blob-wrap:nth-of-type(6) .blob-sphere { animation-delay: 2.5s; }
-    .blob-wrap--active .blob-sphere {
+    .blob-layer .blob-wrap:nth-of-type(1) .blob-agent { animation-delay: 0s; }
+    .blob-layer .blob-wrap:nth-of-type(2) .blob-agent { animation-delay: 0.5s; }
+    .blob-layer .blob-wrap:nth-of-type(3) .blob-agent { animation-delay: 1s; }
+    .blob-layer .blob-wrap:nth-of-type(4) .blob-agent { animation-delay: 1.5s; }
+    .blob-layer .blob-wrap:nth-of-type(5) .blob-agent { animation-delay: 2s; }
+    .blob-layer .blob-wrap:nth-of-type(6) .blob-agent { animation-delay: 2.5s; }
+    .blob-wrap--active .blob-agent {
       animation-name: blob-float-fast;
       animation-duration: 1.2s;
-      box-shadow:
-        inset -8px -8px 20px rgba(0, 0, 0, 0.35),
-        inset 3px 3px 10px rgba(255, 255, 255, 0.2),
-        0 8px 32px rgba(0, 0, 0, 0.15),
-        0 10px 30px rgba(0, 0, 0, 0.12),
-        0 0 28px rgba(var(--glow-rgb), 0.5),
-        0 0 48px rgba(var(--glow-rgb), 0.28);
     }
-    .blob-wrap--done .blob-sphere { filter: brightness(1.1); }
-    .blob-face { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 2px; }
-    .blob-emoji { font-size: 1.6rem; line-height: 1; }
-    .blob-emoji-tiny { font-size: 0.62rem; opacity: 0.95; }
-    .blob-eyes { display: flex; gap: 6px; margin-top: 2px; }
-    .blob-eyes span { width: 6px; height: 6px; border-radius: 50%; background: #fff; display: block; }
+    .blob-wrap--active .blob-agent img {
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15)) drop-shadow(0 0 18px rgba(var(--glow-rgb), 0.55)) drop-shadow(0 0 28px rgba(var(--glow-rgb), 0.35));
+    }
+    .blob-wrap--done .blob-agent img { filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15)) brightness(1.08); }
     .blob-label { margin-top: 10px; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; text-align: center; max-width: 120px; line-height: 1.2; }
     .blob-check {
       position: absolute;
@@ -659,37 +639,37 @@
       <div class="blob-wrap blob-wrap--orchestrator" id="blob-orchestrator" data-agent="orchestrator">
         <div class="speech-bubble"><span class="speech-bubble__text"></span></div>
         <div class="blob-check">✓</div>
-        <div class="blob-sphere"><div class="blob-face"><div><span class="blob-emoji">🎼</span><span class="blob-emoji-tiny">🪄</span></div><div class="blob-eyes"><span></span><span></span></div></div></div>
+        <div class="blob-agent"><img src="/characters/conductor.png" alt="Conductor" width="90" height="90" /></div>
         <div class="blob-label">Conductor</div>
       </div>
       <div class="blob-wrap blob-wrap--webresearch" id="blob-webresearch" data-agent="webresearch">
         <div class="speech-bubble"><span class="speech-bubble__text"></span></div>
         <div class="blob-check">✓</div>
-        <div class="blob-sphere"><div class="blob-face"><div><span class="blob-emoji">🧐</span><span class="blob-emoji-tiny">🔍</span></div><div class="blob-eyes"><span></span><span></span></div></div></div>
+        <div class="blob-agent"><img src="/characters/detective.png" alt="Detective" width="90" height="90" /></div>
         <div class="blob-label">Detective</div>
       </div>
       <div class="blob-wrap blob-wrap--documentparser" id="blob-documentparser" data-agent="documentparser">
         <div class="speech-bubble"><span class="speech-bubble__text"></span></div>
         <div class="blob-check">✓</div>
-        <div class="blob-sphere"><div class="blob-face"><div><span class="blob-emoji">📜</span><span class="blob-emoji-tiny">👓</span></div><div class="blob-eyes"><span></span><span></span></div></div></div>
+        <div class="blob-agent"><img src="/characters/librarian.png" alt="Librarian" width="90" height="90" /></div>
         <div class="blob-label">Librarian</div>
       </div>
       <div class="blob-wrap blob-wrap--financialanalyst" id="blob-financialanalyst" data-agent="financialanalyst">
         <div class="speech-bubble"><span class="speech-bubble__text"></span></div>
         <div class="blob-check">✓</div>
-        <div class="blob-sphere"><div class="blob-face"><div><span class="blob-emoji">💼</span><span class="blob-emoji-tiny">📈</span></div><div class="blob-eyes"><span></span><span></span></div></div></div>
+        <div class="blob-agent"><img src="/characters/banker.png" alt="Banker" width="90" height="90" /></div>
         <div class="blob-label">Banker</div>
       </div>
       <div class="blob-wrap blob-wrap--legalrisk" id="blob-legalrisk" data-agent="legalrisk">
         <div class="speech-bubble"><span class="speech-bubble__text"></span></div>
         <div class="blob-check">✓</div>
-        <div class="blob-sphere"><div class="blob-face"><div><span class="blob-emoji">⚖️</span><span class="blob-emoji-tiny">🔨</span></div><div class="blob-eyes"><span></span><span></span></div></div></div>
+        <div class="blob-agent"><img src="/characters/judge.png" alt="Judge" width="90" height="90" /></div>
         <div class="blob-label">Judge</div>
       </div>
       <div class="blob-wrap blob-wrap--synthesis" id="blob-synthesis" data-agent="synthesis">
         <div class="speech-bubble"><span class="speech-bubble__text"></span></div>
         <div class="blob-check">✓</div>
-        <div class="blob-sphere"><div class="blob-face"><div><span class="blob-emoji">✨</span><span class="blob-emoji-tiny">🪄</span></div><div class="blob-eyes"><span></span><span></span></div></div></div>
+        <div class="blob-agent"><img src="/characters/wizard.jpg" alt="Wizard" width="90" height="90" /></div>
         <div class="blob-label">Wizard</div>
       </div>
     </div>
