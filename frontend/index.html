@@ -29,7 +29,22 @@
       letter-spacing: 0.01em;
       color: #1a1a2e;
     }
-    .sidebar-brand { padding: 18px 16px 14px; font-weight: 600; font-size: 15px; color: #1a1a2e; letter-spacing: -0.02em; }
+    .sidebar-brand {
+      padding: 18px 16px 14px;
+      font-weight: 600;
+      font-size: 15px;
+      color: #1a1a2e;
+      letter-spacing: -0.02em;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      text-align: left;
+      width: 100%;
+      display: block;
+      line-height: inherit;
+    }
+    .sidebar-brand:hover { color: #111827; }
     .btn-new {
       margin: 0 10px 6px;
       width: calc(100% - 20px);
@@ -579,6 +594,11 @@
       transition: opacity 0.5s ease 0.15s;
     }
     #arena.arena--running .arena-lines { opacity: 1; }
+    #arena.arena--home-blobs .blob-layer {
+      opacity: 1;
+      visibility: visible;
+    }
+    #arena.arena--home-blobs .arena-lines { opacity: 1; }
     .blob-wrap {
       position: absolute;
       transform: translate(-50%, -50%);
@@ -942,7 +962,7 @@
 <body>
 <div class="app-grid" id="appGrid">
   <aside id="sidebar">
-    <div class="sidebar-brand">⚡ DealFlow AI</div>
+    <button type="button" class="sidebar-brand" id="sidebarLogoBtn" aria-label="DealFlow AI — home">⚡ DealFlow AI</button>
     <button type="button" class="btn-new" id="newAnalysisBtn"><span class="btn-new__icon">+</span> New Analysis</button>
     <div class="sidebar-nav-label">Analyses</div>
     <div class="sidebar-nav-item">All deals</div>
@@ -1392,6 +1412,7 @@ function appendHistoryMessage(m) {
 function restoreChatFromHistory(entry) {
   hideArenaMemoViewer();
   var arena = document.getElementById('arena');
+  arena.classList.remove('arena--home-blobs');
   arena.classList.add('arena--running');
   arena.classList.add('arena--viewing-history');
   document.body.classList.remove('app-running');
@@ -1488,7 +1509,10 @@ function showResults() {
 document.getElementById('resultsCloseBtn').addEventListener('click', function () {
   document.getElementById('resultsOverlay').classList.remove('visible');
   var arena = document.getElementById('arena');
-  if (arena) arena.classList.add('arena--memo-view');
+  if (arena) {
+    arena.classList.remove('arena--home-blobs');
+    arena.classList.add('arena--memo-view');
+  }
   var mv = document.getElementById('memoPreview');
   if (mv) mv.removeAttribute('hidden');
 });
@@ -1498,7 +1522,8 @@ document.getElementById('runDemoBtn').addEventListener('click', function () {
   document.getElementById('industry').value = 'Technology';
   startAnalysis();
 });
-function resetToInputCard() {
+function resetToInputCard(opts) {
+  opts = opts || {};
   hideArenaMemoViewer();
   if (stepTimeoutId) { clearTimeout(stepTimeoutId); stepTimeoutId = null; }
   window.analysisAborted = false;
@@ -1506,6 +1531,8 @@ function resetToInputCard() {
   arena.classList.remove('arena--running');
   arena.classList.remove('arena--viewing-history');
   arena.classList.remove('arena--memo-view');
+  arena.classList.remove('arena--home-blobs');
+  if (opts.homeBlobs) arena.classList.add('arena--home-blobs');
   document.body.classList.remove('app-running');
   document.getElementById('resultsOverlay').classList.remove('visible');
   ['orchestrator', 'webresearch', 'documentparser', 'financialanalyst', 'legalrisk', 'synthesis'].forEach(function (a) {
@@ -1541,6 +1568,11 @@ document.getElementById('memoPreviewNewAnalysis').addEventListener('click', func
   document.getElementById('chatFeed').innerHTML = '';
   updateChatEmpty();
 });
+document.getElementById('sidebarLogoBtn').addEventListener('click', function () {
+  resetToInputCard({ homeBlobs: true });
+  document.getElementById('chatFeed').innerHTML = '';
+  updateChatEmpty();
+});
 document.getElementById('stopBtn').addEventListener('click', function () {
   window.analysisAborted = true;
   if (stepTimeoutId) { clearTimeout(stepTimeoutId); stepTimeoutId = null; }
@@ -1561,8 +1593,9 @@ async function startAnalysis() {
   hideArenaMemoViewer();
   window.analysisAborted = false;
   if (stepTimeoutId) { clearTimeout(stepTimeoutId); stepTimeoutId = null; }
-  document.getElementById('arena').classList.remove('arena--viewing-history');
-  document.getElementById('arena').classList.add('arena--running');
+  var arenaRun = document.getElementById('arena');
+  arenaRun.classList.remove('arena--viewing-history', 'arena--home-blobs');
+  arenaRun.classList.add('arena--running');
   document.body.classList.add('app-running');
   ['orchestrator', 'webresearch', 'documentparser', 'financialanalyst', 'legalrisk', 'synthesis'].forEach(function (a) {
     setAgentStatus(a, 'idle');
