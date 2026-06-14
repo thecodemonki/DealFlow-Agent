@@ -4,6 +4,7 @@ uploads/
 __pycache__/
 *.pyc
 .venv/
+.deps/
 .uv/
 *.egg-info/
 dist/
