@@ -68,6 +68,45 @@
     }
     .sidebar-nav-item:hover { background: rgba(79, 110, 247, 0.1); color: #111827; }
     .recent-list { padding: 4px 8px 0; flex: 1; }
+    .chat-restore-banner {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 500;
+      color: #9ca3af;
+      padding: 8px 12px 4px;
+      margin-bottom: 4px;
+      flex-shrink: 0;
+    }
+    .chat-msg--system .chat-msg__avatar {
+      background: #e5e7eb;
+      color: #4b5563;
+      font-size: 13px;
+    }
+    .chat-msg--system .chat-msg__name { color: #6b7280; }
+    .chat-msg--system .chat-msg__bubble {
+      background: #f3f4f6;
+      color: #374151;
+      border: 1px solid #e5e7eb;
+      box-shadow: none;
+    }
+    #stopBtn {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      font-size: 11px;
+      line-height: 1;
+      border-radius: 6px;
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      color: #374151;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .app-running #stopBtn { display: flex; }
+    #stopBtn:hover { background: #e5e7eb; color: #111827; }
     .recent-row {
       margin: 2px 0;
       padding: 8px 12px;
@@ -588,11 +627,7 @@
     <div class="sidebar-nav-item">All deals</div>
     <div class="sidebar-nav-label">Starred</div>
     <div class="sidebar-nav-item">Watchlist</div>
-    <div class="recent-list">
-      <div class="recent-row"><span class="recent-row__icon">💬</span><div class="recent-row__meta"><span class="recent-row__name">Stripe</span><span class="recent-row__date">Jun 13</span></div></div>
-      <div class="recent-row"><span class="recent-row__icon">💬</span><div class="recent-row__meta"><span class="recent-row__name">OpenAI</span><span class="recent-row__date">Jun 12</span></div></div>
-      <div class="recent-row"><span class="recent-row__icon">💬</span><div class="recent-row__meta"><span class="recent-row__name">Figma</span><span class="recent-row__date">Jun 11</span></div></div>
-    </div>
+    <div class="recent-list" id="recentList"></div>
     <div class="sidebar-footer">Powered by Band</div>
     <div class="sidebar-user">
       <div class="sidebar-user__avatar" aria-hidden="true">M</div>
@@ -680,6 +715,8 @@
         </div>
         <div class="chat-header-meta">
           <div class="chat-live-wrap"><span class="chat-live-dot" aria-hidden="true"></span><span>Live</span></div>
+          <span class="chat-timer" id="analyzeTimerChat" aria-live="polite"></span>
+          <button type="button" id="stopBtn" title="Stop analysis" aria-label="Stop analysis">⏹</button>
         </div>
       </div>
       <div class="chat-feed-wrap">
@@ -701,11 +738,18 @@
 </div>
 <script>
 const API = window.location.origin;
-let currentDealId = null, pollTimer = null, activityStep = 0, runTimerInterval = null;
+const CHATS_KEY = 'dealflow_chats';
+let currentDealId = null, pollTimer = null, activityStep = 0, runTimerInterval = null, stepTimeoutId = null;
 const speechTimers = {};
 const AGENT_CHAT_CLASS = { orchestrator: 'chat-msg--orchestrator', webresearch: 'chat-msg--webresearch', documentparser: 'chat-msg--documentparser', financialanalyst: 'chat-msg--financialanalyst', legalrisk: 'chat-msg--legalrisk', synthesis: 'chat-msg--synthesis' };
+const AGENT_ICON = { orchestrator: '🎼', webresearch: '🧐', documentparser: '📜', financialanalyst: '💼', legalrisk: '⚖️', synthesis: '✨' };
 const AGENT_LABEL = { orchestrator: 'Conductor', webresearch: 'Detective', documentparser: 'Librarian', financialanalyst: 'Banker', legalrisk: 'Judge', synthesis: 'Wizard' };
 const AGENT_DISPLAY = { orchestrator: 'Orchestrator', webresearch: 'WebResearch', documentparser: 'DocumentParser', financialanalyst: 'FinancialAnalyst', legalrisk: 'LegalRisk', synthesis: 'Synthesis' };
+function nameToAgentId(name) {
+  for (var k in AGENT_LABEL) { if (AGENT_LABEL[k] === name) return k; }
+  for (var k2 in AGENT_DISPLAY) { if (AGENT_DISPLAY[k2] === name) return k2; }
+  return null;
+}
 function toggleChat() {
   var g = document.getElementById('appGrid');
   var collapsed = g.classList.toggle('chat-collapsed');
@@ -716,6 +760,8 @@ function clearRunTimer() {
   if (runTimerInterval) { clearInterval(runTimerInterval); runTimerInterval = null; }
   var t = document.getElementById('analyzeTimer');
   if (t) t.textContent = '';
+  var tc = document.getElementById('analyzeTimerChat');
+  if (tc) tc.textContent = '';
 }
 function startRunTimer() {
   clearRunTimer();
@@ -723,7 +769,10 @@ function startRunTimer() {
   if (!el) return;
   var sec = 0;
   function r() {
-    el.textContent = Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
+    var str = Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
+    el.textContent = str;
+    var cc = document.getElementById('analyzeTimerChat');
+    if (cc) cc.textContent = str;
   }
   r();
   runTimerInterval = setInterval(function () { sec++; r(); }, 1000);
@@ -778,6 +827,15 @@ function addUserMessage(text) {
   feed.scrollTop = feed.scrollHeight;
   updateChatEmpty();
 }
+function addSystemChat(text) {
+  var feed = document.getElementById('chatFeed');
+  var row = document.createElement('div');
+  row.className = 'chat-msg chat-msg--system';
+  row.innerHTML = '<div class="chat-msg__avatar">ⓘ</div><div class="chat-msg__body"><div class="chat-msg__name">System</div><div class="chat-msg__bubble">' + escapeHtml(text) + '</div></div>';
+  feed.appendChild(row);
+  feed.scrollTop = feed.scrollHeight;
+  updateChatEmpty();
+}
 function sendUserChatMessage() {
   var inp = document.getElementById('userChatInput');
   if (!inp) return;
@@ -809,6 +867,102 @@ function setSignal(id, ok, text) {
   if (ok) card.classList.add('received');
   status.textContent = text;
 }
+function serializeChatFeed() {
+  var feed = document.getElementById('chatFeed');
+  var out = [];
+  Array.prototype.forEach.call(feed.children, function (row) {
+    if (!row.classList || !row.classList.contains('chat-msg')) return;
+    var nameEl = row.querySelector('.chat-msg__name');
+    var bubble = row.querySelector('.chat-msg__bubble');
+    if (!nameEl || !bubble) return;
+    var name = nameEl.textContent.trim();
+    var text = bubble.textContent.trim();
+    if (row.classList.contains('chat-msg--user')) {
+      out.push({ role: 'user', name: 'You', text: text });
+    } else if (row.classList.contains('chat-msg--system')) {
+      out.push({ role: 'system', name: 'System', text: text });
+    } else {
+      var agentId = nameToAgentId(name);
+      if (!agentId) agentId = inferAgentFromHtml('<strong>' + name + '</strong> ' + text);
+      out.push({ role: 'agent', name: name, text: text, agentId: agentId });
+    }
+  });
+  return out;
+}
+function loadChatsFromStorage() {
+  try {
+    var raw = localStorage.getItem(CHATS_KEY);
+    if (!raw) return [];
+    var arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  } catch (e) { return []; }
+}
+function saveChatsToStorage(arr) {
+  try { localStorage.setItem(CHATS_KEY, JSON.stringify(arr)); } catch (e) {}
+}
+function formatChatDate(ts) {
+  var d = new Date(ts);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+function renderRecentList() {
+  var list = document.getElementById('recentList');
+  if (!list) return;
+  list.innerHTML = '';
+  var chats = loadChatsFromStorage();
+  chats.forEach(function (entry) {
+    var row = document.createElement('div');
+    row.className = 'recent-row';
+    row.setAttribute('data-chat-id', entry.id);
+    row.innerHTML = '<span class="recent-row__icon">💬</span><div class="recent-row__meta"><span class="recent-row__name">' + escapeHtml(entry.company || 'Untitled') + '</span><span class="recent-row__date">' + formatChatDate(entry.timestamp) + '</span></div>';
+    list.appendChild(row);
+  });
+}
+function appendHistoryMessage(m) {
+  if (m.role === 'user') {
+    addUserMessage(m.text);
+    return;
+  }
+  if (m.role === 'system') {
+    addSystemChat(m.text);
+    return;
+  }
+  var aid = m.agentId || nameToAgentId(m.name) || inferAgentFromHtml('<strong>' + m.name + '</strong> ' + m.text);
+  var icon = (aid && AGENT_ICON[aid]) ? AGENT_ICON[aid] : '💬';
+  var safe = escapeHtml(m.text).replace(/\n/g, '<br>');
+  addFeedItem(icon, safe, aid, null);
+}
+function restoreChatFromHistory(entry) {
+  var arena = document.getElementById('arena');
+  arena.classList.add('arena--running');
+  arena.classList.add('arena--viewing-history');
+  document.body.classList.remove('app-running');
+  document.getElementById('resultsOverlay').classList.remove('visible');
+  ['orchestrator', 'webresearch', 'documentparser', 'financialanalyst', 'legalrisk', 'synthesis'].forEach(function (a) {
+    var w = document.getElementById('blob-' + a);
+    if (w) w.classList.remove('blob-wrap--active', 'blob-wrap--done', 'speech-on');
+    setAgentStatus(a, 'done');
+  });
+  var feed = document.getElementById('chatFeed');
+  feed.innerHTML = '';
+  var banner = document.createElement('div');
+  banner.className = 'chat-restore-banner';
+  banner.textContent = 'Restored from history';
+  feed.appendChild(banner);
+  (entry.messages || []).forEach(function (m) { appendHistoryMessage(m); });
+  updateChatEmpty();
+  feed.scrollTop = 0;
+  if (document.getElementById('companyName')) document.getElementById('companyName').value = entry.company || '';
+  if (document.getElementById('industry')) document.getElementById('industry').value = entry.industry || '';
+}
+document.getElementById('recentList').addEventListener('click', function (e) {
+  var row = e.target.closest('.recent-row');
+  if (!row) return;
+  var id = row.getAttribute('data-chat-id');
+  var chats = loadChatsFromStorage();
+  var entry = null;
+  for (var ri = 0; ri < chats.length; ri++) { if (chats[ri].id === id) { entry = chats[ri]; break; } }
+  if (entry) restoreChatFromHistory(entry);
+});
 const STEPS = [
   function () { setAgentStatus('orchestrator', 'active'); showSpeechBubble('orchestrator', 'Kicking off pipeline…'); addFeedItem('🎼', '<strong>Orchestrator</strong> received deal request — kicking off pipeline', 'orchestrator'); },
   function () { setAgentStatus('webresearch', 'active'); showSpeechBubble('webresearch', 'Scanning the open web…'); addFeedItem('🧐', '<strong>WebResearch</strong> querying Wikipedia + web for market data', 'webresearch'); },
@@ -832,6 +986,13 @@ function showResults() {
   document.getElementById('memo-summary').textContent = company + ' is a leading player in ' + industry + '. Based on available signals, the business shows differentiated positioning within its sector; full diligence would validate revenue quality, margin structure, and governance.';
   document.getElementById('downloadBtn').href = API + '/memo/latest';
   document.getElementById('resultsOverlay').classList.add('visible');
+  var messages = serializeChatFeed();
+  var entry = { id: String(Date.now()), company: company, industry: industry, timestamp: Date.now(), messages: messages };
+  var chats = loadChatsFromStorage();
+  chats.unshift(entry);
+  if (chats.length > 20) chats = chats.slice(0, 20);
+  saveChatsToStorage(chats);
+  renderRecentList();
 }
 document.getElementById('resultsCloseBtn').addEventListener('click', function () { document.getElementById('resultsOverlay').classList.remove('visible'); });
 document.getElementById('analyzeBtn').addEventListener('click', function () { startAnalysis(); });
@@ -841,8 +1002,11 @@ document.getElementById('runDemoBtn').addEventListener('click', function () {
   startAnalysis();
 });
 function resetToInputCard() {
+  if (stepTimeoutId) { clearTimeout(stepTimeoutId); stepTimeoutId = null; }
+  window.analysisAborted = false;
   var arena = document.getElementById('arena');
   arena.classList.remove('arena--running');
+  arena.classList.remove('arena--viewing-history');
   document.body.classList.remove('app-running');
   document.getElementById('resultsOverlay').classList.remove('visible');
   ['orchestrator', 'webresearch', 'documentparser', 'financialanalyst', 'legalrisk', 'synthesis'].forEach(function (a) {
@@ -865,9 +1029,26 @@ document.getElementById('newAnalysisBtn').addEventListener('click', function () 
   document.getElementById('chatFeed').innerHTML = '';
   updateChatEmpty();
 });
+document.getElementById('stopBtn').addEventListener('click', function () {
+  window.analysisAborted = true;
+  if (stepTimeoutId) { clearTimeout(stepTimeoutId); stepTimeoutId = null; }
+  ['orchestrator', 'webresearch', 'documentparser', 'financialanalyst', 'legalrisk', 'synthesis'].forEach(function (a) {
+    setAgentStatus(a, 'idle');
+    var w = document.getElementById('blob-' + a);
+    if (w) w.classList.remove('blob-wrap--active', 'blob-wrap--done', 'speech-on');
+  });
+  addSystemChat('Analysis stopped by user.');
+  document.body.classList.remove('app-running');
+  clearRunTimer();
+  var btn = document.getElementById('analyzeBtn');
+  if (btn) { btn.disabled = false; btn.textContent = 'Run Analysis →'; }
+});
 async function startAnalysis() {
   var company = document.getElementById('companyName').value.trim();
   if (!company) { alert('Please enter a company name.'); return; }
+  window.analysisAborted = false;
+  if (stepTimeoutId) { clearTimeout(stepTimeoutId); stepTimeoutId = null; }
+  document.getElementById('arena').classList.remove('arena--viewing-history');
   document.getElementById('arena').classList.add('arena--running');
   document.body.classList.add('app-running');
   ['orchestrator', 'webresearch', 'documentparser', 'financialanalyst', 'legalrisk', 'synthesis'].forEach(function (a) {
@@ -899,11 +1080,12 @@ async function startAnalysis() {
     await fetch(API + '/analyze', { method: 'POST', body: fd });
   } catch (e) {}
   function nextStep() {
+    if (window.analysisAborted) return;
     if (activityStep < STEPS.length) {
       STEPS[activityStep]();
       activityStep++;
       var delay = activityStep < 4 ? 1200 : activityStep < 9 ? 1800 : 2400;
-      setTimeout(nextStep, delay);
+      stepTimeoutId = setTimeout(nextStep, delay);
     } else {
       clearRunTimer();
       btn.disabled = false;
@@ -912,6 +1094,7 @@ async function startAnalysis() {
   }
   nextStep();
 }
+renderRecentList();
 updateChatEmpty();
 </script>
 </body>
