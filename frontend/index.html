@@ -3,1057 +3,210 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DealFlow AI — M&A Due Diligence</title>
+  <title>DealFlow AI — Agent Arena</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg: #f8f9fc;
-      --surface: #ffffff;
-      --surface2: #f1f4f9;
-      --border: #e2e8f0;
-      --blue: #4f6ef7;
-      --blue-dim: #3b5bdb;
-      --gold: #f59e0b;
-      --green: #059669;
-      --red: #dc2626;
-      --text: #0f172a;
-      --text-body: #334155;
-      --muted: #64748b;
-      --card-h: #eef2ff;
-      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
-    }
-
-    body {
-      background-color: #f8f9fc;
-      background-image:
-        radial-gradient(circle at 20% 50%, rgba(79, 110, 247, 0.06) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(245, 158, 11, 0.05) 0%, transparent 40%);
-      color: var(--text-body);
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      min-height: 100vh;
-    }
-
-    body.landing-active > header,
-    body.landing-active > .main {
-      display: none !important;
-    }
-
-    #landing {
-      position: fixed;
-      inset: 0;
-      z-index: 10000;
-      min-height: 100vh;
-      background-color: #f8f9fc;
-      background-image:
-        radial-gradient(circle at 20% 50%, rgba(79, 110, 247, 0.06) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(245, 158, 11, 0.05) 0%, transparent 40%);
-      color: var(--text-body);
-      overflow-y: auto;
-      opacity: 1;
-      transition: opacity 300ms ease;
-    }
-    #landing.landing-exiting {
-      opacity: 0;
-      pointer-events: none;
-    }
-    #landing.landing-gone {
-      display: none !important;
-    }
-
-    .landing-nav {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 40px;
-      border-bottom: 1px solid var(--border);
-      background: #ffffff;
-      box-shadow: var(--shadow-sm);
-    }
-    .landing-nav .logo .badge { display: none; }
-    .landing-nav-tagline {
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .landing-hero {
-      text-align: center;
-      padding: 120px 40px 80px;
-      max-width: 900px;
-      margin: 0 auto;
-    }
-    .landing-eyebrow {
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 20px;
-    }
-    .landing-headline {
-      font-size: 56px;
-      font-weight: 800;
-      line-height: 1.05;
-      letter-spacing: -1.5px;
-      margin-bottom: 24px;
-      color: var(--text);
-    }
-    .landing-subhead {
-      font-size: 17px;
-      line-height: 1.65;
-      color: var(--muted);
-      max-width: 640px;
-      margin: 0 auto 36px;
-    }
-    .landing-cta-row {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-    }
-    .btn-cta-landing {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, #4f6ef7, #3b5bdb);
-      border: none;
-      border-radius: 10px;
-      color: white;
-      cursor: pointer;
-      font-size: 16px;
-      font-weight: 600;
-      padding: 16px 36px;
-      letter-spacing: 0.2px;
-      transition: opacity 0.2s, transform 0.1s;
-    }
-    .btn-cta-landing:hover {
-      opacity: 0.92;
-      transform: translateY(-1px);
-    }
-    .landing-link-secondary {
-      font-size: 14px;
-      color: var(--blue);
-      text-decoration: none;
-      font-weight: 500;
-    }
-    .landing-link-secondary:hover {
-      text-decoration: underline;
-    }
-
-    .landing-features {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
-      max-width: 900px;
-      margin: 60px auto 0;
-      padding: 0 24px 40px;
-    }
-    @media (max-width: 768px) {
-      .landing-features {
-        grid-template-columns: 1fr;
-      }
-      .landing-headline {
-        font-size: 36px;
-      }
-    }
-    .landing-feature-card {
-      background: #ffffff;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 22px 20px;
-      text-align: left;
-      box-shadow: var(--shadow-sm);
-    }
-    .landing-feature-card h3 {
-      font-size: 15px;
-      font-weight: 700;
-      margin-bottom: 10px;
-      color: var(--text);
-    }
-    .landing-feature-card p {
-      font-size: 13px;
-      color: var(--muted);
-      line-height: 1.5;
-    }
-
-    .landing-agent-strip {
-      padding: 0 24px 80px;
-      max-width: 960px;
-      margin: 0 auto;
-    }
-    .landing-agent-strip-label {
-      text-align: center;
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 2px;
-      color: var(--muted);
-      margin-bottom: 16px;
-    }
-    .landing-agent-row {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 12px;
-    }
-    .landing-agent-chip {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 14px;
-      background: #ffffff;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text);
-      box-shadow: var(--shadow-sm);
-    }
-
-    @keyframes appShellFadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    body.app-revealed > header,
-    body.app-revealed > .main {
-      animation: appShellFadeIn 400ms ease forwards;
-    }
-
-
-    /* ── Header ── */
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 40px;
-      border-bottom: 1px solid var(--border);
-      background: #ffffff;
-      box-shadow: var(--shadow-sm);
-    }
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 700;
-      font-size: 20px;
-      letter-spacing: -0.5px;
-      color: var(--text);
-    }
-    .logo-icon {
-      width: 32px; height: 32px;
-      background: linear-gradient(135deg, var(--blue), var(--gold));
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 16px;
-    }
-    .badge {
-      font-size: 11px;
-      padding: 2px 8px;
-      border-radius: 99px;
-      background: rgba(79, 110, 247, 0.12);
-      border: 1px solid rgba(79, 110, 247, 0.25);
-      color: var(--blue);
-      font-weight: 500;
-    }
-    .powered {
-      font-size: 12px;
-      color: var(--muted);
-    }
-    .powered span { color: var(--blue); }
-
-    /* ── Layout ── */
-    .main {
-      display: grid;
-      grid-template-columns: 400px 1fr;
-      gap: 0;
-      min-height: calc(100vh - 65px);
-    }
-
-    /* ── Left panel ── */
-    .panel-left {
-      background: #ffffff;
-      border-right: 1px solid var(--border);
-      padding: 32px 28px;
-      display: flex;
-      flex-direction: column;
-      gap: 28px;
-      box-shadow: var(--shadow-sm);
-    }
-
-    .section-label {
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 12px;
-    }
-
-    /* Form */
-    .form-group { display: flex; flex-direction: column; gap: 6px; }
-    label { font-size: 13px; font-weight: 500; color: var(--muted); }
-    input[type="text"], textarea, select {
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      color: var(--text-body);
-      font-size: 14px;
-      padding: 10px 14px;
-      outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
-      font-family: inherit;
-      width: 100%;
-    }
-    input[type="text"]:focus, textarea:focus {
-      border-color: var(--blue);
-      box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12), 0 1px 2px rgba(0, 0, 0, 0.04);
-    }
-    textarea { resize: vertical; min-height: 60px; }
-
-    .file-drop {
-      border: 2px dashed var(--border);
-      border-radius: 10px;
-      padding: 20px;
-      text-align: center;
-      cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
-    }
-    .file-drop:hover { border-color: var(--blue); background: #f8faff; }
-    .file-drop-icon { font-size: 28px; margin-bottom: 8px; }
-    .file-drop p { font-size: 13px; color: var(--muted); }
-    .file-drop p span { color: var(--blue); cursor: pointer; }
-    input[type="file"] { display: none; }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #4f6ef7, #3b5bdb);
-      border: none;
-      border-radius: 10px;
-      color: white;
-      cursor: pointer;
-      font-size: 15px;
-      font-weight: 600;
-      padding: 14px;
-      width: 100%;
-      transition: opacity 0.2s, transform 0.1s;
-      letter-spacing: 0.2px;
-    }
-    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
-    .btn-primary:active { transform: translateY(0); }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
-    .btn-run-wrap {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      width: 100%;
-    }
-    .btn-run-wrap .btn-primary { flex: 1; min-width: 0; width: auto; }
-    .analyze-timer {
-      font-size: 13px;
-      font-weight: 600;
-      font-variant-numeric: tabular-nums;
-      color: var(--muted);
-      min-width: 3.25rem;
-      text-align: right;
-      flex-shrink: 0;
-    }
-
-    /* Agent pipeline */
-    .pipeline { display: flex; flex-direction: column; gap: 0; }
-    .agent-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 12px;
-      border-radius: 8px;
-      transition: background 0.2s;
-      position: relative;
-    }
-    .agent-row:hover { background: #f8faff; }
-    .agent-row.active { background: #eef2ff; }
-    .agent-row.done { background: #f0fdf4; }
-
-    .agent-icon {
-      width: 36px; height: 36px;
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 16px;
-      flex-shrink: 0;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      transition: all 0.3s;
-    }
-    .agent-row.active .agent-icon {
-      border-color: var(--blue);
-      background: rgba(79, 110, 247, 0.1);
-      animation: agentIconGlow 1.8s ease-in-out infinite;
-    }
-    .agent-row.done .agent-icon {
-      border-color: var(--green);
-      background: rgba(5, 150, 105, 0.12);
-      animation: none;
-    }
-
-    .agent-info { flex: 1; min-width: 0; }
-    .agent-name { font-size: 13px; font-weight: 600; color: var(--text); }
-    .agent-desc { font-size: 11px; color: var(--muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-    .agent-status {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 2px 8px;
-      border-radius: 99px;
-      white-space: nowrap;
-    }
-    .status-idle { color: var(--muted); background: rgba(100,116,139,0.1); }
-    .status-active { color: var(--blue); background: rgba(79, 110, 247, 0.14); animation: statusPulse 1.5s infinite; }
-    .status-done { color: var(--green); background: rgba(5, 150, 105, 0.14); }
-    .status-error { color: var(--red); background: rgba(220, 38, 38, 0.1); }
-
-    .connector {
-      width: 1px; height: 12px;
-      background: var(--border);
-      margin-left: 30px;
-    }
-
-    @keyframes statusPulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-
-    @keyframes agentIconGlow {
-      0%, 100% {
-        box-shadow: 0 0 0 0 rgba(79, 110, 247, 0.25), 0 0 8px rgba(79, 110, 247, 0.12);
-      }
-      50% {
-        box-shadow: 0 0 0 5px rgba(79, 110, 247, 0.1), 0 0 18px rgba(79, 110, 247, 0.2);
-      }
-    }
-
-    /* ── Right panel ── */
-    .panel-right {
-      padding: 32px 36px;
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-    }
-
-    /* Hero state */
-    .hero-state {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 20px;
-      text-align: center;
-    }
-    .hero-graphic {
-      width: 120px; height: 120px;
-      border-radius: 24px;
-      background: linear-gradient(135deg, rgba(79, 110, 247, 0.12), rgba(245, 158, 11, 0.1));
-      border: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 52px;
-    }
-    .hero-state h2 { font-size: 24px; font-weight: 700; color: var(--text); }
-    .hero-state p { color: var(--text-body); max-width: 520px; font-size: 14px; line-height: 1.6; }
-
-    .flow-chips {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-    .chip {
-      font-size: 12px;
-      padding: 4px 12px;
-      border-radius: 99px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      color: var(--muted);
-    }
-    .chip-arrow { color: var(--muted); font-size: 16px; }
-
-    /* Activity feed */
-    .activity-section { display: none; flex-direction: column; gap: 16px; }
-    .activity-section.visible { display: flex; }
-
-    .card {
-      background: #ffffff;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: var(--shadow-sm);
-    }
-    .card-title { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 14px; letter-spacing: 0.5px; }
-
-    .feed { display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; }
-    .feed-item {
-      display: flex;
-      gap: 10px;
-      align-items: flex-start;
-      font-size: 13px;
-      line-height: 1.4;
-      padding: 8px 12px;
-      border-radius: 6px;
-      background: #f8f9fc;
-      animation: slideIn 0.3s ease;
-    }
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateY(-4px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .feed-icon { flex-shrink: 0; font-size: 14px; }
-    .feed-text { color: var(--text-body); }
-    .feed-text strong { color: var(--text); }
-
-    /* Signal badges */
-    .signal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .signal-card {
-      background: #ffffff;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px;
-      box-shadow: var(--shadow-sm);
-    }
-    .signal-card.received { border-color: rgba(5, 150, 105, 0.35); }
-    .signal-type { font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
-    .signal-status { font-size: 12px; margin-top: 4px; }
-    .signal-status.ok { color: var(--green); }
-    .signal-status.pending { color: var(--muted); }
-
-    /* Results */
-    .results-section { display: none; flex-direction: column; gap: 16px; }
-    .results-section.visible { display: flex; }
-
-    .recommendation-banner {
-      border-radius: 12px;
-      padding: 20px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .rec-invest { background: rgba(5, 150, 105, 0.1); border: 1px solid rgba(5, 150, 105, 0.3); }
-    .rec-conditional { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); }
-    .rec-pass { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); }
-
-    .rec-label { font-size: 12px; color: var(--muted); font-weight: 500; }
-    .rec-value { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
-    .rec-invest .rec-value { color: var(--green); }
-    .rec-conditional .rec-value { color: var(--gold); }
-    .rec-pass .rec-value { color: var(--red); }
-    .rec-confidence { font-size: 12px; color: var(--muted); }
-
-    .memo-sections { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .memo-card {
-      background: #ffffff;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 14px;
-      box-shadow: var(--shadow-sm);
-    }
-    .memo-card-title { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 8px; }
-    .memo-card-body { font-size: 13px; color: var(--text-body); line-height: 1.5; }
-
-    .red-flags { grid-column: 1 / -1; }
-    .flag-item {
-      display: flex; align-items: flex-start; gap: 8px;
-      font-size: 13px; color: var(--text-body); margin-top: 6px; line-height: 1.4;
-    }
-    .flag-item::before { content: '⚠️'; flex-shrink: 0; }
-
-    .btn-download {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      background: linear-gradient(135deg, #059669, #047857);
-      border: 1px solid rgba(5, 150, 105, 0.35);
-      border-radius: 10px;
-      color: white;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-      padding: 14px;
-      text-decoration: none;
-      transition: opacity 0.2s, transform 0.1s;
-    }
-    .btn-download:hover { opacity: 0.9; transform: translateY(-1px); }
-
-    /* Band link */
-    .band-link {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 16px;
-      background: #eef2ff;
-      border: 1px solid #c7d2fe;
-      border-radius: 10px;
-      font-size: 13px;
-      color: var(--text-body);
-    }
-    .band-link a { color: var(--blue); text-decoration: none; font-weight: 500; }
-    .band-link a:hover { text-decoration: underline; }
-
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    body { font-family: Inter, system-ui, sans-serif; min-height: 100vh; overflow: hidden; }
+    .app-layout { display: flex; min-height: 100vh; width: 100%; }
+    .blob-arena { flex: 1; position: relative; min-height: 100vh; background: #0a0f1e; overflow: hidden; }
+    .arena-demo-btn { position: absolute; top: 16px; left: 16px; z-index: 20; padding: 8px 14px; font-size: 13px; font-weight: 600; color: #fff; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; cursor: pointer; }
+    .arena-demo-btn:hover { background: rgba(255,255,255,0.2); }
+    .arena-lines { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+    .blob-wrap { position: absolute; transform: translate(-50%, -50%); z-index: 2; display: flex; flex-direction: column; align-items: center; --blob-w: 90px; --blob-h: 90px; --blob-glow: 127, 29, 29; }
+    .blob-wrap--orchestrator { --blob-w: 110px; --blob-h: 110px; }
+    .blob-wrap--webresearch { --blob-glow: 30, 27, 75; }
+    .blob-wrap--documentparser { --blob-glow: 120, 53, 15; }
+    .blob-wrap--financialanalyst { --blob-glow: 20, 83, 45; }
+    .blob-wrap--legalrisk { --blob-glow: 59, 7, 100; }
+    .blob-wrap--synthesis { --blob-glow: 19, 78, 74; }
+    @keyframes blob-breathe { 0%, 100% { border-radius: 60% 40% 55% 45% / 50% 60% 40% 55%; } 50% { border-radius: 45% 55% 48% 52% / 58% 42% 52% 48%; } }
+    @keyframes blob-glow-pulse { 0%, 100% { box-shadow: 0 0 0 4px rgba(var(--blob-glow), 0.15), 0 8px 24px rgba(0,0,0,0.35); } 50% { box-shadow: 0 0 0 8px rgba(var(--blob-glow), 0.35), 0 12px 28px rgba(0,0,0,0.4); } }
+    @keyframes blob-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+    @keyframes blink { 0%, 45%, 55%, 100% { transform: scaleY(1); } 50% { transform: scaleY(0.08); } }
+    @keyframes speech-in { from { opacity: 0; transform: translateX(-50%) scale(0.85); } to { opacity: 1; transform: translateX(-50%) scale(1); } }
+    @keyframes live-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.65; } }
+    .blob { width: var(--blob-w); height: var(--blob-h); position: relative; display: flex; align-items: center; justify-content: center; border-radius: 60% 40% 55% 45% / 50% 60% 40% 55%; animation: blob-breathe 3s ease-in-out infinite; transition: filter 0.35s ease, opacity 0.35s ease; }
+    .blob--orchestrator { background: #7f1d1d; }
+    .blob--webresearch { background: #1e1b4b; }
+    .blob--documentparser { background: #78350f; }
+    .blob--financialanalyst { background: #14532d; }
+    .blob--legalrisk { background: #3b0764; }
+    .blob--synthesis { background: #134e4a; }
+    .blob-wrap--done .blob { filter: brightness(1.18); }
+    .blob-wrap--active .blob { animation: blob-breathe 3s ease-in-out infinite, blob-glow-pulse 1.4s ease-in-out infinite, blob-bounce 0.6s ease-in-out infinite; }
+    .blob-face { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; z-index: 2; }
+    .blob-emoji { font-size: 1.75rem; line-height: 1; }
+    .blob-wrap--orchestrator .blob-emoji { font-size: 2rem; }
+    .blob-emoji-tiny { font-size: 0.65rem; opacity: 0.95; }
+    .blob-eyes { display: flex; gap: 6px; margin-top: 4px; }
+    .blob-eyes span { width: 6px; height: 6px; border-radius: 50%; background: #fff; display: block; transform-origin: center; }
+    .blob-wrap--active .blob-eyes span { animation: blink 2.5s ease-in-out infinite; }
+    .blob-wrap--active .blob-eyes span:nth-child(2) { animation-delay: 0.08s; }
+    .blob-label { margin-top: 10px; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: rgba(255,255,255,0.85); text-transform: uppercase; text-align: center; max-width: 120px; line-height: 1.2; }
+    .blob-check { position: absolute; top: -8px; font-size: 18px; color: #4ade80; font-weight: 800; opacity: 0; transform: scale(0.5); transition: opacity 0.3s ease, transform 0.3s ease; z-index: 4; text-shadow: 0 1px 4px rgba(0,0,0,0.6); }
+    .blob-wrap--done .blob-check { opacity: 1; transform: scale(1); }
+    .speech-bubble { position: absolute; bottom: calc(100% + 12px); left: 50%; transform: translateX(-50%) scale(0.8); opacity: 0; pointer-events: none; max-width: 160px; padding: 8px 10px; font-size: 12px; line-height: 1.35; color: #0f172a; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.25); z-index: 5; }
+    .speech-bubble::after { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); border: 6px solid transparent; border-top-color: #fff; }
+    .blob-wrap.speech-on .speech-bubble { opacity: 1; pointer-events: auto; animation: speech-in 0.28s ease-out forwards; }
+    #blob-orchestrator { left: 50%; top: 45%; }
+    #blob-webresearch { left: 22%; top: 22%; }
+    #blob-documentparser { left: 78%; top: 22%; }
+    #blob-financialanalyst { left: 18%; top: 72%; }
+    #blob-legalrisk { left: 82%; top: 72%; }
+    #blob-synthesis { left: 50%; top: 78%; }
+    .chat-sidebar { width: 360px; flex-shrink: 0; min-height: 100vh; background: #ffffff; border-left: 1px solid #e2e8f0; display: flex; flex-direction: column; }
+    .chat-header { padding: 16px 18px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; font-weight: 700; font-size: 16px; color: #0f172a; }
+    .chat-header-live { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: #64748b; }
+    .chat-live-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25); animation: live-pulse 2s ease-in-out infinite; }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+    .chat-msg { display: flex; gap: 10px; align-items: flex-start; }
+    .chat-msg__avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .chat-msg--orchestrator .chat-msg__avatar { background: #7f1d1d; }
+    .chat-msg--webresearch .chat-msg__avatar { background: #1e1b4b; }
+    .chat-msg--documentparser .chat-msg__avatar { background: #78350f; }
+    .chat-msg--financialanalyst .chat-msg__avatar { background: #14532d; }
+    .chat-msg--legalrisk .chat-msg__avatar { background: #3b0764; }
+    .chat-msg--synthesis .chat-msg__avatar { background: #134e4a; }
+    .chat-msg__body { flex: 1; min-width: 0; }
+    .chat-msg__name { font-size: 11px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+    .chat-msg__bubble { background: #f8f9fc; border-radius: 12px; padding: 10px 14px; font-size: 13px; line-height: 1.45; color: #334155; }
+    .chat-msg__bubble strong { color: #0f172a; }
+    .chat-form { padding: 12px 14px 16px; border-top: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 8px; background: #fff; }
+    .chat-form input[type=text] { width: 100%; padding: 8px 10px; font-size: 13px; border: 1px solid #e2e8f0; border-radius: 8px; outline: none; color: #334155; }
+    .chat-form input:focus { border-color: #4f6ef7; box-shadow: 0 0 0 2px rgba(79, 110, 247, 0.15); }
+    .chat-form-row { display: flex; gap: 8px; align-items: center; }
+    .chat-form-grow { flex: 1; min-width: 0; }
+    .btn-run { padding: 8px 14px; font-size: 13px; font-weight: 600; color: #fff; background: linear-gradient(135deg, #4f6ef7, #3b5bdb); border: none; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+    .btn-run:disabled { opacity: 0.55; cursor: not-allowed; }
+    .chat-timer { font-size: 12px; font-variant-numeric: tabular-nums; color: #64748b; min-width: 2.5rem; text-align: right; }
+    .file-row { font-size: 11px; color: #64748b; }
+    .file-row label { color: #4f6ef7; cursor: pointer; text-decoration: underline; }
+    .signal-stub { display: none; }
+    .results-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(10, 15, 30, 0.72); display: none; align-items: center; justify-content: center; padding: 24px; }
+    .results-overlay.visible { display: flex; }
+    .results-card { background: #fff; border-radius: 16px; max-width: 480px; width: 100%; padding: 28px 24px; box-shadow: 0 24px 48px rgba(0,0,0,0.35); }
+    .results-card h2 { font-size: 18px; color: #0f172a; margin-bottom: 8px; }
+    .results-card .rec-line { font-size: 14px; color: #64748b; margin-bottom: 20px; }
+    .results-card .rec-value { font-size: 28px; font-weight: 800; color: #d97706; margin-bottom: 8px; }
+    .btn-download { display: inline-flex; align-items: center; justify-content: center; width: 100%; margin-top: 16px; padding: 12px; font-weight: 600; font-size: 14px; color: #fff; text-decoration: none; border-radius: 10px; background: linear-gradient(135deg, #059669, #047857); }
+    .results-close { margin-top: 12px; width: 100%; padding: 8px; font-size: 13px; color: #64748b; background: transparent; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; }
   </style>
 </head>
-<body class="landing-active">
-
-<div id="landing">
-  <nav class="landing-nav">
-    <div class="logo">
-      <div class="logo-icon">⚡</div>
-      DealFlow AI
-      <span class="badge">BETA</span>
+<body>
+<div class="app-layout">
+  <div class="blob-arena" id="blobArena">
+    <button type="button" class="arena-demo-btn" id="runDemoBtn">Run Demo</button>
+    <svg class="arena-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+      <line x1="50" y1="45" x2="22" y2="22" stroke="rgba(255,255,255,0.08)" stroke-width="1.5" stroke-dasharray="1.2 0.8" vector-effect="non-scaling-stroke"/>
+      <line x1="50" y1="45" x2="78" y2="22" stroke="rgba(255,255,255,0.08)" stroke-width="1.5" stroke-dasharray="1.2 0.8" vector-effect="non-scaling-stroke"/>
+      <line x1="50" y1="45" x2="18" y2="72" stroke="rgba(255,255,255,0.08)" stroke-width="1.5" stroke-dasharray="1.2 0.8" vector-effect="non-scaling-stroke"/>
+      <line x1="50" y1="45" x2="82" y2="72" stroke="rgba(255,255,255,0.08)" stroke-width="1.5" stroke-dasharray="1.2 0.8" vector-effect="non-scaling-stroke"/>
+      <line x1="50" y1="45" x2="50" y2="78" stroke="rgba(255,255,255,0.08)" stroke-width="1.5" stroke-dasharray="1.2 0.8" vector-effect="non-scaling-stroke"/>
+    </svg>
+    <div class="blob-wrap blob-wrap--orchestrator" id="blob-orchestrator" data-agent="orchestrator">
+      <div class="speech-bubble"><span class="speech-bubble__text"></span></div>
+      <div class="blob-check">✓</div>
+      <div class="blob blob--orchestrator"><div class="blob-face"><div><span class="blob-emoji">🎼</span><span class="blob-emoji-tiny">🪄</span></div><div class="blob-eyes"><span></span><span></span></div></div></div>
+      <div class="blob-label">Conductor</div>
     </div>
-    <div class="landing-nav-tagline">Built on Band · LangGraph · GPT-4o</div>
-  </nav>
-
-  <section class="landing-hero">
-    <p class="landing-eyebrow">MULTI-AGENT DUE DILIGENCE</p>
-    <h1 class="landing-headline">M&amp;A Intelligence,<br>Powered by AI Agents</h1>
-    <p class="landing-subhead">
-      Six specialized agents coordinate through Band — researching markets, parsing financials, assessing legal risk — and deliver a signed-off investment memo in under 60 seconds.
-    </p>
-    <div class="landing-cta-row">
-      <button type="button" class="btn-cta-landing" id="landingStartBtn">Start Free Analysis →</button>
-      <a class="landing-link-secondary" href="https://app.band.ai/chat/8f4ebded-2988-4a75-915c-bcb80ad8a815" target="_blank" rel="noopener noreferrer">View live agents in Band →</a>
+    <div class="blob-wrap blob-wrap--webresearch" id="blob-webresearch" data-agent="webresearch">
+      <div class="speech-bubble"><span class="speech-bubble__text"></span></div>
+      <div class="blob-check">✓</div>
+      <div class="blob blob--webresearch"><div class="blob-face"><div><span class="blob-emoji">🧐</span><span class="blob-emoji-tiny">🔍</span></div><div class="blob-eyes"><span></span><span></span></div></div></div>
+      <div class="blob-label">Detective</div>
     </div>
-  </section>
-
-  <div class="landing-features">
-    <div class="landing-feature-card">
-      <h3>🔍 Market Research</h3>
-      <p>Wikipedia + web · TAM · competitors · news sentiment</p>
+    <div class="blob-wrap blob-wrap--documentparser" id="blob-documentparser" data-agent="documentparser">
+      <div class="speech-bubble"><span class="speech-bubble__text"></span></div>
+      <div class="blob-check">✓</div>
+      <div class="blob blob--documentparser"><div class="blob-face"><div><span class="blob-emoji">📜</span><span class="blob-emoji-tiny">👓</span></div><div class="blob-eyes"><span></span><span></span></div></div></div>
+      <div class="blob-label">Librarian</div>
     </div>
-    <div class="landing-feature-card">
-      <h3>📊 Financial Analysis</h3>
-      <p>CAGR · burn rate · runway · valuation range</p>
+    <div class="blob-wrap blob-wrap--financialanalyst" id="blob-financialanalyst" data-agent="financialanalyst">
+      <div class="speech-bubble"><span class="speech-bubble__text"></span></div>
+      <div class="blob-check">✓</div>
+      <div class="blob blob--financialanalyst"><div class="blob-face"><div><span class="blob-emoji">💼</span><span class="blob-emoji-tiny">📈</span></div><div class="blob-eyes"><span></span><span></span></div></div></div>
+      <div class="blob-label">Banker</div>
     </div>
-    <div class="landing-feature-card">
-      <h3>⚖️ Legal Risk</h3>
-      <p>Change-of-control · IP ownership · liability exposure</p>
+    <div class="blob-wrap blob-wrap--legalrisk" id="blob-legalrisk" data-agent="legalrisk">
+      <div class="speech-bubble"><span class="speech-bubble__text"></span></div>
+      <div class="blob-check">✓</div>
+      <div class="blob blob--legalrisk"><div class="blob-face"><div><span class="blob-emoji">⚖️</span><span class="blob-emoji-tiny">🔨</span></div><div class="blob-eyes"><span></span><span></span></div></div></div>
+      <div class="blob-label">Judge</div>
+    </div>
+    <div class="blob-wrap blob-wrap--synthesis" id="blob-synthesis" data-agent="synthesis">
+      <div class="speech-bubble"><span class="speech-bubble__text"></span></div>
+      <div class="blob-check">✓</div>
+      <div class="blob blob--synthesis"><div class="blob-face"><div><span class="blob-emoji">✨</span><span class="blob-emoji-tiny">🪄</span></div><div class="blob-eyes"><span></span><span></span></div></div></div>
+      <div class="blob-label">Wizard</div>
     </div>
   </div>
-
-  <div class="landing-agent-strip">
-    <p class="landing-agent-strip-label">6 AGENTS COLLABORATING VIA BAND</p>
-    <div class="landing-agent-row">
-      <div class="landing-agent-chip"><span>🎯</span> Orchestrator</div>
-      <div class="landing-agent-chip"><span>🔍</span> WebResearch</div>
-      <div class="landing-agent-chip"><span>📋</span> DocumentParser</div>
-      <div class="landing-agent-chip"><span>📊</span> FinancialAnalyst</div>
-      <div class="landing-agent-chip"><span>⚖️</span> LegalRisk</div>
-      <div class="landing-agent-chip"><span>✍️</span> Synthesis</div>
+  <aside class="chat-sidebar">
+    <div class="chat-header"><span>Agent Chat</span><span class="chat-header-live"><span class="chat-live-dot"></span> Live</span></div>
+    <div class="chat-messages" id="activityFeed"></div>
+    <div class="chat-form">
+      <input type="text" id="companyName" placeholder="Company name" autocomplete="organization" />
+      <input type="text" id="industry" placeholder="Industry" value="financial services" />
+      <div class="chat-form-row">
+        <div class="chat-form-grow">
+          <input type="file" id="fileInput" multiple accept=".pdf,.xlsx,.csv,.txt" style="display:none" />
+          <div class="file-row"><label for="fileInput">Attach files</label> <span id="fileList"></span></div>
+        </div>
+        <span class="chat-timer" id="analyzeTimer" aria-live="polite"></span>
+        <button type="button" class="btn-run" id="analyzeBtn">Run →</button>
+      </div>
     </div>
+  </aside>
+</div>
+<div class="signal-stub">
+  <div id="sig-market"><span id="sig-market-status"></span></div>
+  <div id="sig-financial"><span id="sig-financial-status"></span></div>
+  <div id="sig-legal"><span id="sig-legal-status"></span></div>
+  <div id="sig-memo"><span id="sig-memo-status"></span></div>
+</div>
+<div class="results-overlay" id="resultsOverlay">
+  <div class="results-card">
+    <h2>Analysis complete</h2>
+    <div class="rec-value" id="recValue">CONDITIONAL</div>
+    <div class="rec-line" id="recConfidence"></div>
+    <p style="font-size:13px;color:#334155;line-height:1.5;margin-top:12px;" id="memo-summary"></p>
+    <a class="btn-download" id="downloadBtn" href="#" target="_blank">Download investment memo PDF</a>
+    <button type="button" class="results-close" id="resultsCloseBtn">Close</button>
   </div>
 </div>
-
-<header>
-  <div class="logo">
-    <div class="logo-icon">⚡</div>
-    DealFlow AI
-    <span class="badge">BETA</span>
-  </div>
-  <div class="powered">Powered by <span>Band</span> · 6 Agents · LangGraph</div>
-</header>
-
-<div class="main">
-
-  <!-- ── LEFT: Form + Pipeline ── -->
-  <div class="panel-left">
-
-    <div>
-      <div class="section-label">New Analysis</div>
-      <div style="display:flex; flex-direction:column; gap:12px;">
-        <div class="form-group">
-          <label>Company Name</label>
-          <input type="text" id="companyName" placeholder="e.g. Stripe, OpenAI, Figma" />
-        </div>
-        <div class="form-group">
-          <label>Industry</label>
-          <input type="text" id="industry" placeholder="e.g. financial services, SaaS" value="financial services" />
-        </div>
-        <div class="form-group">
-          <label>Documents (optional)</label>
-          <div class="file-drop" onclick="document.getElementById('fileInput').click()">
-            <div class="file-drop-icon">📄</div>
-            <p><span>Upload files</span> or drag & drop</p>
-            <p style="margin-top:4px;font-size:11px;">PDF, XLSX, CSV — financials, contracts, cap table</p>
-          </div>
-          <input type="file" id="fileInput" multiple accept=".pdf,.xlsx,.csv,.txt" />
-          <div id="fileList" style="font-size:12px;color:var(--muted);margin-top:4px;"></div>
-        </div>
-        <div class="btn-run-wrap">
-          <button class="btn-primary" id="analyzeBtn" onclick="startAnalysis()">
-            🚀 Run Due Diligence
-          </button>
-          <span id="analyzeTimer" class="analyze-timer" aria-live="polite"></span>
-        </div>
-      </div>
-    </div>
-
-    <div>
-      <div class="section-label">Agent Pipeline</div>
-      <div class="pipeline" id="pipeline">
-
-        <div class="agent-row" id="agent-orchestrator">
-          <div class="agent-icon">🎯</div>
-          <div class="agent-info">
-            <div class="agent-name">Orchestrator</div>
-            <div class="agent-desc">Coordinates agents via Band</div>
-          </div>
-          <span class="agent-status status-idle" id="status-orchestrator">Idle</span>
-        </div>
-        <div class="connector"></div>
-
-        <div class="agent-row" id="agent-webresearch">
-          <div class="agent-icon">🔍</div>
-          <div class="agent-info">
-            <div class="agent-name">WebResearch</div>
-            <div class="agent-desc">Market data · competitors · TAM</div>
-          </div>
-          <span class="agent-status status-idle" id="status-webresearch">Idle</span>
-        </div>
-        <div class="connector"></div>
-
-        <div class="agent-row" id="agent-documentparser">
-          <div class="agent-icon">📋</div>
-          <div class="agent-info">
-            <div class="agent-name">DocumentParser</div>
-            <div class="agent-desc">Extracts financials from docs</div>
-          </div>
-          <span class="agent-status status-idle" id="status-documentparser">Idle</span>
-        </div>
-        <div class="connector"></div>
-
-        <div class="agent-row" id="agent-financialanalyst">
-          <div class="agent-icon">📊</div>
-          <div class="agent-info">
-            <div class="agent-name">FinancialAnalyst</div>
-            <div class="agent-desc">Valuation · CAGR · runway</div>
-          </div>
-          <span class="agent-status status-idle" id="status-financialanalyst">Idle</span>
-        </div>
-        <div class="connector"></div>
-
-        <div class="agent-row" id="agent-legalrisk">
-          <div class="agent-icon">⚖️</div>
-          <div class="agent-info">
-            <div class="agent-name">LegalRisk</div>
-            <div class="agent-desc">Contracts · CoC · IP · liability</div>
-          </div>
-          <span class="agent-status status-idle" id="status-legalrisk">Idle</span>
-        </div>
-        <div class="connector"></div>
-
-        <div class="agent-row" id="agent-synthesis">
-          <div class="agent-icon">✍️</div>
-          <div class="agent-info">
-            <div class="agent-name">Synthesis</div>
-            <div class="agent-desc">Investment memo · PDF output</div>
-          </div>
-          <span class="agent-status status-idle" id="status-synthesis">Idle</span>
-        </div>
-
-      </div>
-    </div>
-
-  </div>
-
-  <!-- ── RIGHT: Output ── -->
-  <div class="panel-right">
-
-    <!-- Hero (default state) -->
-    <div class="hero-state" id="heroState">
-      <div class="hero-graphic">🏦</div>
-      <h2>Due Diligence in 60 Seconds</h2>
-      <p>
-        Drop in a company name. Six specialized AI agents coordinate through Band — researching markets, parsing financials, assessing legal risk — and deliver a signed-off investment memo.
-      </p>
-      <div class="flow-chips">
-        <span class="chip">🔍 Market Research</span>
-        <span class="chip-arrow">→</span>
-        <span class="chip">📊 Financials</span>
-        <span class="chip-arrow">→</span>
-        <span class="chip">⚖️ Legal Risk</span>
-        <span class="chip-arrow">→</span>
-        <span class="chip">✍️ Memo + PDF</span>
-      </div>
-    </div>
-
-    <!-- Activity (during analysis) -->
-    <div class="activity-section" id="activitySection">
-
-      <div class="card">
-        <div class="card-title">LIVE ACTIVITY · Band Chat Room</div>
-        <div class="feed" id="activityFeed"></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">SIGNAL STATUS</div>
-        <div class="signal-grid">
-          <div class="signal-card" id="sig-market">
-            <div class="signal-type">Market Research</div>
-            <div class="signal-status pending" id="sig-market-status">Waiting…</div>
-          </div>
-          <div class="signal-card" id="sig-financial">
-            <div class="signal-type">Financial Analysis</div>
-            <div class="signal-status pending" id="sig-financial-status">Waiting…</div>
-          </div>
-          <div class="signal-card" id="sig-legal">
-            <div class="signal-type">Legal Risk</div>
-            <div class="signal-status pending" id="sig-legal-status">Waiting…</div>
-          </div>
-          <div class="signal-card" id="sig-memo">
-            <div class="signal-type">Investment Memo</div>
-            <div class="signal-status pending" id="sig-memo-status">Waiting…</div>
-          </div>
-        </div>
-        <div class="band-link" style="margin-top:14px;">
-          🤝 <span>Agents collaborating in</span>
-          <a href="https://app.band.ai/chat/8f4ebded-2988-4a75-915c-bcb80ad8a815" target="_blank">Band Chat Room →</a>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- Results -->
-    <div class="results-section" id="resultsSection">
-
-      <div class="recommendation-banner rec-conditional" id="recBanner">
-        <div>
-          <div class="rec-label">RECOMMENDATION</div>
-          <div class="rec-value" id="recValue">CONDITIONAL</div>
-          <div class="rec-confidence" id="recConfidence">Medium confidence · Web-only analysis</div>
-        </div>
-        <div style="font-size:48px;">📋</div>
-      </div>
-
-      <div class="memo-sections" id="memoSections">
-        <div class="memo-card">
-          <div class="memo-card-title">Executive Summary</div>
-          <div class="memo-card-body" id="memo-summary">—</div>
-        </div>
-        <div class="memo-card">
-          <div class="memo-card-title">Financial Highlights</div>
-          <div class="memo-card-body" id="memo-financial">—</div>
-        </div>
-        <div class="memo-card">
-          <div class="memo-card-title">Market Position</div>
-          <div class="memo-card-body" id="memo-market">—</div>
-        </div>
-        <div class="memo-card">
-          <div class="memo-card-title">Legal Risk Assessment</div>
-          <div class="memo-card-body" id="memo-legal">—</div>
-        </div>
-        <div class="memo-card red-flags">
-          <div class="memo-card-title">Red Flags</div>
-          <div id="memo-flags">—</div>
-        </div>
-      </div>
-
-      <a class="btn-download" id="downloadBtn" href="#" target="_blank">
-        ⬇️ Download Investment Memo PDF
-      </a>
-
-    </div>
-
-  </div>
-</div>
-
 <script>
-  function enterAppFromLanding() {
-    const landing = document.getElementById('landing');
-    if (!landing || landing.classList.contains('landing-gone')) return;
-    landing.classList.add('landing-exiting');
-    setTimeout(function () {
-      landing.classList.add('landing-gone');
-      document.body.classList.remove('landing-active');
-      document.body.classList.add('app-revealed');
-    }, 300);
-  }
-
-  document.getElementById('landingStartBtn').addEventListener('click', enterAppFromLanding);
-
-  const API = window.location.origin;
-  let currentDealId = null;
-  let pollTimer = null;
-  let activityStep = 0;
-  let runTimerInterval = null;
-
-  function clearRunTimer() {
-    if (runTimerInterval) {
-      clearInterval(runTimerInterval);
-      runTimerInterval = null;
-    }
-    const t = document.getElementById('analyzeTimer');
-    if (t) t.textContent = '';
-  }
-
-  function startRunTimer() {
-    clearRunTimer();
-    const el = document.getElementById('analyzeTimer');
-    if (!el) return;
-    let sec = 0;
-    function render() {
-      el.textContent = Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
-    }
-    render();
-    runTimerInterval = setInterval(function () {
-      sec++;
-      render();
-    }, 1000);
-  }
-
-  // File input label
-  document.getElementById('fileInput').addEventListener('change', function() {
-    const names = Array.from(this.files).map(f => f.name).join(', ');
-    document.getElementById('fileList').textContent = names || '';
-  });
-
-  // Drag & drop
-  const drop = document.querySelector('.file-drop');
-  drop.addEventListener('dragover', e => { e.preventDefault(); drop.style.borderColor = 'var(--blue)'; });
-  drop.addEventListener('dragleave', () => { drop.style.borderColor = 'var(--border)'; });
-  drop.addEventListener('drop', e => {
-    e.preventDefault();
-    drop.style.borderColor = 'var(--border)';
-    document.getElementById('fileInput').files = e.dataTransfer.files;
-    const names = Array.from(e.dataTransfer.files).map(f => f.name).join(', ');
-    document.getElementById('fileList').textContent = names;
-  });
-
-  function setAgentStatus(agent, state, label) {
-    const row = document.getElementById('agent-' + agent);
-    const badge = document.getElementById('status-' + agent);
-    if (!row || !badge) return;
-    row.className = 'agent-row ' + (state === 'active' ? 'active' : state === 'done' ? 'done' : '');
-    badge.className = 'agent-status status-' + (state === 'active' ? 'active' : state === 'done' ? 'done' : state === 'error' ? 'error' : 'idle');
-    badge.textContent = label || (state === 'active' ? 'Working…' : state === 'done' ? '✓ Done' : 'Idle');
-  }
-
-  function addFeedItem(icon, html) {
-    const feed = document.getElementById('activityFeed');
-    const el = document.createElement('div');
-    el.className = 'feed-item';
-    el.innerHTML = `<span class="feed-icon">${icon}</span><span class="feed-text">${html}</span>`;
-    feed.prepend(el);
-  }
-
-  function setSignal(id, ok, text) {
-    const card = document.getElementById('sig-' + id);
-    const status = document.getElementById('sig-' + id + '-status');
-    if (ok) { card.classList.add('received'); status.className = 'signal-status ok'; }
-    status.textContent = text;
-  }
-
-  // Simulate pipeline progress for demo (replace with real polling in commit 2)
-  const STEPS = [
-    () => { setAgentStatus('orchestrator', 'active'); addFeedItem('🎯', '<strong>Orchestrator</strong> received deal request — kicking off pipeline'); },
-    () => { setAgentStatus('webresearch', 'active'); addFeedItem('🔍', '<strong>WebResearch</strong> querying Wikipedia + web for market data'); },
-    () => { setAgentStatus('documentparser', 'active'); addFeedItem('📋', '<strong>DocumentParser</strong> scanning uploaded documents'); },
-    () => { setAgentStatus('orchestrator', 'done'); addFeedItem('🤝', 'Band: Orchestrator routed tasks to all specialist agents'); },
-    () => { setAgentStatus('webresearch', 'done'); setSignal('market', true, '✓ Received'); addFeedItem('✅', '<strong>SIGNAL:market_research</strong> posted to Band room'); },
-    () => { setAgentStatus('documentparser', 'done'); addFeedItem('✅', '<strong>DocumentParser</strong> extraction complete'); },
-    () => { setAgentStatus('financialanalyst', 'active'); addFeedItem('📊', '<strong>FinancialAnalyst</strong> calculating valuation, CAGR, runway'); },
-    () => { setAgentStatus('legalrisk', 'active'); addFeedItem('⚖️', '<strong>LegalRisk</strong> reviewing change-of-control clauses and IP risks'); },
-    () => { setAgentStatus('financialanalyst', 'done'); setSignal('financial', true, '✓ Received'); addFeedItem('✅', '<strong>SIGNAL:financial_analysis</strong> posted — provisional valuation range (pending full data)'); },
-    () => { setAgentStatus('legalrisk', 'done'); setSignal('legal', true, '✓ Received'); addFeedItem('✅', '<strong>SIGNAL:legal_risk</strong> posted — CoC and key contractual risks flagged for review'); },
-    () => { setAgentStatus('synthesis', 'active'); addFeedItem('✍️', '<strong>Synthesis</strong> consolidating all signals into investment memo'); },
-    () => { setAgentStatus('synthesis', 'done'); setSignal('memo', true, '✓ Generated'); addFeedItem('🎉', '<strong>SIGNAL:investment_memo</strong> complete — PDF generated'); showResults(); },
-  ];
-
-  function showResults() {
-    const company = (document.getElementById('companyName').value || '').trim() || 'Unknown company';
-    const industry = (document.getElementById('industry').value || '').trim() || 'your industry';
-    document.getElementById('activitySection').classList.remove('visible');
-    document.getElementById('resultsSection').classList.add('visible');
-
-    document.getElementById('recValue').textContent = 'CONDITIONAL';
-    document.getElementById('recConfidence').textContent =
-      'Medium confidence · Web-only analysis · ' + company + ' · ' + industry;
-
-    document.getElementById('memo-summary').textContent =
-      company + ' is a leading player in ' + industry + '. Based on available signals, the business shows differentiated positioning within its sector; full diligence would validate revenue quality, margin structure, and governance.';
-
-    document.getElementById('memo-financial').textContent =
-      'Financial highlights for ' + company + ': preliminary view suggests typical ' + industry + ' metrics pending uploaded statements — valuation range, growth, and runway to be confirmed with management data and audited financials.';
-
-    document.getElementById('memo-market').textContent =
-      company + ' competes in ' + industry + ' where market size and share shift quickly. Top peers and TAM should be triangulated with primary research; this memo assumes public and agent-sourced context only.';
-
-    document.getElementById('memo-legal').textContent =
-      'Legal risk assessment for ' + company + ' in ' + industry + ': standard M&A themes include change-of-control, IP assignment, regulatory licenses, and customer consent — human counsel should review definitive agreements before signing.';
-
-    const flags = [
-      'No private data room attached — ' + company + ' figures may be incomplete or directional.',
-      industry + ' exposure may carry sector-specific regulatory and reporting obligations.',
-      'Competitive dynamics for ' + company + ' require validation against proprietary market work.',
-      'Recommend management Q&A and confirmatory diligence before final investment decision.',
-    ];
-    document.getElementById('memo-flags').innerHTML = flags.map(function (f) {
-      return '<div class="flag-item">' + f + '</div>';
-    }).join('');
-    document.getElementById('downloadBtn').href = API + '/memo/latest';
-  }
-
-  async function startAnalysis() {
-    const company = document.getElementById('companyName').value.trim();
-    if (!company) { alert('Please enter a company name.'); return; }
-
-    // Reset UI
-    ['orchestrator','webresearch','documentparser','financialanalyst','legalrisk','synthesis'].forEach(a => setAgentStatus(a, 'idle', 'Idle'));
-    ['market','financial','legal','memo'].forEach(s => {
-      const card = document.getElementById('sig-' + s);
-      const status = document.getElementById('sig-' + s + '-status');
-      card.classList.remove('received');
-      status.className = 'signal-status pending';
-      status.textContent = 'Waiting…';
-    });
-    document.getElementById('activityFeed').innerHTML = '';
-    document.getElementById('heroState').style.display = 'none';
-    document.getElementById('activitySection').classList.add('visible');
-    document.getElementById('resultsSection').classList.remove('visible');
-    document.getElementById('analyzeBtn').disabled = true;
-    document.getElementById('analyzeBtn').textContent = '⏳ Running…';
-    startRunTimer();
-
-    activityStep = 0;
-    if (pollTimer) clearInterval(pollTimer);
-
-    // Try to hit real API; fall back to simulation
-    try {
-      const fd = new FormData();
-      fd.append('company_name', company);
-      fd.append('notes', 'Industry: ' + document.getElementById('industry').value);
-      const files = document.getElementById('fileInput').files;
-      for (const f of files) fd.append('files', f);
-      await fetch(API + '/analyze', { method: 'POST', body: fd });
-    } catch (e) {
-      // API not reachable — run demo simulation
-    }
-
-    // Step through pipeline with delays
-    function nextStep() {
-      if (activityStep < STEPS.length) {
-        STEPS[activityStep]();
-        activityStep++;
-        const delay = activityStep < 4 ? 1200 : activityStep < 9 ? 1800 : 2400;
-        setTimeout(nextStep, delay);
-      } else {
-        clearRunTimer();
-        document.getElementById('analyzeBtn').disabled = false;
-        document.getElementById('analyzeBtn').textContent = '🚀 Run Due Diligence';
-      }
-    }
-    nextStep();
-  }
+const API = window.location.origin;
+let currentDealId = null, pollTimer = null, activityStep = 0, runTimerInterval = null;
+const speechTimers = {};
+const AGENT_CHAT_CLASS = { orchestrator: 'chat-msg--orchestrator', webresearch: 'chat-msg--webresearch', documentparser: 'chat-msg--documentparser', financialanalyst: 'chat-msg--financialanalyst', legalrisk: 'chat-msg--legalrisk', synthesis: 'chat-msg--synthesis' };
+const AGENT_DISPLAY = { orchestrator: 'Orchestrator', webresearch: 'WebResearch', documentparser: 'DocumentParser', financialanalyst: 'FinancialAnalyst', legalrisk: 'LegalRisk', synthesis: 'Synthesis' };
+function clearRunTimer(){ if(runTimerInterval){ clearInterval(runTimerInterval); runTimerInterval=null;} var t=document.getElementById('analyzeTimer'); if(t) t.textContent=''; }
+function startRunTimer(){ clearRunTimer(); var el=document.getElementById('analyzeTimer'); if(!el) return; var sec=0; function r(){ el.textContent=Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0'); } r(); runTimerInterval=setInterval(function(){ sec++; r(); },1000); }
+function stripHtml(html){ var d=document.createElement('div'); d.innerHTML=html; return d.textContent||d.innerText||''; }
+function inferAgentFromHtml(html){ var t=stripHtml(html).toLowerCase(); if(t.indexOf('orchestrator')!==-1) return 'orchestrator'; if(t.indexOf('webresearch')!==-1) return 'webresearch'; if(t.indexOf('documentparser')!==-1) return 'documentparser'; if(t.indexOf('financialanalyst')!==-1) return 'financialanalyst'; if(t.indexOf('legalrisk')!==-1) return 'legalrisk'; if(t.indexOf('synthesis')!==-1) return 'synthesis'; return null; }
+function showSpeechBubble(agentId, text){ var wrap=document.getElementById('blob-'+agentId); if(!wrap) return; var span=wrap.querySelector('.speech-bubble__text'); if(!span) return; if(speechTimers[agentId]){ clearTimeout(speechTimers[agentId]); speechTimers[agentId]=null;} span.textContent=text; wrap.classList.add('speech-on'); speechTimers[agentId]=setTimeout(function(){ wrap.classList.remove('speech-on'); speechTimers[agentId]=null; },3000); }
+document.getElementById('fileInput').addEventListener('change', function(){ var names=Array.from(this.files).map(function(f){return f.name;}).join(', '); document.getElementById('fileList').textContent=names||''; });
+function setAgentStatus(agent, state, label){ var wrap=document.getElementById('blob-'+agent); if(!wrap) return; wrap.classList.remove('blob-wrap--active','blob-wrap--done'); if(state==='active') wrap.classList.add('blob-wrap--active'); else if(state==='done') wrap.classList.add('blob-wrap--done'); }
+function addFeedItem(icon, html, agentId, speechText){ var feed=document.getElementById('activityFeed'); var agent=agentId||inferAgentFromHtml(html); var row=document.createElement('div'); row.className='chat-msg'+(agent&&AGENT_CHAT_CLASS[agent]?' '+AGENT_CHAT_CLASS[agent]:''); var name=agent?AGENT_DISPLAY[agent]||agent:'Band'; row.innerHTML='<div class="chat-msg__avatar">'+(icon||'💬')+'</div><div class="chat-msg__body"><div class="chat-msg__name">'+name+'</div><div class="chat-msg__bubble">'+html+'</div></div>'; feed.appendChild(row); feed.scrollTop=feed.scrollHeight; if(agent&&speechText) showSpeechBubble(agent,speechText); }
+function setSignal(id, ok, text){ var card=document.getElementById('sig-'+id); var status=document.getElementById('sig-'+id+'-status'); if(!card||!status) return; if(ok) card.classList.add('received'); status.textContent=text; }
+const STEPS=[
+ function(){ setAgentStatus('orchestrator','active'); showSpeechBubble('orchestrator','Kicking off pipeline…'); addFeedItem('🎼','<strong>Orchestrator</strong> received deal request — kicking off pipeline','orchestrator'); },
+ function(){ setAgentStatus('webresearch','active'); showSpeechBubble('webresearch','Scanning the open web…'); addFeedItem('🧐','<strong>WebResearch</strong> querying Wikipedia + web for market data','webresearch'); },
+ function(){ setAgentStatus('documentparser','active'); showSpeechBubble('documentparser','Reading your uploads…'); addFeedItem('📜','<strong>DocumentParser</strong> scanning uploaded documents','documentparser'); },
+ function(){ setAgentStatus('orchestrator','done'); showSpeechBubble('orchestrator','Routing specialists…'); addFeedItem('🤝','Band: Orchestrator routed tasks to all specialist agents','orchestrator'); },
+ function(){ setAgentStatus('webresearch','done'); setSignal('market',true,'✓ Received'); showSpeechBubble('webresearch','Market signal posted.'); addFeedItem('✅','<strong>SIGNAL:market_research</strong> posted to Band room','webresearch'); },
+ function(){ setAgentStatus('documentparser','done'); showSpeechBubble('documentparser','Parse complete.'); addFeedItem('✅','<strong>DocumentParser</strong> extraction complete','documentparser'); },
+ function(){ setAgentStatus('financialanalyst','active'); showSpeechBubble('financialanalyst','Crunching numbers…'); addFeedItem('💼','<strong>FinancialAnalyst</strong> calculating valuation, CAGR, runway','financialanalyst'); },
+ function(){ setAgentStatus('legalrisk','active'); showSpeechBubble('legalrisk','Reviewing clauses…'); addFeedItem('⚖️','<strong>LegalRisk</strong> reviewing change-of-control clauses and IP risks','legalrisk'); },
+ function(){ setAgentStatus('financialanalyst','done'); setSignal('financial',true,'✓ Received'); showSpeechBubble('financialanalyst','Financials in.'); addFeedItem('✅','<strong>SIGNAL:financial_analysis</strong> posted — provisional valuation range (pending full data)','financialanalyst'); },
+ function(){ setAgentStatus('legalrisk','done'); setSignal('legal',true,'✓ Received'); showSpeechBubble('legalrisk','Legal memo in.'); addFeedItem('✅','<strong>SIGNAL:legal_risk</strong> posted — CoC and key contractual risks flagged for review','legalrisk'); },
+ function(){ setAgentStatus('synthesis','active'); showSpeechBubble('synthesis','Weaving the memo…'); addFeedItem('✨','<strong>Synthesis</strong> consolidating all signals into investment memo','synthesis'); },
+ function(){ setAgentStatus('synthesis','done'); setSignal('memo',true,'✓ Generated'); showSpeechBubble('synthesis','Done — memo ready.'); addFeedItem('🎉','<strong>SIGNAL:investment_memo</strong> complete — PDF generated','synthesis'); showResults(); }
+];
+function showResults(){ var company=(document.getElementById('companyName').value||'').trim()||'Unknown company'; var industry=(document.getElementById('industry').value||'').trim()||'your industry'; document.getElementById('recValue').textContent='CONDITIONAL'; document.getElementById('recConfidence').textContent='Medium confidence · Web-only analysis · '+company+' · '+industry; document.getElementById('memo-summary').textContent=company+' is a leading player in '+industry+'. Based on available signals, the business shows differentiated positioning within its sector; full diligence would validate revenue quality, margin structure, and governance.'; document.getElementById('downloadBtn').href=API+'/memo/latest'; document.getElementById('resultsOverlay').classList.add('visible'); }
+document.getElementById('resultsCloseBtn').addEventListener('click', function(){ document.getElementById('resultsOverlay').classList.remove('visible'); });
+document.getElementById('analyzeBtn').addEventListener('click', function(){ startAnalysis(); });
+document.getElementById('runDemoBtn').addEventListener('click', function(){ document.getElementById('companyName').value='Demo Corp'; document.getElementById('industry').value='Technology'; startAnalysis(); });
+async function startAnalysis(){ var company=document.getElementById('companyName').value.trim(); if(!company){ alert('Please enter a company name.'); return;} ['orchestrator','webresearch','documentparser','financialanalyst','legalrisk','synthesis'].forEach(function(a){ setAgentStatus(a,'idle'); var w=document.getElementById('blob-'+a); if(w) w.classList.remove('blob-wrap--active','blob-wrap--done','speech-on'); }); ['market','financial','legal','memo'].forEach(function(s){ var card=document.getElementById('sig-'+s); var status=document.getElementById('sig-'+s+'-status'); if(card) card.classList.remove('received'); if(status) status.textContent='Waiting…'; }); document.getElementById('activityFeed').innerHTML=''; document.getElementById('resultsOverlay').classList.remove('visible'); var btn=document.getElementById('analyzeBtn'); btn.disabled=true; btn.textContent='…'; startRunTimer(); activityStep=0; if(pollTimer) clearInterval(pollTimer); try{ var fd=new FormData(); fd.append('company_name',company); fd.append('notes','Industry: '+document.getElementById('industry').value); var files=document.getElementById('fileInput').files; for(var i=0;i<files.length;i++) fd.append('files',files[i]); await fetch(API+'/analyze',{method:'POST',body:fd}); }catch(e){} function nextStep(){ if(activityStep<STEPS.length){ STEPS[activityStep](); activityStep++; var delay=activityStep<4?1200:activityStep<9?1800:2400; setTimeout(nextStep,delay);} else { clearRunTimer(); btn.disabled=false; btn.textContent='Run →'; } } nextStep(); }
 </script>
 </body>
 </html>
