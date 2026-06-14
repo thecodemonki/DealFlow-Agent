@@ -6,7 +6,185 @@
   <title>DealFlow AI</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Inter, system-ui, sans-serif; min-height: 100vh; overflow: hidden; background: #f0f4ff; color: #111827; }
+    body { font-family: Inter, system-ui, sans-serif; min-height: 100vh; overflow-x: hidden; overflow-y: auto; background: #fff; color: #111827; }
+    #appShell {
+      display: none;
+      opacity: 0;
+      min-height: 100vh;
+      transition: opacity 0.3s ease;
+    }
+    #appShell.app-shell--visible {
+      opacity: 1;
+    }
+    #landingPage {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+      color: #0f172a;
+      opacity: 1;
+      transition: opacity 0.3s ease;
+    }
+    #landingPage.landing-page--exiting {
+      opacity: 0;
+    }
+    .landing-nav {
+      flex-shrink: 0;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 48px;
+      border-bottom: 1px solid #eee;
+    }
+    .landing-nav__logo {
+      font-weight: 700;
+      font-size: 18px;
+      color: #0f172a;
+    }
+    .landing-nav__credit {
+      font-size: 13px;
+      color: #888;
+    }
+    .landing-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 0 40px 48px;
+    }
+    .landing-hero {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      max-width: 900px;
+      padding-top: 24px;
+    }
+    .landing-eyebrow {
+      font-size: 13px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 20px;
+    }
+    .landing-headline {
+      font-size: 56px;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.1;
+    }
+    .landing-headline--accent {
+      color: #3b82f6;
+    }
+    .landing-desc {
+      font-size: 17px;
+      color: #64748b;
+      max-width: 500px;
+      margin: 20px auto 0;
+      line-height: 1.6;
+    }
+    .landing-cta {
+      margin-top: 32px;
+      padding: 16px 40px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      background: #3b82f6;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .landing-cta:hover {
+      background: #2563eb;
+    }
+    .landing-cta-hint {
+      margin-top: 12px;
+      font-size: 13px;
+      color: #888;
+    }
+    .landing-characters {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 32px;
+      margin-top: 56px;
+    }
+    .landing-char {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 72px;
+    }
+    .landing-char img {
+      width: 72px;
+      height: auto;
+      object-fit: contain;
+      mix-blend-mode: multiply;
+      display: block;
+    }
+    .landing-char span {
+      margin-top: 8px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #888;
+    }
+    .landing-how {
+      width: 100%;
+      margin-top: 64px;
+      padding: 40px 48px 80px;
+      background: #f8fafc;
+    }
+    .landing-how__title {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      text-align: center;
+      color: #888;
+      margin-bottom: 32px;
+    }
+    .landing-how__cols {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 48px;
+    }
+    .landing-how__col {
+      max-width: 200px;
+      text-align: center;
+    }
+    .landing-how__num {
+      font-size: 36px;
+      font-weight: 800;
+      color: #e2e8f0;
+      line-height: 1;
+    }
+    .landing-how__col-title {
+      margin-top: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .landing-how__col-desc {
+      margin-top: 6px;
+      font-size: 13px;
+      color: #888;
+      line-height: 1.45;
+    }
+    .landing-footer {
+      flex-shrink: 0;
+      text-align: center;
+      font-size: 12px;
+      color: #aaa;
+      padding: 24px;
+    }
     .app-grid {
       display: grid;
       grid-template-columns: 240px 1fr minmax(0, var(--chat-w, 360px));
@@ -956,6 +1134,52 @@
   </style>
 </head>
 <body>
+<div id="landingPage">
+  <nav class="landing-nav" aria-label="Top">
+    <span class="landing-nav__logo">⚡ DealFlow AI</span>
+    <span class="landing-nav__credit">Powered by Band</span>
+  </nav>
+  <div class="landing-main">
+    <div class="landing-hero">
+      <p class="landing-eyebrow">AI-Powered M&amp;A Due Diligence</p>
+      <h1 class="landing-headline">Six agents. Sixty seconds.</h1>
+      <p class="landing-headline landing-headline--accent">Full investment memo.</p>
+      <p class="landing-desc">A team of AI specialists that research, analyze, and synthesize — collaborating through Band in real time.</p>
+      <button type="button" class="landing-cta" id="landingGetStarted">Get Started →</button>
+      <p class="landing-cta-hint">No signup required · runs a live demo</p>
+      <div class="landing-characters" aria-hidden="true">
+        <div class="landing-char"><img src="/characters/conductor.png" alt="" width="72" height="72" /><span>Conductor</span></div>
+        <div class="landing-char"><img src="/characters/detective.png" alt="" width="72" height="72" /><span>Detective</span></div>
+        <div class="landing-char"><img src="/characters/librarian.png" alt="" width="72" height="72" /><span>Librarian</span></div>
+        <div class="landing-char"><img src="/characters/banker.png" alt="" width="72" height="72" /><span>Banker</span></div>
+        <div class="landing-char"><img src="/characters/judge.png" alt="" width="72" height="72" /><span>Judge</span></div>
+        <div class="landing-char"><img src="/characters/wizard.png" alt="" width="72" height="72" /><span>Wizard</span></div>
+      </div>
+    </div>
+    <section class="landing-how" aria-labelledby="landing-how-heading">
+      <h2 class="landing-how__title" id="landing-how-heading">How it works</h2>
+      <div class="landing-how__cols">
+        <div class="landing-how__col">
+          <div class="landing-how__num">01</div>
+          <div class="landing-how__col-title">Submit</div>
+          <p class="landing-how__col-desc">Enter a company name and optional documents</p>
+        </div>
+        <div class="landing-how__col">
+          <div class="landing-how__num">02</div>
+          <div class="landing-how__col-title">Agents Collaborate</div>
+          <p class="landing-how__col-desc">6 specialists coordinate through Band in real time</p>
+        </div>
+        <div class="landing-how__col">
+          <div class="landing-how__num">03</div>
+          <div class="landing-how__col-title">Get Your Memo</div>
+          <p class="landing-how__col-desc">Download a complete investment memo PDF</p>
+        </div>
+      </div>
+    </section>
+  </div>
+  <footer class="landing-footer">Built for the Band of Agents Hackathon · June 2026</footer>
+</div>
+<div id="appShell">
 <div class="app-grid" id="appGrid">
   <aside id="sidebar">
     <button type="button" class="sidebar-brand" id="sidebarLogoBtn" aria-label="DealFlow AI — home">⚡ DealFlow AI</button>
@@ -1110,6 +1334,7 @@
     </aside>
   </div>
 </div>
+</div>
 <div class="signal-stub">
   <div id="sig-market"><span id="sig-market-status"></span></div>
   <div id="sig-financial"><span id="sig-financial-status"></span></div>
@@ -1121,6 +1346,41 @@ const API = window.location.origin;
 const CHATS_KEY = 'dealflow_chats';
 const RECENT_LIST_MAX_COLLAPSED = 4;
 var recentListExpanded = false;
+function showAppFromLanding() {
+  var land = document.getElementById('landingPage');
+  var shell = document.getElementById('appShell');
+  if (!land || !shell) return;
+  land.style.opacity = '';
+  land.classList.add('landing-page--exiting');
+  setTimeout(function () {
+    land.style.display = 'none';
+    land.classList.remove('landing-page--exiting');
+    shell.style.display = 'block';
+    document.body.style.background = '#f0f4ff';
+    requestAnimationFrame(function () {
+      shell.classList.add('app-shell--visible');
+    });
+  }, 300);
+}
+function showLandingFromApp() {
+  var land = document.getElementById('landingPage');
+  var shell = document.getElementById('appShell');
+  if (!land || !shell) return;
+  shell.classList.remove('app-shell--visible');
+  setTimeout(function () {
+    shell.style.display = 'none';
+    land.style.display = 'flex';
+    land.style.opacity = '0';
+    document.body.style.background = '#fff';
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        land.style.opacity = '1';
+        setTimeout(function () { land.style.opacity = ''; }, 350);
+      });
+    });
+  }, 300);
+}
+document.getElementById('landingGetStarted').addEventListener('click', showAppFromLanding);
 let currentDealId = null, pollTimer = null, activityStep = 0, runTimerInterval = null, stepTimeoutId = null, lastAnalysisDurationSec = 0;
 const speechTimers = {};
 const AGENT_CHAT_CLASS = { orchestrator: 'chat-msg--orchestrator', webresearch: 'chat-msg--webresearch', documentparser: 'chat-msg--documentparser', financialanalyst: 'chat-msg--financialanalyst', legalrisk: 'chat-msg--legalrisk', synthesis: 'chat-msg--synthesis' };
@@ -1581,6 +1841,7 @@ document.getElementById('sidebarLogoBtn').addEventListener('click', function () 
   resetToInputCard({ homeBlobs: true });
   document.getElementById('chatFeed').innerHTML = '';
   updateChatEmpty();
+  showLandingFromApp();
 });
 document.getElementById('stopBtn').addEventListener('click', function () {
   window.analysisAborted = true;
