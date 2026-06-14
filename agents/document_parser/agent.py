@@ -1,7 +1,7 @@
 """
 Document Parser Agent — DealFlow AI
-Framework: Pydantic AI
-Model: Mistral-7B-Instruct via Featherless
+Framework: LangGraph
+Model: GPT-4o-mini via AI/ML API
 
 Specialist in extracting structured data from company documents.
 Fast and precise — doesn't need deep reasoning, needs structured extraction.
@@ -14,11 +14,11 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
-from openai import AsyncOpenAI
-from pydantic_ai import Agent as PAAgent
-from pydantic_ai.models.openai import OpenAIModel
+from langchain_core.tools import tool
+from langchain_openai import ChatOpenAI
+from langgraph.checkpoint.memory import InMemorySaver
 from thenvoi import Agent
-from thenvoi.adapters import PydanticAIAdapter
+from thenvoi.adapters import LangGraphAdapter
 from thenvoi.config import load_agent_config
 
 from shared.models import ParsedDocuments
@@ -28,30 +28,20 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 # -------------------------------------------------------------------
-# Model — Mistral-7B via Featherless (fast structured extraction)
+# Model — GPT-4o-mini via AI/ML API (reliable tool calling, no Featherless 429s)
 # -------------------------------------------------------------------
-featherless_client = AsyncOpenAI(
-    base_url="https://api.featherless.ai/v1",
-    api_key=os.environ["FEATHERLESS_API_KEY"],
-)
-
-model = OpenAIModel(
-    "mistralai/Mistral-7B-Instruct-v0.3",
-    openai_client=featherless_client,
+llm = ChatOpenAI(
+    model="gpt-4o-mini",
+    base_url="https://api.aimlapi.com/v1",
+    api_key=os.environ["AIML_API_KEY"],
+    temperature=0.1,
 )
 
 # -------------------------------------------------------------------
-# Pydantic AI agent with file reading tools
+# Tools
 # -------------------------------------------------------------------
 
-pa_agent = PAAgent(
-    model=model,
-    system_prompt=DOCUMENT_PARSER_PROMPT,
-    result_type=str,  # Returns structured JSON string posted back to Band
-)
-
-
-@pa_agent.tool_plain
+@tool
 def read_pdf_file(file_path: str) -> str:
     """Read and extract text from a PDF file."""
     try:
@@ -66,7 +56,7 @@ def read_pdf_file(file_path: str) -> str:
         return f"ERROR reading {file_path}: {e}"
 
 
-@pa_agent.tool_plain
+@tool
 def read_text_file(file_path: str) -> str:
     """Read a plain text or CSV file."""
     try:
@@ -75,17 +65,31 @@ def read_text_file(file_path: str) -> str:
         return f"ERROR reading {file_path}: {e}"
 
 
-@pa_agent.tool_plain
-def format_signal(parsed_data: dict) -> str:
+@tool
+def format_signal(parsed_json: str) -> str:
     """
-    Format the ParsedDocuments dict as a SIGNAL message for the Band room.
-    This is what gets posted back via Band after parsing is complete.
+    Format parsed document data as a SIGNAL message for the Band room.
+    Input: JSON string of the parsed document fields.
+    Output: SIGNAL:parsed_documents message to post back to Band.
+    Keeps content under 2000 chars to comply with Band API limits.
     """
     try:
-        validated = ParsedDocuments(**parsed_data)
-        return f"SIGNAL:parsed_documents\n{validated.model_dump_json(indent=2)}"
-    except Exception as e:
-        return f"SIGNAL:parsed_documents\n{json.dumps(parsed_data, indent=2)}"
+        data = json.loads(parsed_json)
+        validated = ParsedDocuments(**data)
+        payload = validated.model_dump_json(indent=2)
+    except Exception:
+        payload = parsed_json
+
+    signal = f"SIGNAL:parsed_documents\n{payload}"
+    if len(signal) > 2000:
+        try:
+            compact = json.dumps(json.loads(payload), separators=(',', ':'))
+            signal = f"SIGNAL:parsed_documents\n{compact}"
+        except Exception:
+            pass
+    if len(signal) > 2000:
+        signal = signal[:1990] + "\n...}"
+    return signal
 
 
 # -------------------------------------------------------------------
@@ -95,7 +99,15 @@ def format_signal(parsed_data: dict) -> str:
 def create_document_parser() -> Agent:
     agent_id, api_key = load_agent_config("document_parser")
 
-    adapter = PydanticAIAdapter(agent=pa_agent)
+    adapter = LangGraphAdapter(
+        llm=llm.bind(system=DOCUMENT_PARSER_PROMPT),
+        checkpointer=InMemorySaver(),
+        additional_tools=[
+            read_pdf_file,
+            read_text_file,
+            format_signal,
+        ],
+    )
 
     return Agent.create(
         adapter=adapter,
@@ -105,7 +117,7 @@ def create_document_parser() -> Agent:
 
 
 async def run_document_parser():
-    logger.info("Document Parser starting (Mistral-7B via Featherless)...")
+    logger.info("Document Parser starting (GPT-4o-mini via AI/ML API)...")
     agent = create_document_parser()
     await agent.run()
 

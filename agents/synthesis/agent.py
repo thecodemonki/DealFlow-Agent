@@ -1,7 +1,7 @@
 """
 Synthesis Agent — DealFlow AI
 Framework: LangGraph
-Model: Claude Sonnet via AI/ML API
+Model: GPT-4o via AI/ML API
 
 The final agent. Waits for all specialist signals, synthesizes findings,
 writes the investment memo, and generates a PDF report.
@@ -29,10 +29,11 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 # -------------------------------------------------------------------
-# Model — Claude Sonnet via AI/ML API (best reasoning for synthesis)
+# Model — GPT-4o via AI/ML API (best reasoning for synthesis)
+# Claude models have a 200-char tool name limit incompatible with Band SDK
 # -------------------------------------------------------------------
 llm = ChatOpenAI(
-    model="claude-sonnet-4-5",
+    model="gpt-4o",
     base_url="https://api.aimlapi.com/v1",
     api_key=os.environ["AIML_API_KEY"],
     temperature=0.3,
@@ -143,8 +144,20 @@ def generate_pdf_memo(memo_data: dict) -> str:
 
 @tool
 def format_final_signal(memo: dict) -> str:
-    """Format InvestmentMemo as a SIGNAL message for the Band room."""
-    return f"SIGNAL:investment_memo\n{json.dumps(memo, indent=2)}"
+    """Format InvestmentMemo as a SIGNAL message for the Band room.
+    Posts a concise summary — full memo is saved to PDF separately.
+    Keeps content under 2000 chars to comply with Band API limits."""
+    summary = {
+        "company_name": memo.get("company_name", ""),
+        "recommendation": memo.get("recommendation", ""),
+        "confidence": memo.get("confidence", ""),
+        "executive_summary": (memo.get("executive_summary", "") or "")[:400],
+        "red_flags": (memo.get("red_flags", []) or [])[:3],
+    }
+    signal = f"SIGNAL:investment_memo\n{json.dumps(summary, indent=2)}"
+    if len(signal) > 2000:
+        signal = signal[:1990] + "\n...}"
+    return signal
 
 
 # -------------------------------------------------------------------
@@ -155,14 +168,13 @@ def create_synthesis() -> Agent:
     agent_id, api_key = load_agent_config("synthesis")
 
     adapter = LangGraphAdapter(
-        llm=llm,
+        llm=llm.bind(system=SYNTHESIS_PROMPT),
         checkpointer=InMemorySaver(),
         additional_tools=[
             parse_signal_payload,
             generate_pdf_memo,
             format_final_signal,
         ],
-        system_prompt=SYNTHESIS_PROMPT,
     )
 
     return Agent.create(
@@ -173,7 +185,7 @@ def create_synthesis() -> Agent:
 
 
 async def run_synthesis():
-    logger.info("Synthesis Agent starting (Claude Sonnet via AI/ML API)...")
+    logger.info("Synthesis Agent starting (GPT-4o via AI/ML API)...")
     agent = create_synthesis()
     await agent.run()
 

@@ -1,10 +1,10 @@
 """
 Financial Analyst Agent — DealFlow AI
 Framework: LangGraph
-Model: Qwen2.5-72B-Instruct via Featherless
+Model: GPT-4o-mini via AI/ML API
 
-Best open-source model for quantitative reasoning and financial math.
-Outperforms Llama on math benchmarks — ideal for valuation work.
+Reliable tool calling + strong quantitative reasoning for financial analysis.
+Switched from Featherless Qwen2.5-72B to eliminate 429 concurrency errors.
 """
 
 import asyncio
@@ -27,12 +27,12 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 # -------------------------------------------------------------------
-# Model — Qwen2.5-72B via Featherless (best open-source for math/finance)
+# Model — GPT-4o-mini via AI/ML API (reliable tool calling, no Featherless 429s)
 # -------------------------------------------------------------------
 llm = ChatOpenAI(
-    model="Qwen/Qwen2.5-72B-Instruct",
-    base_url="https://api.featherless.ai/v1",
-    api_key=os.environ["FEATHERLESS_API_KEY"],
+    model="gpt-4o-mini",
+    base_url="https://api.aimlapi.com/v1",
+    api_key=os.environ["AIML_API_KEY"],
     temperature=0.0,  # Zero temp for deterministic financial calculations
 )
 
@@ -93,8 +93,16 @@ def parse_financial_signal(signal_json: str) -> dict:
 
 @tool
 def format_financial_signal(analysis: dict) -> str:
-    """Format FinancialAnalysis as a SIGNAL message for the Band room."""
-    return f"SIGNAL:financial_analysis\n{json.dumps(analysis, indent=2)}"
+    """Format FinancialAnalysis as a SIGNAL message for the Band room.
+    Keeps content under 2000 chars to comply with Band API limits."""
+    payload = json.dumps(analysis, indent=2)
+    signal = f"SIGNAL:financial_analysis\n{payload}"
+    if len(signal) > 2000:
+        compact = json.dumps(analysis, separators=(',', ':'))
+        signal = f"SIGNAL:financial_analysis\n{compact}"
+    if len(signal) > 2000:
+        signal = signal[:1990] + "\n...}"
+    return signal
 
 
 # -------------------------------------------------------------------
@@ -105,7 +113,7 @@ def create_financial_analyst() -> Agent:
     agent_id, api_key = load_agent_config("financial_analyst")
 
     adapter = LangGraphAdapter(
-        llm=llm,
+        llm=llm.bind(system=FINANCIAL_ANALYST_PROMPT),
         checkpointer=InMemorySaver(),
         additional_tools=[
             calculate_cagr,
@@ -114,7 +122,6 @@ def create_financial_analyst() -> Agent:
             parse_financial_signal,
             format_financial_signal,
         ],
-        system_prompt=FINANCIAL_ANALYST_PROMPT,
     )
 
     return Agent.create(
@@ -125,7 +132,7 @@ def create_financial_analyst() -> Agent:
 
 
 async def run_financial_analyst():
-    logger.info("Financial Analyst starting (Qwen2.5-72B via Featherless)...")
+    logger.info("Financial Analyst starting (GPT-4o-mini via AI/ML API)...")
     agent = create_financial_analyst()
     await agent.run()
 

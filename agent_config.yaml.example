@@ -3,7 +3,7 @@
 # Copy this file to agent_config.yaml and fill in real values.
 
 orchestrator:
-  agent_id: "replace-with-orchestrator-uuid"
+  agent_id: 
   api_key: "replace-with-orchestrator-api-key"
 
 document_parser:

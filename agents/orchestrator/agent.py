@@ -1,7 +1,7 @@
 """
 Orchestrator Agent — DealFlow AI
 Framework: LangGraph
-Model: Claude Sonnet via AI/ML API
+Model: GPT-4o via AI/ML API
 
 The brain of the system. Creates the Band deal room, recruits specialist agents,
 coordinates handoffs, escalates to humans when needed, and confirms completion.
@@ -26,10 +26,11 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 # -------------------------------------------------------------------
-# LLM — Claude Sonnet via AI/ML API (OpenAI-compatible endpoint)
+# LLM — GPT-4o via AI/ML API (OpenAI-compatible endpoint)
+# Claude models have a 200-char tool name limit incompatible with Band SDK
 # -------------------------------------------------------------------
 llm = ChatOpenAI(
-    model="claude-sonnet-4-5",
+    model="gpt-4o",
     base_url="https://api.aimlapi.com/v1",
     api_key=os.environ["AIML_API_KEY"],
     temperature=0.1,
@@ -81,10 +82,9 @@ def create_orchestrator() -> Agent:
     agent_id, api_key = load_agent_config("orchestrator")
 
     adapter = LangGraphAdapter(
-        llm=llm,
+        llm=llm.bind(system=ORCHESTRATOR_PROMPT),
         checkpointer=InMemorySaver(),
         additional_tools=[parse_agent_signal, build_deal_kickoff_message],
-        system_prompt=ORCHESTRATOR_PROMPT,
     )
 
     return Agent.create(
@@ -95,7 +95,7 @@ def create_orchestrator() -> Agent:
 
 
 async def run_orchestrator():
-    logger.info("Orchestrator starting...")
+    logger.info("Orchestrator starting (GPT-4o via AI/ML API)...")
     agent = create_orchestrator()
     await agent.run()
 
