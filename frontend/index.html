@@ -305,8 +305,45 @@
       background: #fff;
       display: block;
     }
+    .chat-msg__avatar-ring {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      line-height: 0;
+    }
+    .chat-msg--orchestrator .chat-msg__avatar-ring {
+      border: 2px solid #3b82f6;
+      box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+    }
+    .chat-msg--webresearch .chat-msg__avatar-ring {
+      border: 2px solid #f59e0b;
+      box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+    }
+    .chat-msg--documentparser .chat-msg__avatar-ring {
+      border: 2px solid #10b981;
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+    }
+    .chat-msg--financialanalyst .chat-msg__avatar-ring {
+      border: 2px solid #f97316;
+      box-shadow: 0 0 8px rgba(249, 115, 22, 0.5);
+    }
+    .chat-msg--legalrisk .chat-msg__avatar-ring {
+      border: 2px solid #ef4444;
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+    }
+    .chat-msg--synthesis .chat-msg__avatar-ring {
+      border: 2px solid #a855f7;
+      box-shadow: 0 0 8px rgba(168, 85, 247, 0.5);
+    }
     .chat-msg__body { flex: 1; min-width: 0; }
     .chat-msg__name { font-size: 12px; font-weight: 600; color: #111827; margin-bottom: 4px; }
+    .chat-msg--orchestrator .chat-msg__name { color: #3d5a8a; }
+    .chat-msg--webresearch .chat-msg__name { color: #8b6220; }
+    .chat-msg--documentparser .chat-msg__name { color: #1f6f55; }
+    .chat-msg--financialanalyst .chat-msg__name { color: #9a4f18; }
+    .chat-msg--legalrisk .chat-msg__name { color: #a33434; }
+    .chat-msg--synthesis .chat-msg__name { color: #6b3d9e; }
     .chat-msg__bubble {
       background: #ffffff;
       border-radius: 4px 16px 16px 16px;
@@ -464,13 +501,14 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      --glow-rgb: 127, 29, 29;
+      --accent-rgb: 59, 130, 246;
     }
-    .blob-wrap--webresearch { --glow-rgb: 30, 27, 75; }
-    .blob-wrap--documentparser { --glow-rgb: 120, 53, 15; }
-    .blob-wrap--financialanalyst { --glow-rgb: 20, 83, 45; }
-    .blob-wrap--legalrisk { --glow-rgb: 59, 7, 100; }
-    .blob-wrap--synthesis { --glow-rgb: 19, 78, 74; }
+    .blob-wrap--orchestrator { --accent-rgb: 59, 130, 246; }
+    .blob-wrap--webresearch { --accent-rgb: 245, 158, 11; }
+    .blob-wrap--documentparser { --accent-rgb: 16, 185, 129; }
+    .blob-wrap--financialanalyst { --accent-rgb: 249, 115, 22; }
+    .blob-wrap--legalrisk { --accent-rgb: 239, 68, 68; }
+    .blob-wrap--synthesis { --accent-rgb: 168, 85, 247; }
     @keyframes blob-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
     @keyframes blob-float-fast { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
     .blob-agent {
@@ -493,8 +531,10 @@
       display: block;
       mix-blend-mode: multiply;
       pointer-events: none;
-      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
       transition: filter 0.35s ease;
+    }
+    .blob-wrap .blob-agent img {
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15)) drop-shadow(0 0 12px rgba(var(--accent-rgb), 0.55));
     }
     .blob-layer .blob-wrap:nth-of-type(1) .blob-agent { animation-delay: 0s; }
     .blob-layer .blob-wrap:nth-of-type(2) .blob-agent { animation-delay: 0.5s; }
@@ -507,9 +547,11 @@
       animation-duration: 1.2s;
     }
     .blob-wrap--active .blob-agent img {
-      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15)) drop-shadow(0 0 18px rgba(var(--glow-rgb), 0.55)) drop-shadow(0 0 28px rgba(var(--glow-rgb), 0.35));
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15)) drop-shadow(0 0 14px rgba(var(--accent-rgb), 0.7)) drop-shadow(0 0 26px rgba(var(--accent-rgb), 0.4));
     }
-    .blob-wrap--done .blob-agent img { filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15)) brightness(1.08); }
+    .blob-wrap--done .blob-agent img {
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15)) drop-shadow(0 0 10px rgba(var(--accent-rgb), 0.45)) brightness(1.08);
+    }
     .blob-label { margin-top: 10px; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; text-align: center; max-width: 120px; line-height: 1.2; }
     .blob-check {
       position: absolute;
@@ -955,7 +997,7 @@ document.getElementById('userChatInput').addEventListener('keydown', function (e
 });
 function agentAvatarInner(agentId, iconFallback) {
   var src = agentId && AGENT_AVATAR_SRC[agentId];
-  if (src) return '<img src="' + src + '" alt="" width="32" height="32" />';
+  if (src) return '<span class="chat-msg__avatar-ring"><img src="' + src + '" alt="" width="32" height="32" /></span>';
   return iconFallback || '💬';
 }
 function addFeedItem(icon, html, agentId, speechText) {
@@ -963,6 +1005,7 @@ function addFeedItem(icon, html, agentId, speechText) {
   var agent = agentId || inferAgentFromHtml(html);
   var row = document.createElement('div');
   row.className = 'chat-msg' + (agent && AGENT_CHAT_CLASS[agent] ? ' ' + AGENT_CHAT_CLASS[agent] : '');
+  if (agent) row.setAttribute('data-agent', agent);
   var name = agent ? (AGENT_LABEL[agent] || AGENT_DISPLAY[agent] || agent) : 'Band';
   row.innerHTML = '<div class="chat-msg__avatar">' + agentAvatarInner(agent, icon) + '</div><div class="chat-msg__body"><div class="chat-msg__name">' + name + '</div><div class="chat-msg__bubble">' + html + '</div></div>';
   feed.appendChild(row);
