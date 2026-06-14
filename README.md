@@ -1,141 +1,182 @@
-# DealFlow AI
+# DealFlow AI 🎯
 
-**Autonomous M&A due diligence platform — 6 agents collaborating through Band.**
+> **Multi-agent M&A due diligence — powered by [Band](https://band.ai)**
 
-6 specialized agents across 3 frameworks (LangGraph, CrewAI, Pydantic AI) coordinate through Band to analyze acquisition targets, passing structured context at each handoff. A deal that takes analysts weeks completes in ~90 seconds.
+DealFlow AI is a cross-framework multi-agent system that performs complete M&A due diligence in minutes. Six specialized AI agents collaborate through Band's shared environment — passing structured signals, coordinating tasks, and producing a final investment memo without any human in the loop.
 
----
-
-## Agent Architecture
-
-| Agent | Framework | Model | Role |
-|---|---|---|---|
-| Orchestrator | LangGraph | Claude Sonnet (AI/ML API) | Creates Band room, recruits agents, coordinates flow |
-| Document Parser | Pydantic AI | Mistral-7B (Featherless) | Extracts structured data from contracts and financials |
-| Financial Analyst | LangGraph | Qwen2.5-72B (Featherless) | Revenue modeling, valuation, burn rate analysis |
-| Legal Risk | CrewAI | Llama-3.1-70B (Featherless) | Contract risks, IP issues, change-of-control clauses |
-| Web Research | LangGraph | Claude Haiku (AI/ML API) | Market sizing, competitors, news, founder background |
-| Synthesis | LangGraph | Claude Sonnet (AI/ML API) | Aggregates all findings → investment memo PDF |
+**Live demo:** [dealflow-agent-production-4bf4.up.railway.app](https://dealflow-agent-production-4bf4.up.railway.app)
 
 ---
 
-## Setup
+## How it works
 
-### 1. Install dependencies
+Submit a company name and any available documents. Six agents immediately spring into action inside a shared Band room, routing work to each other, posting structured signals, and handing off outputs until the investment memo is generated.
 
-```bash
-uv install
+```
+User submits company → Orchestrator kicks off pipeline
+    ├── WebResearch    → scrapes market data → posts SIGNAL:market_research
+    ├── DocumentParser → extracts financials from uploaded files → posts SIGNAL:parsed_documents
+    │       ├── FinancialAnalyst → CAGR, burn rate, valuation range → SIGNAL:financial_analysis
+    │       └── LegalRisk        → CoC clauses, IP risks, liability → SIGNAL:legal_risk
+    └── Synthesis → reads all signals → writes investment memo PDF → SIGNAL:investment_memo
 ```
 
-### 2. Configure environment
+All coordination happens **through Band** — agents @mention each other, post structured JSON signals, and the Band room acts as the shared memory and message bus for the entire workflow.
+
+---
+
+## The 6 agents
+
+| Agent | Character | Framework | Model | Role |
+|-------|-----------|-----------|-------|------|
+| **Orchestrator** | 🎩 Conductor | OpenAI Agents SDK | GPT-4o | Kicks off the pipeline, routes tasks, escalates human review |
+| **WebResearch** | 🔍 Detective | LangGraph | GPT-4o | Wikipedia + DuckDuckGo market research, posts to Band directly |
+| **DocumentParser** | 📚 Librarian | OpenAI Agents SDK | GPT-4o-mini | Extracts financials, contracts, and cap table from uploaded PDFs |
+| **FinancialAnalyst** | 💼 Banker | OpenAI Agents SDK | GPT-4o-mini | Calculates CAGR, burn rate, runway, and valuation range |
+| **LegalRisk** | ⚖️ Judge | OpenAI Agents SDK | GPT-4o-mini | Flags change-of-control clauses, IP risks, and liability exposure |
+| **Synthesis** | 🔮 Wizard | OpenAI Agents SDK | GPT-4o | Synthesizes all signals into a final PDF investment memo |
+
+---
+
+## Band integration
+
+Band is the **central nervous system** of DealFlow AI — not just a notification layer.
+
+- Every agent listens on a shared Band room via the `thenvoi` SDK
+- Agents post **structured JSON signals** (e.g. `SIGNAL:financial_analysis`) that downstream agents parse
+- @mentions route work: `@FinancialAnalyst` only activates when it receives a message with its handle
+- The Orchestrator reads incoming Band messages to decide what to trigger next
+- WebResearch posts its signal **directly via the Band REST API** (bypassing the LLM) for reliability
+- The Band room acts as a persistent shared log — Synthesis reads the full message history to compile its memo
+- If LegalRisk flags a deal-breaker, the Orchestrator posts an escalation message to loop in a human reviewer
+
+---
+
+## Tech stack
+
+- **Agent frameworks:** OpenAI Agents SDK + LangGraph (cross-framework)
+- **Models:** GPT-4o and GPT-4o-mini via [AI/ML API](https://aimlapi.com)
+- **Coordination:** [Band (thenvoi)](https://band.ai) — shared room, @mentions, structured signals
+- **API:** FastAPI (Python)
+- **Frontend:** Vanilla JS + CSS animations
+- **Deployment:** Railway (Docker)
+
+---
+
+## Running locally
+
+### Prerequisites
+
+- Python 3.11+
+- [uv](https://github.com/astral-sh/uv)
+- A Band account — get free Pro with code `BANDHACK26` at [band.ai/manage-billing](https://band.ai/manage-billing)
+- AI/ML API key for GPT-4o access
+
+### Setup
 
 ```bash
+git clone https://github.com/<your-username>/dealflow-agent
+cd dealflow-agent
+
+uv sync
+
 cp .env.example .env
-# Fill in FEATHERLESS_API_KEY and AIML_API_KEY
-```
+# Add your AIML_API_KEY and ORCHESTRATOR_API_KEY
 
-### 3. Register agents in Band
-
-Go to [band.ai/agents](https://app.band.ai/agents) and create 6 External Agents:
-- Orchestrator
-- DocumentParser
-- FinancialAnalyst
-- LegalRisk
-- WebResearch
-- Synthesis
-
-```bash
 cp agent_config.yaml.example agent_config.yaml
-# Fill in agent_id and api_key for each agent
+# Add your Band agent IDs and API keys for all 6 agents
 ```
 
-### 4. Run all agents
+### agent_config.yaml
+
+```yaml
+orchestrator:
+  agent_id: "..."
+  api_key: "..."
+web_research:
+  agent_id: "..."
+  api_key: "..."
+document_parser:
+  agent_id: "..."
+  api_key: "..."
+financial_analyst:
+  agent_id: "..."
+  api_key: "..."
+legal_risk:
+  agent_id: "..."
+  api_key: "..."
+synthesis:
+  agent_id: "..."
+  api_key: "..."
+```
+
+### Run
 
 ```bash
-uv run python run_agents.py
+# Terminal 1 — start all 6 agents
+python run_agents.py
+
+# Terminal 2 — start the API + frontend
+uvicorn api.main:app --reload --port 8000
 ```
 
-### 5. Start the API server (separate terminal)
-
-```bash
-uv run uvicorn api.main:app --reload --port 8000
-```
-
-Open [http://localhost:8000/](http://localhost:8000/) in a browser for the web UI (same origin as the API).
-
-### 6. Deploy on Railway
-
-The repo includes `Dockerfile` and `railway.json` (Docker builder). Create a Railway service from this repository, then add a **mounted or copied** `agent_config.yaml` (or equivalent secret file at the app working directory) plus any `.env` variables your agents need, since the gateway reads Band credentials from `agent_config.yaml` at runtime.
+Open [http://localhost:8000](http://localhost:8000) and submit a company.
 
 ---
 
-## Usage
-
-### Submit a deal via API
+## API
 
 ```bash
+# Submit a company for analysis
 curl -X POST http://localhost:8000/analyze \
-  -F "company_name=Acme Corp" \
-  -F "notes=Series B SaaS company, considering acquisition" \
-  -F "files=@contracts/msa.pdf" \
-  -F "files=@financials/p_and_l.pdf"
-```
+  -F "company_name=Stripe" \
+  -F "notes=Series B SaaS, considering acquisition" \
+  -F "files=@financials.pdf"
 
-### Check deal status
-
-```bash
+# Check status
 curl http://localhost:8000/deals/{deal_id}
-```
 
-### Download investment memo PDF
-
-```bash
-curl http://localhost:8000/deals/{deal_id}/memo --output memo.pdf
+# Download the investment memo PDF
+curl http://localhost:8000/memo/latest --output memo.pdf
 ```
 
 ---
 
-## How Band Coordination Works
-
-1. **Room creation** — Orchestrator calls `thenvoi_create_chatroom` → "Deal: Acme Corp [abc12345]"
-2. **Agent recruitment** — Orchestrator calls `thenvoi_lookup_peers` + `thenvoi_add_participant` for each specialist
-3. **Parallel dispatch** — Document Parser posts `SIGNAL:parsed_documents` + `@FinancialAnalyst @LegalRisk` simultaneously
-4. **Context passing** — Each agent serializes its findings as structured JSON in Band messages
-5. **Human escalation** — If Legal Risk flags a deal-breaker, Orchestrator calls `thenvoi_add_participant` to add the human analyst
-6. **Completion** — Synthesis posts `SIGNAL:investment_memo` + generates PDF
-
----
-
-## Tech Stack
-
-- **Band SDK** (`band-sdk`) — agent coordination layer
-- **Featherless AI** — serverless open-source model inference (Mistral, Qwen, Llama)
-- **AI/ML API** — Claude Sonnet + Haiku access
-- **FastAPI** — REST gateway for deal submissions
-- **ReportLab** — PDF memo generation
-- **pypdf** — document text extraction
-
----
-
-## Project Structure
+## Project structure
 
 ```
-dealflow-ai/
+dealflow-agent/
 ├── agents/
-│   ├── orchestrator/agent.py      # LangGraph + Claude Sonnet
-│   ├── document_parser/agent.py   # Pydantic AI + Mistral-7B
-│   ├── financial_analyst/agent.py # LangGraph + Qwen2.5-72B
-│   ├── legal_risk/agent.py        # CrewAI + Llama-3.1-70B
-│   ├── web_research/agent.py      # LangGraph + Claude Haiku
-│   └── synthesis/agent.py         # LangGraph + Claude Sonnet
+│   ├── orchestrator/      # GPT-4o, OpenAI Agents SDK
+│   ├── web_research/      # GPT-4o, LangGraph
+│   ├── document_parser/   # GPT-4o-mini, OpenAI Agents SDK
+│   ├── financial_analyst/ # GPT-4o-mini, OpenAI Agents SDK
+│   ├── legal_risk/        # GPT-4o-mini, OpenAI Agents SDK
+│   └── synthesis/         # GPT-4o, OpenAI Agents SDK
+├── api/
+│   └── main.py            # FastAPI gateway
 ├── shared/
-│   ├── models.py                  # Pydantic schemas for agent outputs
-│   └── prompts.py                 # System prompts for each agent
-├── api/main.py                    # FastAPI gateway (serves frontend at /)
-├── frontend/index.html            # Web UI
-├── Dockerfile                     # Railway / container image
-├── railway.json                   # Railway build config (Dockerfile)
-├── run_agents.py                  # Start all 6 agents
-├── pyproject.toml
-└── agent_config.yaml.example
+│   ├── prompts.py         # System prompts for all agents
+│   └── models.py          # Shared Pydantic models
+├── frontend/
+│   ├── index.html         # Single-page UI
+│   └── characters/        # Agent character images
+├── Dockerfile
+└── railway.json
 ```
+
+---
+
+## Why multi-agent?
+
+M&A due diligence is inherently parallel and multi-disciplinary. A single agent can't simultaneously hold deep financial modeling, legal contract review, market research, and narrative synthesis in context without degrading on all of them.
+
+By splitting into specialists that communicate through Band:
+- **WebResearch and DocumentParser run concurrently** — no waiting
+- **Each agent's context window is focused** on one domain
+- **Outputs are structured and auditable** — every signal is a JSON blob in the Band room log
+- **Human escalation is built in** — LegalRisk can trigger a human review without breaking the pipeline
+
+---
+
+Built for the **[Band of Agents Hackathon](https://lablab.ai)** · June 2026
