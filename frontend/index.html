@@ -172,8 +172,7 @@
       border-left: 1px solid #e2e8f0;
     }
     .app-grid.chat-collapsed .chat-feed-wrap,
-    .app-grid.chat-collapsed .chat-message-bar,
-    .app-grid.chat-collapsed .chat-run-form { display: none !important; }
+    .app-grid.chat-collapsed .chat-message-bar { display: none !important; }
     .app-grid.chat-collapsed .chat-header {
       flex-direction: column;
       justify-content: flex-start;
@@ -324,42 +323,6 @@
     }
     .chat-message-bar__send:hover { filter: brightness(1.05); }
     .chat-message-bar__send:disabled { opacity: 0.45; cursor: not-allowed; }
-    .chat-run-form {
-      flex-shrink: 0;
-      border-top: 1px solid #e2e8f0;
-      padding: 12px;
-      background: #fafafa;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .chat-run-form input[type="text"] {
-      width: 100%;
-      padding: 8px 10px;
-      font-size: 13px;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      outline: none;
-      color: #334155;
-      background: #fff;
-    }
-    .chat-run-form input:focus { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12); }
-    .chat-run-form-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-    .chat-run-form-grow { flex: 1; min-width: 0; }
-    .btn-run-chat {
-      padding: 8px 14px;
-      font-size: 13px;
-      font-weight: 600;
-      color: #fff;
-      background: linear-gradient(135deg, #2563eb, #1d4ed8);
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    .btn-run-chat:disabled { opacity: 0.55; cursor: not-allowed; }
-    .chat-run-file { font-size: 11px; color: #64748b; }
-    .chat-run-file label { color: #2563eb; cursor: pointer; text-decoration: underline; }
     #inputCard {
       position: absolute;
       top: 50%;
@@ -375,18 +338,45 @@
       transition: opacity 0.45s ease, visibility 0.45s ease;
     }
     #arena.arena--running #inputCard { opacity: 0; visibility: hidden; pointer-events: none; }
-    #inputCard h1 { font-size: 24px; font-weight: 700; color: #0f172a; margin-bottom: 12px; }
-    #inputCard .input-card-hint { font-size: 14px; font-weight: 400; color: #64748b; line-height: 1.5; margin-bottom: 20px; }
+    #inputCard h1 { font-size: 24px; font-weight: 700; color: #0f172a; margin-bottom: 22px; }
+    #inputCard .input-card-fields input[type="text"] {
+      width: 100%;
+      padding: 14px 14px;
+      margin-bottom: 12px;
+      font-size: 16px;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      outline: none;
+      color: #0f172a;
+    }
+    #inputCard .input-card-fields input[type="text"]::placeholder { color: #94a3b8; }
+    #inputCard .input-card-fields input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
+    .input-card-attach { font-size: 13px; color: #94a3b8; margin-bottom: 22px; }
+    .input-card-attach label { color: #64748b; cursor: pointer; text-decoration: underline; }
+    .input-card-attach label:hover { color: #2563eb; }
+    .btn-run-analysis {
+      width: 100%;
+      padding: 14px 20px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+    .btn-run-analysis:disabled { opacity: 0.55; cursor: not-allowed; }
+    .arena-demo-wrap { text-align: center; margin-top: 14px; }
     .arena-demo-link {
       font-size: 13px;
       font-weight: 500;
-      color: #2563eb;
+      color: #64748b;
       background: none;
       border: none;
       cursor: pointer;
       text-decoration: underline;
     }
-    .arena-demo-link:hover { color: #1d4ed8; }
+    .arena-demo-link:hover { color: #2563eb; }
     .blob-layer {
       position: absolute;
       inset: 0;
@@ -599,8 +589,15 @@
   <main id="arena">
     <div id="inputCard">
       <h1>What company are you evaluating?</h1>
-      <p class="input-card-hint">Enter company and industry in the chat panel on the right, then run the analysis.</p>
-      <button type="button" class="arena-demo-link" id="runDemoBtn">Run demo</button>
+      <div class="input-card-fields">
+        <input type="text" id="companyName" placeholder="e.g. Stripe, OpenAI, Figma" autocomplete="organization" />
+        <input type="text" id="industry" placeholder="e.g. fintech, SaaS, healthcare" />
+      </div>
+      <input type="file" id="fileInput" multiple accept=".pdf,.xlsx,.csv,.txt" style="display: none" />
+      <div class="input-card-attach"><label for="fileInput">Attach files</label> <span id="fileList"></span></div>
+      <button type="button" class="btn-run-analysis" id="analyzeBtn">Run Analysis →</button>
+      <div class="arena-demo-wrap"><button type="button" class="arena-demo-link" id="runDemoBtn">Run demo</button></div>
+      <span id="analyzeTimer" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0" aria-hidden="true"></span>
     </div>
     <svg class="arena-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
       <line x1="50" y1="45" x2="22" y2="22" stroke="rgba(255,255,255,0.08)" stroke-width="1.5" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"/>
@@ -669,8 +666,6 @@
         </div>
         <div class="chat-header-meta">
           <div class="chat-live-wrap"><span class="chat-live-dot" aria-hidden="true"></span><span>Live</span></div>
-          <span class="chat-timer" id="analyzeTimerChat" aria-live="polite"></span>
-          <span id="analyzeTimer" style="position:absolute;width:0;height:0;overflow:hidden;clip:rect(0,0,0,0)" aria-hidden="true"></span>
         </div>
       </div>
       <div class="chat-feed-wrap">
@@ -680,16 +675,6 @@
       <div class="chat-message-bar">
         <input type="text" id="userChatInput" placeholder="Message the agents..." autocomplete="off" />
         <button type="button" class="chat-message-bar__send" id="userChatSend" title="Send">→</button>
-      </div>
-      <div class="chat-run-form">
-        <input type="text" id="companyName" placeholder="Company name" autocomplete="organization" />
-        <input type="text" id="industry" placeholder="Industry" value="financial services" />
-        <input type="file" id="fileInput" multiple accept=".pdf,.xlsx,.csv,.txt" style="display: none" />
-        <div class="chat-run-file"><label for="fileInput">Attach files</label> <span id="fileList"></span></div>
-        <div class="chat-run-form-row">
-          <div class="chat-run-form-grow"></div>
-          <button type="button" class="btn-run-chat" id="analyzeBtn">Run Analysis →</button>
-        </div>
       </div>
     </aside>
   </div>
@@ -713,17 +698,10 @@ function toggleChat() {
   document.getElementById('chatToggle').setAttribute('aria-expanded', collapsed ? 'false' : 'true');
 }
 document.getElementById('chatToggle').addEventListener('click', toggleChat);
-function syncTimerToChat() {
-  var a = document.getElementById('analyzeTimer');
-  var c = document.getElementById('analyzeTimerChat');
-  if (a && c) c.textContent = a.textContent;
-}
 function clearRunTimer() {
   if (runTimerInterval) { clearInterval(runTimerInterval); runTimerInterval = null; }
   var t = document.getElementById('analyzeTimer');
   if (t) t.textContent = '';
-  var tc = document.getElementById('analyzeTimerChat');
-  if (tc) tc.textContent = '';
 }
 function startRunTimer() {
   clearRunTimer();
@@ -731,9 +709,7 @@ function startRunTimer() {
   if (!el) return;
   var sec = 0;
   function r() {
-    var s = Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
-    el.textContent = s;
-    syncTimerToChat();
+    el.textContent = Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
   }
   r();
   runTimerInterval = setInterval(function () { sec++; r(); }, 1000);
