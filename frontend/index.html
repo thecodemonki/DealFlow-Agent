@@ -23,7 +23,10 @@
     }
 
     body {
-      background: var(--bg);
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(circle at 20% 50%, rgba(59,130,246,0.03) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(245,158,11,0.03) 0%, transparent 40%);
       color: var(--text);
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
       min-height: 100vh;
@@ -147,6 +150,23 @@
     .btn-primary:active { transform: translateY(0); }
     .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
+    .btn-run-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+    }
+    .btn-run-wrap .btn-primary { flex: 1; min-width: 0; width: auto; }
+    .analyze-timer {
+      font-size: 13px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      color: var(--muted);
+      min-width: 3.25rem;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
     /* Agent pipeline */
     .pipeline { display: flex; flex-direction: column; gap: 0; }
     .agent-row {
@@ -171,8 +191,16 @@
       border: 1px solid var(--border);
       transition: all 0.3s;
     }
-    .agent-row.active .agent-icon { border-color: var(--blue); background: rgba(59,130,246,0.1); }
-    .agent-row.done .agent-icon { border-color: var(--green); background: rgba(16,185,129,0.1); }
+    .agent-row.active .agent-icon {
+      border-color: var(--blue);
+      background: rgba(59,130,246,0.1);
+      animation: agentIconGlow 1.8s ease-in-out infinite;
+    }
+    .agent-row.done .agent-icon {
+      border-color: var(--green);
+      background: rgba(16,185,129,0.1);
+      animation: none;
+    }
 
     .agent-info { flex: 1; min-width: 0; }
     .agent-name { font-size: 13px; font-weight: 600; }
@@ -186,7 +214,7 @@
       white-space: nowrap;
     }
     .status-idle { color: var(--muted); background: rgba(100,116,139,0.1); }
-    .status-active { color: var(--blue); background: rgba(59,130,246,0.15); animation: pulse 1.5s infinite; }
+    .status-active { color: var(--blue); background: rgba(59,130,246,0.15); animation: statusPulse 1.5s infinite; }
     .status-done { color: var(--green); background: rgba(16,185,129,0.15); }
     .status-error { color: var(--red); background: rgba(239,68,68,0.15); }
 
@@ -196,9 +224,18 @@
       margin-left: 30px;
     }
 
-    @keyframes pulse {
+    @keyframes statusPulse {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.5; }
+    }
+
+    @keyframes agentIconGlow {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.35), 0 0 8px rgba(59, 130, 246, 0.15);
+      }
+      50% {
+        box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.12), 0 0 18px rgba(59, 130, 246, 0.28);
+      }
     }
 
     /* ── Right panel ── */
@@ -228,7 +265,7 @@
       font-size: 52px;
     }
     .hero-state h2 { font-size: 24px; font-weight: 700; }
-    .hero-state p { color: var(--muted); max-width: 380px; font-size: 14px; line-height: 1.6; }
+    .hero-state p { color: var(--muted); max-width: 520px; font-size: 14px; line-height: 1.6; }
 
     .flow-chips {
       display: flex;
@@ -407,9 +444,12 @@
           <input type="file" id="fileInput" multiple accept=".pdf,.xlsx,.csv,.txt" />
           <div id="fileList" style="font-size:12px;color:var(--muted);margin-top:4px;"></div>
         </div>
-        <button class="btn-primary" id="analyzeBtn" onclick="startAnalysis()">
-          🚀 Run Due Diligence
-        </button>
+        <div class="btn-run-wrap">
+          <button class="btn-primary" id="analyzeBtn" onclick="startAnalysis()">
+            🚀 Run Due Diligence
+          </button>
+          <span id="analyzeTimer" class="analyze-timer" aria-live="polite"></span>
+        </div>
       </div>
     </div>
 
@@ -487,10 +527,9 @@
     <!-- Hero (default state) -->
     <div class="hero-state" id="heroState">
       <div class="hero-graphic">🏦</div>
-      <h2>M&A Due Diligence, Automated</h2>
+      <h2>Due Diligence in 60 Seconds</h2>
       <p>
-        6 AI agents collaborate through Band to deliver a full investment memo in under 60 seconds —
-        market research, financial analysis, legal risk, and synthesis.
+        Drop in a company name. Six specialized AI agents coordinate through Band — researching markets, parsing financials, assessing legal risk — and deliver a signed-off investment memo.
       </p>
       <div class="flow-chips">
         <span class="chip">🔍 Market Research</span>
@@ -588,6 +627,31 @@
   let currentDealId = null;
   let pollTimer = null;
   let activityStep = 0;
+  let runTimerInterval = null;
+
+  function clearRunTimer() {
+    if (runTimerInterval) {
+      clearInterval(runTimerInterval);
+      runTimerInterval = null;
+    }
+    const t = document.getElementById('analyzeTimer');
+    if (t) t.textContent = '';
+  }
+
+  function startRunTimer() {
+    clearRunTimer();
+    const el = document.getElementById('analyzeTimer');
+    if (!el) return;
+    let sec = 0;
+    function render() {
+      el.textContent = Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
+    }
+    render();
+    runTimerInterval = setInterval(function () {
+      sec++;
+      render();
+    }, 1000);
+  }
 
   // File input label
   document.getElementById('fileInput').addEventListener('change', function() {
@@ -641,35 +705,43 @@
     () => { setAgentStatus('documentparser', 'done'); addFeedItem('✅', '<strong>DocumentParser</strong> extraction complete'); },
     () => { setAgentStatus('financialanalyst', 'active'); addFeedItem('📊', '<strong>FinancialAnalyst</strong> calculating valuation, CAGR, runway'); },
     () => { setAgentStatus('legalrisk', 'active'); addFeedItem('⚖️', '<strong>LegalRisk</strong> reviewing change-of-control clauses and IP risks'); },
-    () => { setAgentStatus('financialanalyst', 'done'); setSignal('financial', true, '✓ Received'); addFeedItem('✅', '<strong>SIGNAL:financial_analysis</strong> posted — valuation $50–95B'); },
-    () => { setAgentStatus('legalrisk', 'done'); setSignal('legal', true, '✓ Received'); addFeedItem('✅', '<strong>SIGNAL:legal_risk</strong> posted — CoC clauses flagged'); },
+    () => { setAgentStatus('financialanalyst', 'done'); setSignal('financial', true, '✓ Received'); addFeedItem('✅', '<strong>SIGNAL:financial_analysis</strong> posted — provisional valuation range (pending full data)'); },
+    () => { setAgentStatus('legalrisk', 'done'); setSignal('legal', true, '✓ Received'); addFeedItem('✅', '<strong>SIGNAL:legal_risk</strong> posted — CoC and key contractual risks flagged for review'); },
     () => { setAgentStatus('synthesis', 'active'); addFeedItem('✍️', '<strong>Synthesis</strong> consolidating all signals into investment memo'); },
     () => { setAgentStatus('synthesis', 'done'); setSignal('memo', true, '✓ Generated'); addFeedItem('🎉', '<strong>SIGNAL:investment_memo</strong> complete — PDF generated'); showResults(); },
   ];
 
   function showResults() {
-    const company = document.getElementById('companyName').value || 'Stripe';
+    const company = (document.getElementById('companyName').value || '').trim() || 'Unknown company';
+    const industry = (document.getElementById('industry').value || '').trim() || 'your industry';
     document.getElementById('activitySection').classList.remove('visible');
     document.getElementById('resultsSection').classList.add('visible');
 
-    // Populate with last-generated memo data
     document.getElementById('recValue').textContent = 'CONDITIONAL';
-    document.getElementById('recConfidence').textContent = 'Medium confidence · Web-only analysis · ' + company;
+    document.getElementById('recConfidence').textContent =
+      'Medium confidence · Web-only analysis · ' + company + ' · ' + industry;
+
     document.getElementById('memo-summary').textContent =
-      company + ' is a market leader in payment infrastructure. Founded by Patrick and John Collison (2010). Last valued $50–65B (2023). Strong growth trajectory with regulatory headwinds.';
+      company + ' is a leading player in ' + industry + '. Based on available signals, the business shows differentiated positioning within its sector; full diligence would validate revenue quality, margin structure, and governance.';
+
     document.getElementById('memo-financial').textContent =
-      'Valuation: $50–95B (ARR multiple). Revenue CAGR: ~58%. Cash runway: 100+ months. TPV: $817B (2022). Profitable as of 2023.';
+      'Financial highlights for ' + company + ': preliminary view suggests typical ' + industry + ' metrics pending uploaded statements — valuation range, growth, and runway to be confirmed with management data and audited financials.';
+
     document.getElementById('memo-market').textContent =
-      'Dominant in developer-first payments. Competitors: PayPal, Adyen, Square. TAM: $8–10T global digital payments by 2026. Strong API moat.';
+      company + ' competes in ' + industry + ' where market size and share shift quickly. Top peers and TAM should be triangulated with primary research; this memo assumes public and agent-sourced context only.';
+
     document.getElementById('memo-legal').textContent =
-      'Change-of-control clauses present. IP ownership standard for fintech. PCI-DSS, GDPR, PSD2 exposure. Human legal review required before closing.';
+      'Legal risk assessment for ' + company + ' in ' + industry + ': standard M&A themes include change-of-control, IP assignment, regulatory licenses, and customer consent — human counsel should review definitive agreements before signing.';
+
     const flags = [
-      'Valuation down ~45% from 2021 peak ($95B → $50B)',
-      'No company documents provided — financials are public estimates',
-      'Heavy regulatory exposure (PSD2, CFPB, global payments law)',
-      'Competitive pressure from Adyen in enterprise segment',
+      'No private data room attached — ' + company + ' figures may be incomplete or directional.',
+      industry + ' exposure may carry sector-specific regulatory and reporting obligations.',
+      'Competitive dynamics for ' + company + ' require validation against proprietary market work.',
+      'Recommend management Q&A and confirmatory diligence before final investment decision.',
     ];
-    document.getElementById('memo-flags').innerHTML = flags.map(f => `<div class="flag-item">${f}</div>`).join('');
+    document.getElementById('memo-flags').innerHTML = flags.map(function (f) {
+      return '<div class="flag-item">' + f + '</div>';
+    }).join('');
     document.getElementById('downloadBtn').href = API + '/memo/latest';
   }
 
@@ -692,6 +764,7 @@
     document.getElementById('resultsSection').classList.remove('visible');
     document.getElementById('analyzeBtn').disabled = true;
     document.getElementById('analyzeBtn').textContent = '⏳ Running…';
+    startRunTimer();
 
     activityStep = 0;
     if (pollTimer) clearInterval(pollTimer);
@@ -716,6 +789,7 @@
         const delay = activityStep < 4 ? 1200 : activityStep < 9 ? 1800 : 2400;
         setTimeout(nextStep, delay);
       } else {
+        clearRunTimer();
         document.getElementById('analyzeBtn').disabled = false;
         document.getElementById('analyzeBtn').textContent = '🚀 Run Due Diligence';
       }
