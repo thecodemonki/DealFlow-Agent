@@ -739,10 +739,12 @@ const speechTimers = {};
 const AGENT_CHAT_CLASS = { orchestrator: 'chat-msg--orchestrator', webresearch: 'chat-msg--webresearch', documentparser: 'chat-msg--documentparser', financialanalyst: 'chat-msg--financialanalyst', legalrisk: 'chat-msg--legalrisk', synthesis: 'chat-msg--synthesis' };
 const AGENT_AVATAR_SRC = { orchestrator: '/characters/conductor.png', webresearch: '/characters/detective.png', documentparser: '/characters/librarian.png', financialanalyst: '/characters/banker.png', legalrisk: '/characters/judge.png', synthesis: '/characters/wizard.png' };
 const AGENT_LABEL = { orchestrator: 'Conductor', webresearch: 'Detective', documentparser: 'Librarian', financialanalyst: 'Banker', legalrisk: 'Judge', synthesis: 'Wizard' };
-const AGENT_DISPLAY = { orchestrator: 'Orchestrator', webresearch: 'WebResearch', documentparser: 'DocumentParser', financialanalyst: 'FinancialAnalyst', legalrisk: 'LegalRisk', synthesis: 'Synthesis' };
+const AGENT_DISPLAY = { orchestrator: 'Conductor', webresearch: 'Detective', documentparser: 'Librarian', financialanalyst: 'Banker', legalrisk: 'Judge', synthesis: 'Wizard' };
 function nameToAgentId(name) {
   for (var k in AGENT_LABEL) { if (AGENT_LABEL[k] === name) return k; }
   for (var k2 in AGENT_DISPLAY) { if (AGENT_DISPLAY[k2] === name) return k2; }
+  var legacy = { Orchestrator: 'orchestrator', WebResearch: 'webresearch', DocumentParser: 'documentparser', FinancialAnalyst: 'financialanalyst', LegalRisk: 'legalrisk', Synthesis: 'synthesis' };
+  if (legacy[name]) return legacy[name];
   return null;
 }
 function toggleChat() {
@@ -775,12 +777,12 @@ function startRunTimer() {
 function stripHtml(html) { var d = document.createElement('div'); d.innerHTML = html; return d.textContent || d.innerText || ''; }
 function inferAgentFromHtml(html) {
   var t = stripHtml(html).toLowerCase();
-  if (t.indexOf('orchestrator') !== -1) return 'orchestrator';
-  if (t.indexOf('webresearch') !== -1) return 'webresearch';
-  if (t.indexOf('documentparser') !== -1) return 'documentparser';
-  if (t.indexOf('financialanalyst') !== -1) return 'financialanalyst';
-  if (t.indexOf('legalrisk') !== -1) return 'legalrisk';
-  if (t.indexOf('synthesis') !== -1) return 'synthesis';
+  if (t.indexOf('orchestrator') !== -1 || t.indexOf('conductor') !== -1) return 'orchestrator';
+  if (t.indexOf('webresearch') !== -1 || t.indexOf('detective') !== -1 || t.indexOf('market research') !== -1 || t.indexOf('signal:market') !== -1) return 'webresearch';
+  if (t.indexOf('documentparser') !== -1 || t.indexOf('librarian') !== -1 || t.indexOf('documents scanned') !== -1 || t.indexOf('uploaded documents') !== -1) return 'documentparser';
+  if (t.indexOf('financialanalyst') !== -1 || t.indexOf('banker') !== -1 || t.indexOf('financial models') !== -1 || t.indexOf('signal:financial') !== -1 || t.indexOf('valuation range') !== -1) return 'financialanalyst';
+  if (t.indexOf('legalrisk') !== -1 || t.indexOf('legal review') !== -1 || t.indexOf('contracts for risks') !== -1 || t.indexOf('signal:legal') !== -1) return 'legalrisk';
+  if (t.indexOf('synthesis') !== -1 || t.indexOf('investment memo') !== -1 || t.indexOf('signal:investment') !== -1) return 'synthesis';
   return null;
 }
 function showSpeechBubble(agentId, text) {
@@ -963,18 +965,18 @@ document.getElementById('recentList').addEventListener('click', function (e) {
   if (entry) restoreChatFromHistory(entry);
 });
 const STEPS = [
-  function () { setAgentStatus('orchestrator', 'active'); showSpeechBubble('orchestrator', 'Kicking off pipeline…'); addFeedItem(null, '<strong>Orchestrator</strong> received deal request — kicking off pipeline', 'orchestrator'); },
-  function () { setAgentStatus('webresearch', 'active'); showSpeechBubble('webresearch', 'Scanning the open web…'); addFeedItem(null, '<strong>WebResearch</strong> querying Wikipedia + web for market data', 'webresearch'); },
-  function () { setAgentStatus('documentparser', 'active'); showSpeechBubble('documentparser', 'Reading your uploads…'); addFeedItem(null, '<strong>DocumentParser</strong> scanning uploaded documents', 'documentparser'); },
-  function () { setAgentStatus('orchestrator', 'done'); showSpeechBubble('orchestrator', 'Routing specialists…'); addFeedItem(null, 'Band: Orchestrator routed tasks to all specialist agents', 'orchestrator'); },
-  function () { setAgentStatus('webresearch', 'done'); setSignal('market', true, '✓ Received'); showSpeechBubble('webresearch', 'Market signal posted.'); addFeedItem(null, '<strong>SIGNAL:market_research</strong> posted to Band room', 'webresearch'); },
-  function () { setAgentStatus('documentparser', 'done'); showSpeechBubble('documentparser', 'Parse complete.'); addFeedItem(null, '<strong>DocumentParser</strong> extraction complete', 'documentparser'); },
-  function () { setAgentStatus('financialanalyst', 'active'); showSpeechBubble('financialanalyst', 'Crunching numbers…'); addFeedItem(null, '<strong>FinancialAnalyst</strong> calculating valuation, CAGR, runway', 'financialanalyst'); },
-  function () { setAgentStatus('legalrisk', 'active'); showSpeechBubble('legalrisk', 'Reviewing clauses…'); addFeedItem(null, '<strong>LegalRisk</strong> reviewing change-of-control clauses and IP risks', 'legalrisk'); },
-  function () { setAgentStatus('financialanalyst', 'done'); setSignal('financial', true, '✓ Received'); showSpeechBubble('financialanalyst', 'Financials in.'); addFeedItem(null, '<strong>SIGNAL:financial_analysis</strong> posted — provisional valuation range (pending full data)', 'financialanalyst'); },
-  function () { setAgentStatus('legalrisk', 'done'); setSignal('legal', true, '✓ Received'); showSpeechBubble('legalrisk', 'Legal memo in.'); addFeedItem(null, '<strong>SIGNAL:legal_risk</strong> posted — CoC and key contractual risks flagged for review', 'legalrisk'); },
-  function () { setAgentStatus('synthesis', 'active'); showSpeechBubble('synthesis', 'Weaving the memo…'); addFeedItem(null, '<strong>Synthesis</strong> consolidating all signals into investment memo', 'synthesis'); },
-  function () { setAgentStatus('synthesis', 'done'); setSignal('memo', true, '✓ Generated'); showSpeechBubble('synthesis', 'Done — memo ready.'); addFeedItem(null, '<strong>SIGNAL:investment_memo</strong> complete — PDF generated', 'synthesis'); showResults(); }
+  function () { setAgentStatus('orchestrator', 'active'); showSpeechBubble('orchestrator', 'Kicking off pipeline…'); addFeedItem(null, 'Deal request received — kicking off your diligence pipeline.', 'orchestrator'); },
+  function () { setAgentStatus('webresearch', 'active'); showSpeechBubble('webresearch', 'Scanning the open web…'); addFeedItem(null, 'Pulling market context from the web and Wikipedia…', 'webresearch'); },
+  function () { setAgentStatus('documentparser', 'active'); showSpeechBubble('documentparser', 'Reading your uploads…'); addFeedItem(null, 'Scanning uploaded documents…', 'documentparser'); },
+  function () { setAgentStatus('orchestrator', 'done'); showSpeechBubble('orchestrator', 'Routing specialists…'); addFeedItem(null, 'Specialists are lined up — routing work across the team.', 'orchestrator'); },
+  function () { setAgentStatus('webresearch', 'done'); setSignal('market', true, '✓ Received'); showSpeechBubble('webresearch', 'Market signal posted.'); addFeedItem(null, 'Market research complete ✓ — posted to Band', 'webresearch'); },
+  function () { setAgentStatus('documentparser', 'done'); showSpeechBubble('documentparser', 'Parse complete.'); addFeedItem(null, 'Documents scanned and extracted ✓', 'documentparser'); },
+  function () { setAgentStatus('financialanalyst', 'active'); showSpeechBubble('financialanalyst', 'Crunching numbers…'); addFeedItem(null, 'Running financial models…', 'financialanalyst'); },
+  function () { setAgentStatus('legalrisk', 'active'); showSpeechBubble('legalrisk', 'Reviewing clauses…'); addFeedItem(null, 'Reviewing contracts for risks…', 'legalrisk'); },
+  function () { setAgentStatus('financialanalyst', 'done'); setSignal('financial', true, '✓ Received'); showSpeechBubble('financialanalyst', 'Financials in.'); addFeedItem(null, 'Valuation range: $50–95B (illustrative). Analysis posted ✓', 'financialanalyst'); },
+  function () { setAgentStatus('legalrisk', 'done'); setSignal('legal', true, '✓ Received'); showSpeechBubble('legalrisk', 'Legal memo in.'); addFeedItem(null, 'Legal review done — change-of-control clauses flagged', 'legalrisk'); },
+  function () { setAgentStatus('synthesis', 'active'); showSpeechBubble('synthesis', 'Weaving the memo…'); addFeedItem(null, 'Writing investment memo…', 'synthesis'); },
+  function () { setAgentStatus('synthesis', 'done'); setSignal('memo', true, '✓ Generated'); showSpeechBubble('synthesis', 'Done — memo ready.'); addFeedItem(null, 'Investment memo ready — PDF generated ✓', 'synthesis'); showResults(); }
 ];
 function showResults() {
   document.body.classList.remove('app-running');
