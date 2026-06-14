@@ -288,12 +288,23 @@
       font-size: 18px;
       flex-shrink: 0;
     }
-    .chat-msg--orchestrator .chat-msg__avatar { background: linear-gradient(135deg, #ef4444, #7f1d1d); }
-    .chat-msg--webresearch .chat-msg__avatar { background: linear-gradient(135deg, #818cf8, #1e1b4b); }
-    .chat-msg--documentparser .chat-msg__avatar { background: linear-gradient(135deg, #fbbf24, #78350f); }
-    .chat-msg--financialanalyst .chat-msg__avatar { background: linear-gradient(135deg, #34d399, #14532d); }
-    .chat-msg--legalrisk .chat-msg__avatar { background: linear-gradient(135deg, #c084fc, #3b0764); }
-    .chat-msg--synthesis .chat-msg__avatar { background: linear-gradient(135deg, #2dd4bf, #134e4a); }
+    .chat-msg--orchestrator .chat-msg__avatar,
+    .chat-msg--webresearch .chat-msg__avatar,
+    .chat-msg--documentparser .chat-msg__avatar,
+    .chat-msg--financialanalyst .chat-msg__avatar,
+    .chat-msg--legalrisk .chat-msg__avatar,
+    .chat-msg--synthesis .chat-msg__avatar {
+      background: #fff;
+    }
+    .chat-msg__avatar img {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: contain;
+      mix-blend-mode: multiply;
+      background: #fff;
+      display: block;
+    }
     .chat-msg__body { flex: 1; min-width: 0; }
     .chat-msg__name { font-size: 12px; font-weight: 600; color: #111827; margin-bottom: 4px; }
     .chat-msg__bubble {
@@ -726,7 +737,7 @@ const CHATS_KEY = 'dealflow_chats';
 let currentDealId = null, pollTimer = null, activityStep = 0, runTimerInterval = null, stepTimeoutId = null;
 const speechTimers = {};
 const AGENT_CHAT_CLASS = { orchestrator: 'chat-msg--orchestrator', webresearch: 'chat-msg--webresearch', documentparser: 'chat-msg--documentparser', financialanalyst: 'chat-msg--financialanalyst', legalrisk: 'chat-msg--legalrisk', synthesis: 'chat-msg--synthesis' };
-const AGENT_ICON = { orchestrator: '🎼', webresearch: '🧐', documentparser: '📜', financialanalyst: '💼', legalrisk: '⚖️', synthesis: '✨' };
+const AGENT_AVATAR_SRC = { orchestrator: '/characters/conductor.png', webresearch: '/characters/detective.png', documentparser: '/characters/librarian.png', financialanalyst: '/characters/banker.png', legalrisk: '/characters/judge.png', synthesis: '/characters/wizard.png' };
 const AGENT_LABEL = { orchestrator: 'Conductor', webresearch: 'Detective', documentparser: 'Librarian', financialanalyst: 'Banker', legalrisk: 'Judge', synthesis: 'Wizard' };
 const AGENT_DISPLAY = { orchestrator: 'Orchestrator', webresearch: 'WebResearch', documentparser: 'DocumentParser', financialanalyst: 'FinancialAnalyst', legalrisk: 'LegalRisk', synthesis: 'Synthesis' };
 function nameToAgentId(name) {
@@ -832,13 +843,18 @@ document.getElementById('userChatSend').addEventListener('click', sendUserChatMe
 document.getElementById('userChatInput').addEventListener('keydown', function (e) {
   if (e.key === 'Enter') { e.preventDefault(); sendUserChatMessage(); }
 });
+function agentAvatarInner(agentId, iconFallback) {
+  var src = agentId && AGENT_AVATAR_SRC[agentId];
+  if (src) return '<img src="' + src + '" alt="" width="32" height="32" />';
+  return iconFallback || '💬';
+}
 function addFeedItem(icon, html, agentId, speechText) {
   var feed = document.getElementById('chatFeed');
   var agent = agentId || inferAgentFromHtml(html);
   var row = document.createElement('div');
   row.className = 'chat-msg' + (agent && AGENT_CHAT_CLASS[agent] ? ' ' + AGENT_CHAT_CLASS[agent] : '');
   var name = agent ? (AGENT_LABEL[agent] || AGENT_DISPLAY[agent] || agent) : 'Band';
-  row.innerHTML = '<div class="chat-msg__avatar">' + (icon || '💬') + '</div><div class="chat-msg__body"><div class="chat-msg__name">' + name + '</div><div class="chat-msg__bubble">' + html + '</div></div>';
+  row.innerHTML = '<div class="chat-msg__avatar">' + agentAvatarInner(agent, icon) + '</div><div class="chat-msg__body"><div class="chat-msg__name">' + name + '</div><div class="chat-msg__bubble">' + html + '</div></div>';
   feed.appendChild(row);
   feed.scrollTop = feed.scrollHeight;
   updateChatEmpty();
@@ -911,9 +927,8 @@ function appendHistoryMessage(m) {
     return;
   }
   var aid = m.agentId || nameToAgentId(m.name) || inferAgentFromHtml('<strong>' + m.name + '</strong> ' + m.text);
-  var icon = (aid && AGENT_ICON[aid]) ? AGENT_ICON[aid] : '💬';
   var safe = escapeHtml(m.text).replace(/\n/g, '<br>');
-  addFeedItem(icon, safe, aid, null);
+  addFeedItem(null, safe, aid, null);
 }
 function restoreChatFromHistory(entry) {
   var arena = document.getElementById('arena');
@@ -948,18 +963,18 @@ document.getElementById('recentList').addEventListener('click', function (e) {
   if (entry) restoreChatFromHistory(entry);
 });
 const STEPS = [
-  function () { setAgentStatus('orchestrator', 'active'); showSpeechBubble('orchestrator', 'Kicking off pipeline…'); addFeedItem('🎼', '<strong>Orchestrator</strong> received deal request — kicking off pipeline', 'orchestrator'); },
-  function () { setAgentStatus('webresearch', 'active'); showSpeechBubble('webresearch', 'Scanning the open web…'); addFeedItem('🧐', '<strong>WebResearch</strong> querying Wikipedia + web for market data', 'webresearch'); },
-  function () { setAgentStatus('documentparser', 'active'); showSpeechBubble('documentparser', 'Reading your uploads…'); addFeedItem('📜', '<strong>DocumentParser</strong> scanning uploaded documents', 'documentparser'); },
-  function () { setAgentStatus('orchestrator', 'done'); showSpeechBubble('orchestrator', 'Routing specialists…'); addFeedItem('🤝', 'Band: Orchestrator routed tasks to all specialist agents', 'orchestrator'); },
-  function () { setAgentStatus('webresearch', 'done'); setSignal('market', true, '✓ Received'); showSpeechBubble('webresearch', 'Market signal posted.'); addFeedItem('✅', '<strong>SIGNAL:market_research</strong> posted to Band room', 'webresearch'); },
-  function () { setAgentStatus('documentparser', 'done'); showSpeechBubble('documentparser', 'Parse complete.'); addFeedItem('✅', '<strong>DocumentParser</strong> extraction complete', 'documentparser'); },
-  function () { setAgentStatus('financialanalyst', 'active'); showSpeechBubble('financialanalyst', 'Crunching numbers…'); addFeedItem('💼', '<strong>FinancialAnalyst</strong> calculating valuation, CAGR, runway', 'financialanalyst'); },
-  function () { setAgentStatus('legalrisk', 'active'); showSpeechBubble('legalrisk', 'Reviewing clauses…'); addFeedItem('⚖️', '<strong>LegalRisk</strong> reviewing change-of-control clauses and IP risks', 'legalrisk'); },
-  function () { setAgentStatus('financialanalyst', 'done'); setSignal('financial', true, '✓ Received'); showSpeechBubble('financialanalyst', 'Financials in.'); addFeedItem('✅', '<strong>SIGNAL:financial_analysis</strong> posted — provisional valuation range (pending full data)', 'financialanalyst'); },
-  function () { setAgentStatus('legalrisk', 'done'); setSignal('legal', true, '✓ Received'); showSpeechBubble('legalrisk', 'Legal memo in.'); addFeedItem('✅', '<strong>SIGNAL:legal_risk</strong> posted — CoC and key contractual risks flagged for review', 'legalrisk'); },
-  function () { setAgentStatus('synthesis', 'active'); showSpeechBubble('synthesis', 'Weaving the memo…'); addFeedItem('✨', '<strong>Synthesis</strong> consolidating all signals into investment memo', 'synthesis'); },
-  function () { setAgentStatus('synthesis', 'done'); setSignal('memo', true, '✓ Generated'); showSpeechBubble('synthesis', 'Done — memo ready.'); addFeedItem('🎉', '<strong>SIGNAL:investment_memo</strong> complete — PDF generated', 'synthesis'); showResults(); }
+  function () { setAgentStatus('orchestrator', 'active'); showSpeechBubble('orchestrator', 'Kicking off pipeline…'); addFeedItem(null, '<strong>Orchestrator</strong> received deal request — kicking off pipeline', 'orchestrator'); },
+  function () { setAgentStatus('webresearch', 'active'); showSpeechBubble('webresearch', 'Scanning the open web…'); addFeedItem(null, '<strong>WebResearch</strong> querying Wikipedia + web for market data', 'webresearch'); },
+  function () { setAgentStatus('documentparser', 'active'); showSpeechBubble('documentparser', 'Reading your uploads…'); addFeedItem(null, '<strong>DocumentParser</strong> scanning uploaded documents', 'documentparser'); },
+  function () { setAgentStatus('orchestrator', 'done'); showSpeechBubble('orchestrator', 'Routing specialists…'); addFeedItem(null, 'Band: Orchestrator routed tasks to all specialist agents', 'orchestrator'); },
+  function () { setAgentStatus('webresearch', 'done'); setSignal('market', true, '✓ Received'); showSpeechBubble('webresearch', 'Market signal posted.'); addFeedItem(null, '<strong>SIGNAL:market_research</strong> posted to Band room', 'webresearch'); },
+  function () { setAgentStatus('documentparser', 'done'); showSpeechBubble('documentparser', 'Parse complete.'); addFeedItem(null, '<strong>DocumentParser</strong> extraction complete', 'documentparser'); },
+  function () { setAgentStatus('financialanalyst', 'active'); showSpeechBubble('financialanalyst', 'Crunching numbers…'); addFeedItem(null, '<strong>FinancialAnalyst</strong> calculating valuation, CAGR, runway', 'financialanalyst'); },
+  function () { setAgentStatus('legalrisk', 'active'); showSpeechBubble('legalrisk', 'Reviewing clauses…'); addFeedItem(null, '<strong>LegalRisk</strong> reviewing change-of-control clauses and IP risks', 'legalrisk'); },
+  function () { setAgentStatus('financialanalyst', 'done'); setSignal('financial', true, '✓ Received'); showSpeechBubble('financialanalyst', 'Financials in.'); addFeedItem(null, '<strong>SIGNAL:financial_analysis</strong> posted — provisional valuation range (pending full data)', 'financialanalyst'); },
+  function () { setAgentStatus('legalrisk', 'done'); setSignal('legal', true, '✓ Received'); showSpeechBubble('legalrisk', 'Legal memo in.'); addFeedItem(null, '<strong>SIGNAL:legal_risk</strong> posted — CoC and key contractual risks flagged for review', 'legalrisk'); },
+  function () { setAgentStatus('synthesis', 'active'); showSpeechBubble('synthesis', 'Weaving the memo…'); addFeedItem(null, '<strong>Synthesis</strong> consolidating all signals into investment memo', 'synthesis'); },
+  function () { setAgentStatus('synthesis', 'done'); setSignal('memo', true, '✓ Generated'); showSpeechBubble('synthesis', 'Done — memo ready.'); addFeedItem(null, '<strong>SIGNAL:investment_memo</strong> complete — PDF generated', 'synthesis'); showResults(); }
 ];
 function showResults() {
   document.body.classList.remove('app-running');
