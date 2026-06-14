@@ -1340,6 +1340,7 @@ const API = window.location.origin;
 const CHATS_KEY = 'dealflow_chats';
 const RECENT_LIST_MAX_COLLAPSED = 4;
 var recentListExpanded = false;
+var recentListRelativeInterval = null;
 function showAppFromLanding() {
   var land = document.getElementById('landingPage');
   var shell = document.getElementById('appShell');
@@ -1608,9 +1609,39 @@ function loadChatsFromStorage() {
 function saveChatsToStorage(arr) {
   try { localStorage.setItem(CHATS_KEY, JSON.stringify(arr)); } catch (e) {}
 }
-function formatChatDate(ts) {
-  var d = new Date(ts);
+function formatRelativeTime(timestamp) {
+  var t;
+  if (timestamp == null || timestamp === '') return '';
+  if (typeof timestamp === 'number') t = timestamp;
+  else {
+    var p = Date.parse(String(timestamp));
+    t = isNaN(p) ? NaN : p;
+  }
+  if (isNaN(t)) return '';
+  var now = Date.now();
+  var sec = Math.floor((now - t) / 1000);
+  if (sec < 0) {
+    var dPast = new Date(t);
+    return dPast.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+  if (sec < 60) return 'just now';
+  var min = Math.floor(sec / 60);
+  if (min < 60) return min === 1 ? '1 min ago' : min + ' min ago';
+  var hr = Math.floor(min / 60);
+  if (hr < 24) return hr === 1 ? '1 hr ago' : hr + ' hr ago';
+  var days = Math.floor(hr / 24);
+  if (days >= 1 && days <= 6) return days === 1 ? '1 day ago' : days + ' days ago';
+  var d = new Date(t);
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+function updateRecentListRelativeTimes() {
+  var recentList = document.getElementById('recentList');
+  if (!recentList) return;
+  Array.prototype.forEach.call(recentList.querySelectorAll('.recent-row[data-timestamp]'), function (row) {
+    var el = row.querySelector('.recent-row__date');
+    if (!el) return;
+    el.textContent = formatRelativeTime(row.getAttribute('data-timestamp'));
+  });
 }
 function renderRecentList() {
   var recentList = document.getElementById('recentList');
@@ -1624,7 +1655,8 @@ function renderRecentList() {
     var row = document.createElement('div');
     row.className = 'recent-row';
     row.setAttribute('data-chat-id', entry.id);
-    row.innerHTML = '<span class="recent-row__icon">💬</span><div class="recent-row__meta"><span class="recent-row__name">' + escapeHtml(entry.company || 'Untitled') + '</span><span class="recent-row__date">' + formatChatDate(entry.timestamp) + '</span></div><button type="button" class="recent-row__delete" aria-label="Delete chat" title="Delete">×</button>';
+    row.setAttribute('data-timestamp', entry.timestamp != null ? String(entry.timestamp) : '');
+    row.innerHTML = '<span class="recent-row__icon">💬</span><div class="recent-row__meta"><span class="recent-row__name">' + escapeHtml(entry.company || 'Untitled') + '</span><span class="recent-row__date">' + formatRelativeTime(entry.timestamp) + '</span></div><button type="button" class="recent-row__delete" aria-label="Delete chat" title="Delete">×</button>';
     container.appendChild(row);
   }
   chats.forEach(function (entry) {
@@ -1753,7 +1785,7 @@ function showResults() {
   if (bandLink) bandLink.href = 'https://band.ai';
   document.getElementById('resultsOverlay').classList.add('visible');
   var messages = serializeChatFeed();
-  var entry = { id: String(Date.now()), company: company, industry: industry, timestamp: Date.now(), messages: messages, starred: false };
+  var entry = { id: String(Date.now()), company: company, industry: industry, timestamp: new Date().toISOString(), messages: messages, starred: false };
   var chats = loadChatsFromStorage();
   chats.unshift(entry);
   if (chats.length > 20) chats = chats.slice(0, 20);
@@ -1901,6 +1933,9 @@ async function startAnalysis() {
 }
 renderRecentList();
 updateChatEmpty();
+if (recentListRelativeInterval == null) {
+  recentListRelativeInterval = setInterval(updateRecentListRelativeTimes, 60000);
+}
 </script>
 </body>
 </html>
