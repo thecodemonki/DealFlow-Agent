@@ -532,6 +532,7 @@
       flex-direction: column;
       align-items: center;
       --accent-rgb: 59, 130, 246;
+      transition: opacity 0.4s ease, transform 0.4s ease;
     }
     .blob-wrap--orchestrator { --accent-rgb: 59, 130, 246; }
     .blob-wrap--webresearch { --accent-rgb: 245, 158, 11; }
@@ -697,35 +698,144 @@
     .results-rec-value--invest { color: #059669; }
     .results-rec-value--conditional { color: #d97706; }
     .results-rec-value--pass { color: #dc2626; }
-    .arena-memo-panel {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 15;
-      max-height: 40vh;
-      overflow-y: auto;
-      padding: 18px 22px 22px;
-      background: linear-gradient(180deg, rgba(248, 250, 252, 0) 0%, rgba(255, 255, 255, 0.97) 14%, #ffffff 100%);
-      border-top: 1px solid #e5e7eb;
-      text-align: left;
-      box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.06);
+    #arena.arena--memo-view .blob-wrap {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.6);
+      pointer-events: none;
     }
-    .arena-memo-panel[hidden] { display: none !important; }
-    .arena-memo-panel:not([hidden]) { display: block; }
-    .arena-memo-panel__lead {
+    #arena.arena--memo-view .arena-lines {
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    .memo-preview {
+      position: absolute;
+      inset: 0;
+      z-index: 18;
+      display: none;
+      flex-direction: column;
+      background: #eef2f7;
+      animation: memo-preview-fade 0.45s ease;
+    }
+    .memo-preview:not([hidden]) { display: flex; }
+    @keyframes memo-preview-fade {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .memo-preview__body {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 24px 16px 16px;
+    }
+    .memo-preview__sheet {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 32px 36px 40px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.06);
+      font-family: Georgia, 'Times New Roman', Times, ui-serif, serif;
       font-size: 14px;
-      font-weight: 600;
-      color: #334155;
-      line-height: 1.5;
+      line-height: 1.7;
+      color: #1e293b;
+    }
+    .memo-preview__header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 10px 14px;
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .memo-preview__headline {
+      font-family: Inter, system-ui, sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #0f172a;
+      margin: 0;
+      line-height: 1.25;
+    }
+    .memo-preview__pill {
+      display: inline-block;
+      font-family: Inter, system-ui, sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 5px 10px;
+      border-radius: 999px;
+      vertical-align: middle;
+    }
+    .memo-preview__pill--invest { background: #d1fae5; color: #047857; }
+    .memo-preview__pill--conditional { background: #fef3c7; color: #b45309; }
+    .memo-preview__pill--pass { background: #fee2e2; color: #b91c1c; }
+    .memo-preview__section {
+      margin-bottom: 26px;
+    }
+    .memo-preview__section:last-of-type { margin-bottom: 8px; }
+    .memo-preview__section h2 {
+      font-family: Inter, system-ui, sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #64748b;
       margin: 0 0 10px;
     }
-    .arena-memo-panel__detail {
-      font-size: 13px;
-      font-weight: 400;
-      color: #64748b;
-      line-height: 1.55;
+    .memo-preview__section p {
+      margin: 0 0 10px;
+    }
+    .memo-preview__section p:last-child { margin-bottom: 0; }
+    .memo-preview__flags {
       margin: 0;
+      padding-left: 1.2em;
+    }
+    .memo-preview__flags li { margin-bottom: 6px; }
+    .memo-preview__flags li:last-child { margin-bottom: 0; }
+    .memo-preview__bar {
+      flex-shrink: 0;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 14px 20px;
+      border-top: 1px solid #e2e8f0;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(8px);
+    }
+    .memo-preview__btn {
+      font-family: Inter, system-ui, sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 12px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      text-decoration: none;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .memo-preview__btn--primary {
+      color: #fff;
+      background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
+      box-shadow: 0 2px 10px rgba(5, 150, 105, 0.3);
+    }
+    .memo-preview__btn--primary:hover {
+      filter: brightness(1.05);
+    }
+    .memo-preview__btn--ghost {
+      color: #475569;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+    }
+    .memo-preview__btn--ghost:hover {
+      background: #e2e8f0;
+      color: #0f172a;
     }
     .btn-download {
       display: inline-flex;
@@ -851,7 +961,39 @@
         <div class="blob-label">Wizard</div>
       </div>
     </div>
-    <div class="arena-memo-panel" id="arenaMemoPanel" hidden></div>
+    <div id="memoPreview" class="memo-preview" hidden>
+      <div class="memo-preview__body">
+        <article class="memo-preview__sheet">
+          <header class="memo-preview__header">
+            <h1 class="memo-preview__headline" id="memoPreviewHeadline"></h1>
+          </header>
+          <section class="memo-preview__section">
+            <h2>Executive Summary</h2>
+            <p id="memoPreviewExec"></p>
+          </section>
+          <section class="memo-preview__section">
+            <h2>Market Position</h2>
+            <p id="memoPreviewMarket"></p>
+          </section>
+          <section class="memo-preview__section">
+            <h2>Financial Highlights</h2>
+            <p id="memoPreviewFinancial"></p>
+          </section>
+          <section class="memo-preview__section">
+            <h2>Legal Risk</h2>
+            <p id="memoPreviewLegal"></p>
+          </section>
+          <section class="memo-preview__section">
+            <h2>Red Flags</h2>
+            <ul class="memo-preview__flags" id="memoPreviewFlags"></ul>
+          </section>
+        </article>
+      </div>
+      <div class="memo-preview__bar">
+        <a class="memo-preview__btn memo-preview__btn--primary" id="memoPreviewDownload" href="#" target="_blank" rel="noopener noreferrer">Download PDF</a>
+        <button type="button" class="memo-preview__btn memo-preview__btn--ghost" id="memoPreviewNewAnalysis">New Analysis</button>
+      </div>
+    </div>
     <div class="results-overlay" id="resultsOverlay">
       <div class="results-card">
         <div class="results-success-icon" aria-hidden="true">✓</div>
@@ -958,9 +1100,45 @@ function formatAnalysisSecondsBrief(sec) {
   var r = sec % 60;
   return m + 'm ' + r + 's';
 }
-function hideArenaMemoPanel() {
-  var mp = document.getElementById('arenaMemoPanel');
-  if (mp) { mp.setAttribute('hidden', ''); mp.innerHTML = ''; }
+function hideArenaMemoViewer() {
+  var arena = document.getElementById('arena');
+  if (arena) arena.classList.remove('arena--memo-view');
+  var mv = document.getElementById('memoPreview');
+  if (mv) { mv.setAttribute('hidden', ''); }
+}
+function populateMemoPreview(company, industry, rec, nFiles, durationSec) {
+  var recLower = String(rec || 'CONDITIONAL').toLowerCase();
+  var kfRaw = company + ' shows differentiated positioning in ' + industry + ' on open-web signals. Validate unit economics and governance with management.';
+  var kfText = kfRaw.charAt(0).toUpperCase() + kfRaw.slice(1);
+  var memoDetail = 'Based on available signals, ' + company + ' appears well-positioned in ' + industry + '; full diligence would stress-test revenue quality, margins, and contractual risk.';
+  var hl = document.getElementById('memoPreviewHeadline');
+  if (hl) hl.innerHTML = escapeHtml(company) + ' — <span class="memo-preview__pill memo-preview__pill--' + recLower + '">' + escapeHtml(rec) + '</span>';
+  var ex = document.getElementById('memoPreviewExec');
+  if (ex) ex.textContent = kfText;
+  var mk = document.getElementById('memoPreviewMarket');
+  if (mk) {
+    mk.textContent = company + ' operates in ' + industry + ', where competitive intensity and channel mix materially affect growth and margins. Open-web sources point to a coherent category narrative, but market share and pricing power remain unverified without primary research. We recommend a structured customer and competitor interview plan to ground the positioning view.';
+  }
+  var fi = document.getElementById('memoPreviewFinancial');
+  if (fi) {
+    fi.textContent = 'Illustrative work suggests a wide provisional valuation band (e.g., $50–95B for large-cap comparables in this demo) based on public-market heuristics only. Revenue quality, margin durability, and capital intensity were not audited here. Any range should be treated as indicative until management materials, audited financials, and a full operating model are available.';
+  }
+  var lg = document.getElementById('memoPreviewLegal');
+  if (lg) {
+    lg.textContent = 'Contractual review flagged change-of-control and related provisions that could affect timing, economics, or certainty of close. IP and data rights were not fully mapped in this web-only pass. A targeted legal diligence workstream should validate reps and warranties, indemnities, and regulatory constraints relevant to ' + industry + '.';
+  }
+  var ul = document.getElementById('memoPreviewFlags');
+  if (ul) {
+    var flags = [
+      'Web-only signals: key facts not independently verified with management.',
+      'Sector cyclicality or regulatory shifts in ' + industry + ' could alter the outlook materially.',
+      'Valuation band is illustrative and sensitive to small changes in growth or margin assumptions.',
+      'Integration, culture, and key-person risk not assessed in this automated preview.'
+    ];
+    ul.innerHTML = flags.map(function (t) { return '<li>' + escapeHtml(t) + '</li>'; }).join('');
+  }
+  var dl = document.getElementById('memoPreviewDownload');
+  if (dl) dl.href = API + '/memo/latest';
 }
 function stripHtml(html) { var d = document.createElement('div'); d.innerHTML = html; return d.textContent || d.innerText || ''; }
 function inferAgentFromHtml(html) {
@@ -1128,7 +1306,7 @@ function appendHistoryMessage(m) {
   addFeedItem(null, safe, aid, null);
 }
 function restoreChatFromHistory(entry) {
-  hideArenaMemoPanel();
+  hideArenaMemoViewer();
   var arena = document.getElementById('arena');
   arena.classList.add('arena--running');
   arena.classList.add('arena--viewing-history');
@@ -1197,18 +1375,11 @@ function showResults() {
   var recEl = document.getElementById('recValue');
   recEl.textContent = rec;
   recEl.className = 'rec-value results-rec-value results-rec-value--' + recLower;
-  var kfRaw = company + ' shows differentiated positioning in ' + industry + ' on open-web signals. Validate unit economics and governance with management.';
-  var kfText = kfRaw.charAt(0).toUpperCase() + kfRaw.slice(1);
-  var memoDetail = 'Based on available signals, ' + company + ' appears well-positioned in ' + industry + '; full diligence would stress-test revenue quality, margins, and contractual risk.';
-  var memoPanel = document.getElementById('arenaMemoPanel');
-  if (memoPanel) {
-    memoPanel.innerHTML = '<p class="arena-memo-panel__lead"></p><p class="arena-memo-panel__detail"></p>';
-    memoPanel.querySelector('.arena-memo-panel__lead').textContent = kfText;
-    memoPanel.querySelector('.arena-memo-panel__detail').textContent = memoDetail;
-    memoPanel.setAttribute('hidden', '');
-  }
   var fileInput = document.getElementById('fileInput');
   var nFiles = fileInput && fileInput.files ? fileInput.files.length : 0;
+  populateMemoPreview(company, industry, rec, nFiles, lastAnalysisDurationSec);
+  var mv0 = document.getElementById('memoPreview');
+  if (mv0) mv0.setAttribute('hidden', '');
   var webPart = nFiles > 0 ? 'Web + documents' : 'Web-only';
   document.getElementById('resultsMetaLine').textContent = 'Medium confidence · ' + webPart + ' · ' + formatAnalysisSecondsBrief(lastAnalysisDurationSec);
   document.getElementById('downloadBtn').href = API + '/memo/latest';
@@ -1225,8 +1396,10 @@ function showResults() {
 }
 document.getElementById('resultsCloseBtn').addEventListener('click', function () {
   document.getElementById('resultsOverlay').classList.remove('visible');
-  var mp = document.getElementById('arenaMemoPanel');
-  if (mp && mp.innerHTML) mp.removeAttribute('hidden');
+  var arena = document.getElementById('arena');
+  if (arena) arena.classList.add('arena--memo-view');
+  var mv = document.getElementById('memoPreview');
+  if (mv) mv.removeAttribute('hidden');
 });
 document.getElementById('analyzeBtn').addEventListener('click', function () { startAnalysis(); });
 document.getElementById('runDemoBtn').addEventListener('click', function () {
@@ -1235,12 +1408,13 @@ document.getElementById('runDemoBtn').addEventListener('click', function () {
   startAnalysis();
 });
 function resetToInputCard() {
-  hideArenaMemoPanel();
+  hideArenaMemoViewer();
   if (stepTimeoutId) { clearTimeout(stepTimeoutId); stepTimeoutId = null; }
   window.analysisAborted = false;
   var arena = document.getElementById('arena');
   arena.classList.remove('arena--running');
   arena.classList.remove('arena--viewing-history');
+  arena.classList.remove('arena--memo-view');
   document.body.classList.remove('app-running');
   document.getElementById('resultsOverlay').classList.remove('visible');
   ['orchestrator', 'webresearch', 'documentparser', 'financialanalyst', 'legalrisk', 'synthesis'].forEach(function (a) {
@@ -1257,8 +1431,21 @@ function resetToInputCard() {
   clearRunTimer();
   var btn = document.getElementById('analyzeBtn');
   if (btn) { btn.disabled = false; btn.textContent = 'Run Analysis →'; }
+  var cn = document.getElementById('companyName');
+  var ind = document.getElementById('industry');
+  var fi = document.getElementById('fileInput');
+  var fl = document.getElementById('fileList');
+  if (cn) cn.value = '';
+  if (ind) ind.value = '';
+  if (fi) fi.value = '';
+  if (fl) fl.textContent = '';
 }
 document.getElementById('newAnalysisBtn').addEventListener('click', function () {
+  resetToInputCard();
+  document.getElementById('chatFeed').innerHTML = '';
+  updateChatEmpty();
+});
+document.getElementById('memoPreviewNewAnalysis').addEventListener('click', function () {
   resetToInputCard();
   document.getElementById('chatFeed').innerHTML = '';
   updateChatEmpty();
@@ -1280,7 +1467,7 @@ document.getElementById('stopBtn').addEventListener('click', function () {
 async function startAnalysis() {
   var company = document.getElementById('companyName').value.trim();
   if (!company) { alert('Please enter a company name.'); return; }
-  hideArenaMemoPanel();
+  hideArenaMemoViewer();
   window.analysisAborted = false;
   if (stepTimeoutId) { clearTimeout(stepTimeoutId); stepTimeoutId = null; }
   document.getElementById('arena').classList.remove('arena--viewing-history');
