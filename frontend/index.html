@@ -32,6 +32,185 @@
       min-height: 100vh;
     }
 
+    body.landing-active > header,
+    body.landing-active > .main {
+      display: none !important;
+    }
+
+    #landing {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      min-height: 100vh;
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(circle at 20% 50%, rgba(59,130,246,0.03) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(245,158,11,0.03) 0%, transparent 40%);
+      color: var(--text);
+      overflow-y: auto;
+      opacity: 1;
+      transition: opacity 300ms ease;
+    }
+    #landing.landing-exiting {
+      opacity: 0;
+      pointer-events: none;
+    }
+    #landing.landing-gone {
+      display: none !important;
+    }
+
+    .landing-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 40px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .landing-nav .logo .badge { display: none; }
+    .landing-nav-tagline {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .landing-hero {
+      text-align: center;
+      padding: 120px 40px 80px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .landing-eyebrow {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+    .landing-headline {
+      font-size: 56px;
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -1.5px;
+      margin-bottom: 24px;
+    }
+    .landing-subhead {
+      font-size: 17px;
+      line-height: 1.65;
+      color: var(--muted);
+      max-width: 640px;
+      margin: 0 auto 36px;
+    }
+    .landing-cta-row {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+    .btn-cta-landing {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--blue), var(--blue-dim));
+      border: none;
+      border-radius: 10px;
+      color: white;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      padding: 16px 36px;
+      letter-spacing: 0.2px;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    .btn-cta-landing:hover {
+      opacity: 0.92;
+      transform: translateY(-1px);
+    }
+    .landing-link-secondary {
+      font-size: 14px;
+      color: var(--blue);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .landing-link-secondary:hover {
+      text-decoration: underline;
+    }
+
+    .landing-features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      max-width: 900px;
+      margin: 60px auto 0;
+      padding: 0 24px 40px;
+    }
+    @media (max-width: 768px) {
+      .landing-features {
+        grid-template-columns: 1fr;
+      }
+      .landing-headline {
+        font-size: 36px;
+      }
+    }
+    .landing-feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 22px 20px;
+      text-align: left;
+    }
+    .landing-feature-card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .landing-feature-card p {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .landing-agent-strip {
+      padding: 0 24px 80px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    .landing-agent-strip-label {
+      text-align: center;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+    .landing-agent-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+    }
+    .landing-agent-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    @keyframes appShellFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    body.app-revealed > header,
+    body.app-revealed > .main {
+      animation: appShellFadeIn 400ms ease forwards;
+    }
+
+
     /* ── Header ── */
     header {
       display: flex;
@@ -407,7 +586,57 @@
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
   </style>
 </head>
-<body>
+<body class="landing-active">
+
+<div id="landing">
+  <nav class="landing-nav">
+    <div class="logo">
+      <div class="logo-icon">⚡</div>
+      DealFlow AI
+      <span class="badge">BETA</span>
+    </div>
+    <div class="landing-nav-tagline">Built on Band · LangGraph · GPT-4o</div>
+  </nav>
+
+  <section class="landing-hero">
+    <p class="landing-eyebrow">MULTI-AGENT DUE DILIGENCE</p>
+    <h1 class="landing-headline">M&amp;A Intelligence,<br>Powered by AI Agents</h1>
+    <p class="landing-subhead">
+      Six specialized agents coordinate through Band — researching markets, parsing financials, assessing legal risk — and deliver a signed-off investment memo in under 60 seconds.
+    </p>
+    <div class="landing-cta-row">
+      <button type="button" class="btn-cta-landing" id="landingStartBtn">Start Free Analysis →</button>
+      <a class="landing-link-secondary" href="https://app.band.ai/chat/8f4ebded-2988-4a75-915c-bcb80ad8a815" target="_blank" rel="noopener noreferrer">View live agents in Band →</a>
+    </div>
+  </section>
+
+  <div class="landing-features">
+    <div class="landing-feature-card">
+      <h3>🔍 Market Research</h3>
+      <p>Wikipedia + web · TAM · competitors · news sentiment</p>
+    </div>
+    <div class="landing-feature-card">
+      <h3>📊 Financial Analysis</h3>
+      <p>CAGR · burn rate · runway · valuation range</p>
+    </div>
+    <div class="landing-feature-card">
+      <h3>⚖️ Legal Risk</h3>
+      <p>Change-of-control · IP ownership · liability exposure</p>
+    </div>
+  </div>
+
+  <div class="landing-agent-strip">
+    <p class="landing-agent-strip-label">6 AGENTS COLLABORATING VIA BAND</p>
+    <div class="landing-agent-row">
+      <div class="landing-agent-chip"><span>🎯</span> Orchestrator</div>
+      <div class="landing-agent-chip"><span>🔍</span> WebResearch</div>
+      <div class="landing-agent-chip"><span>📋</span> DocumentParser</div>
+      <div class="landing-agent-chip"><span>📊</span> FinancialAnalyst</div>
+      <div class="landing-agent-chip"><span>⚖️</span> LegalRisk</div>
+      <div class="landing-agent-chip"><span>✍️</span> Synthesis</div>
+    </div>
+  </div>
+</div>
 
 <header>
   <div class="logo">
@@ -623,6 +852,19 @@
 </div>
 
 <script>
+  function enterAppFromLanding() {
+    const landing = document.getElementById('landing');
+    if (!landing || landing.classList.contains('landing-gone')) return;
+    landing.classList.add('landing-exiting');
+    setTimeout(function () {
+      landing.classList.add('landing-gone');
+      document.body.classList.remove('landing-active');
+      document.body.classList.add('app-revealed');
+    }, 300);
+  }
+
+  document.getElementById('landingStartBtn').addEventListener('click', enterAppFromLanding);
+
   const API = window.location.origin;
   let currentDealId = null;
   let pollTimer = null;
