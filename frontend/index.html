@@ -241,6 +241,12 @@
     }
     .btn-new:hover { background: #3d5bd9; }
     .btn-new__icon { font-size: 15px; font-weight: 400; opacity: 0.95; line-height: 1; }
+    .sidebar-recent-stack {
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid #e5e7eb;
+      flex-shrink: 0;
+    }
     .sidebar-nav-label {
       padding: 14px 16px 6px;
       font-size: 12px;
@@ -248,20 +254,11 @@
       color: #6b7280;
       letter-spacing: 0.02em;
     }
-    .sidebar-nav-item {
-      margin: 1px 8px;
-      padding: 9px 12px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 400;
-      color: #1a1a2e;
-      cursor: pointer;
-      transition: background 0.12s;
-      line-height: 1.45;
+    .sidebar-nav-label--recent {
+      padding-top: 0;
+      padding-bottom: 8px;
     }
-    .sidebar-nav-item:hover { background: rgba(79, 110, 247, 0.1); color: #111827; }
     .recent-list { padding: 4px 8px 0; }
-    #starredChatList.recent-list { flex: 1; min-height: 0; overflow-y: auto; }
     .recent-section {
       flex-shrink: 0;
       display: flex;
@@ -437,7 +434,7 @@
       border-radius: 6px;
       flex-shrink: 0;
     }
-    .sidebar-footer { padding: 10px 16px 0; font-size: 11px; font-weight: 400; color: #9ca3af; }
+    .sidebar-footer { margin-top: auto; padding: 10px 16px 0; font-size: 11px; font-weight: 400; color: #9ca3af; }
     #arena {
       position: relative;
       min-height: 100vh;
@@ -1184,18 +1181,15 @@
   <aside id="sidebar">
     <button type="button" class="sidebar-brand" id="sidebarLogoBtn" aria-label="DealFlow AI — home">⚡ DealFlow AI</button>
     <button type="button" class="btn-new" id="newAnalysisBtn"><span class="btn-new__icon">+</span> New Analysis</button>
-    <div class="sidebar-nav-label">Analyses</div>
-    <div class="sidebar-nav-item">All deals</div>
-    <div class="sidebar-nav-label">Starred</div>
-    <div class="sidebar-nav-item">Watchlist</div>
-    <div class="recent-list" id="starredChatList"></div>
-    <div class="sidebar-nav-label">Recent</div>
-    <div class="recent-section" id="recentSection">
-      <div class="recent-empty" id="recentEmpty">No recent analyses</div>
-      <div class="recent-list-scroll" id="recentListScroll">
-        <div class="recent-list" id="recentList"></div>
+    <div class="sidebar-recent-stack">
+      <div class="sidebar-nav-label sidebar-nav-label--recent">Recent</div>
+      <div class="recent-section" id="recentSection">
+        <div class="recent-empty" id="recentEmpty">No recent analyses</div>
+        <div class="recent-list-scroll" id="recentListScroll">
+          <div class="recent-list" id="recentList"></div>
+        </div>
+        <button type="button" class="recent-toggle-more" id="recentToggleMore" hidden>Show more (0)</button>
       </div>
-      <button type="button" class="recent-toggle-more" id="recentToggleMore" hidden>Show more (0)</button>
     </div>
     <div class="sidebar-footer">Powered by Band</div>
     <div class="sidebar-user">
@@ -1620,12 +1614,10 @@ function formatChatDate(ts) {
 }
 function renderRecentList() {
   var recentList = document.getElementById('recentList');
-  var starredList = document.getElementById('starredChatList');
   var recentSection = document.getElementById('recentSection');
   var toggleBtn = document.getElementById('recentToggleMore');
   if (!recentList) return;
   recentList.innerHTML = '';
-  if (starredList) starredList.innerHTML = '';
   var chats = loadChatsFromStorage();
   var recentCount = 0;
   function appendChatRow(entry, container) {
@@ -1636,11 +1628,8 @@ function renderRecentList() {
     container.appendChild(row);
   }
   chats.forEach(function (entry) {
-    if (entry.starred && starredList) appendChatRow(entry, starredList);
-    else {
-      appendChatRow(entry, recentList);
-      recentCount++;
-    }
+    appendChatRow(entry, recentList);
+    recentCount++;
   });
   if (recentCount <= RECENT_LIST_MAX_COLLAPSED) recentListExpanded = false;
   if (recentSection) {
