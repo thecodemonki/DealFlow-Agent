@@ -608,9 +608,7 @@
       position: absolute;
       inset: 0;
       z-index: 40;
-      background: rgba(15, 23, 42, 0.38);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      background: rgba(0, 0, 0, 0.4);
       display: none;
       align-items: center;
       justify-content: center;
@@ -623,7 +621,7 @@
       border-radius: 16px;
       max-width: 440px;
       width: 100%;
-      padding: 32px 28px 28px;
+      padding: 27px 24px 24px;
       box-shadow:
         0 25px 50px -12px rgba(15, 23, 42, 0.22),
         0 0 0 1px rgba(255, 255, 255, 0.9) inset;
@@ -632,7 +630,7 @@
     .results-success-icon {
       width: 56px;
       height: 56px;
-      margin: 0 auto 18px;
+      margin: 0 auto 15px;
       border-radius: 50%;
       background: linear-gradient(145deg, #ecfdf5, #d1fae5);
       border: 1px solid rgba(16, 185, 129, 0.25);
@@ -658,7 +656,13 @@
       font-weight: 800;
       letter-spacing: -0.04em;
       line-height: 1.1;
-      margin-bottom: 12px;
+      margin-bottom: 6px;
+    }
+    .results-meta-line {
+      font-size: 12px;
+      color: #888;
+      margin: 0 0 16px;
+      line-height: 1.4;
     }
     .results-rec-value--invest { color: #059669; }
     .results-rec-value--conditional { color: #d97706; }
@@ -668,27 +672,10 @@
       font-weight: 500;
       color: #475569;
       line-height: 1.5;
-      margin: 0 0 18px;
+      margin: 0 0 16px;
       max-width: 36em;
       margin-left: auto;
       margin-right: auto;
-    }
-    .results-stat-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      justify-content: center;
-      margin-bottom: 20px;
-    }
-    .results-chip {
-      font-size: 12px;
-      font-weight: 600;
-      color: #475569;
-      background: #f1f5f9;
-      border: 1px solid #e2e8f0;
-      border-radius: 999px;
-      padding: 7px 12px;
-      white-space: nowrap;
     }
     .results-detail {
       font-size: 13px;
@@ -724,11 +711,11 @@
       display: inline-block;
       margin-top: 14px;
       font-size: 13px;
-      font-weight: 600;
-      color: #4f6ef7;
+      font-weight: 500;
+      color: #999;
       text-decoration: none;
     }
-    .results-band-link:hover { text-decoration: underline; color: #3d5bd9; }
+    .results-band-link:hover { color: #737373; text-decoration: underline; }
     .results-close {
       margin-top: 18px;
       width: 100%;
@@ -824,12 +811,8 @@
         <div class="results-success-icon" aria-hidden="true">✓</div>
         <div class="results-kicker">Analysis Complete</div>
         <div class="rec-value results-rec-value results-rec-value--conditional" id="recValue">CONDITIONAL</div>
+        <p class="results-meta-line" id="resultsMetaLine"></p>
         <p class="results-key-finding" id="resultsKeyFinding"></p>
-        <div class="results-stat-chips">
-          <span class="results-chip" id="resultsChipConfidence">Medium confidence</span>
-          <span class="results-chip" id="resultsChipSources">Web + Documents</span>
-          <span class="results-chip" id="resultsChipTime">~0:00</span>
-        </div>
         <p class="results-detail" id="memo-summary"></p>
         <a class="btn-download" id="downloadBtn" href="#" target="_blank" rel="noopener noreferrer">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -923,6 +906,13 @@ function formatAnalysisDuration(sec) {
   var m = Math.floor(sec / 60);
   var s2 = sec % 60;
   return '~' + m + ':' + String(s2).padStart(2, '0');
+}
+function formatAnalysisSecondsBrief(sec) {
+  if (sec <= 0) return '0s';
+  if (sec < 60) return sec + 's';
+  var m = Math.floor(sec / 60);
+  var r = sec % 60;
+  return m + 'm ' + r + 's';
 }
 function stripHtml(html) { var d = document.createElement('div'); d.innerHTML = html; return d.textContent || d.innerText || ''; }
 function inferAgentFromHtml(html) {
@@ -1116,18 +1106,18 @@ document.getElementById('recentList').addEventListener('click', function (e) {
   if (entry) restoreChatFromHistory(entry);
 });
 const STEPS = [
-  function () { setAgentStatus('orchestrator', 'active'); showSpeechBubble('orchestrator', 'Kicking off pipeline…'); addFeedItem(null, 'Deal request received — kicking off your diligence pipeline.', 'orchestrator'); },
+  function () { setAgentStatus('orchestrator', 'active'); showSpeechBubble('orchestrator', 'Kicking off pipeline…'); addFeedItem(null, 'Deal request received. Kicking off your diligence pipeline.', 'orchestrator'); },
   function () { setAgentStatus('webresearch', 'active'); showSpeechBubble('webresearch', 'Scanning the open web…'); addFeedItem(null, 'Pulling market context from the web and Wikipedia…', 'webresearch'); },
   function () { setAgentStatus('documentparser', 'active'); showSpeechBubble('documentparser', 'Reading your uploads…'); addFeedItem(null, 'Scanning uploaded documents…', 'documentparser'); },
-  function () { setAgentStatus('orchestrator', 'done'); showSpeechBubble('orchestrator', 'Routing specialists…'); addFeedItem(null, 'Specialists are lined up — routing work across the team.', 'orchestrator'); },
-  function () { setAgentStatus('webresearch', 'done'); setSignal('market', true, '✓ Received'); showSpeechBubble('webresearch', 'Market signal posted.'); addFeedItem(null, 'Market research complete ✓ — posted to Band', 'webresearch'); },
-  function () { setAgentStatus('documentparser', 'done'); showSpeechBubble('documentparser', 'Parse complete.'); addFeedItem(null, 'Documents scanned and extracted ✓', 'documentparser'); },
+  function () { setAgentStatus('orchestrator', 'done'); showSpeechBubble('orchestrator', 'Routing specialists…'); addFeedItem(null, 'Specialists are lined up and routing work across the team.', 'orchestrator'); },
+  function () { setAgentStatus('webresearch', 'done'); setSignal('market', true, '✓ Received'); showSpeechBubble('webresearch', 'Market signal posted.'); addFeedItem(null, 'Market research complete. Posted to Band.', 'webresearch'); },
+  function () { setAgentStatus('documentparser', 'done'); showSpeechBubble('documentparser', 'Parse complete.'); addFeedItem(null, 'Documents scanned and extracted.', 'documentparser'); },
   function () { setAgentStatus('financialanalyst', 'active'); showSpeechBubble('financialanalyst', 'Crunching numbers…'); addFeedItem(null, 'Running financial models…', 'financialanalyst'); },
   function () { setAgentStatus('legalrisk', 'active'); showSpeechBubble('legalrisk', 'Reviewing clauses…'); addFeedItem(null, 'Reviewing contracts for risks…', 'legalrisk'); },
-  function () { setAgentStatus('financialanalyst', 'done'); setSignal('financial', true, '✓ Received'); showSpeechBubble('financialanalyst', 'Financials in.'); addFeedItem(null, 'Valuation range: $50–95B (illustrative). Analysis posted ✓', 'financialanalyst'); },
-  function () { setAgentStatus('legalrisk', 'done'); setSignal('legal', true, '✓ Received'); showSpeechBubble('legalrisk', 'Legal memo in.'); addFeedItem(null, 'Legal review done — change-of-control clauses flagged', 'legalrisk'); },
+  function () { setAgentStatus('financialanalyst', 'done'); setSignal('financial', true, '✓ Received'); showSpeechBubble('financialanalyst', 'Financials in.'); addFeedItem(null, 'Valuation range: $50–95B (illustrative). Analysis posted.', 'financialanalyst'); },
+  function () { setAgentStatus('legalrisk', 'done'); setSignal('legal', true, '✓ Received'); showSpeechBubble('legalrisk', 'Legal memo in.'); addFeedItem(null, 'Legal review done. Change-of-control clauses flagged.', 'legalrisk'); },
   function () { setAgentStatus('synthesis', 'active'); showSpeechBubble('synthesis', 'Weaving the memo…'); addFeedItem(null, 'Writing investment memo…', 'synthesis'); },
-  function () { setAgentStatus('synthesis', 'done'); setSignal('memo', true, '✓ Generated'); showSpeechBubble('synthesis', 'Done — memo ready.'); addFeedItem(null, 'Investment memo ready — PDF generated ✓', 'synthesis'); showResults(); }
+  function () { setAgentStatus('synthesis', 'done'); setSignal('memo', true, '✓ Generated'); showSpeechBubble('synthesis', 'Done. Memo ready.'); addFeedItem(null, 'Investment memo ready. PDF generated.', 'synthesis'); showResults(); }
 ];
 function showResults() {
   document.body.classList.remove('app-running');
@@ -1138,12 +1128,12 @@ function showResults() {
   var recEl = document.getElementById('recValue');
   recEl.textContent = rec;
   recEl.className = 'rec-value results-rec-value results-rec-value--' + recLower;
-  document.getElementById('resultsKeyFinding').textContent = company + ' shows differentiated positioning in ' + industry + ' on open-web signals — validate unit economics and governance with management.';
+  var kfRaw = company + ' shows differentiated positioning in ' + industry + ' on open-web signals. Validate unit economics and governance with management.';
+  document.getElementById('resultsKeyFinding').textContent = kfRaw.charAt(0).toUpperCase() + kfRaw.slice(1);
   var fileInput = document.getElementById('fileInput');
   var nFiles = fileInput && fileInput.files ? fileInput.files.length : 0;
-  document.getElementById('resultsChipConfidence').textContent = 'Medium confidence';
-  document.getElementById('resultsChipSources').textContent = nFiles > 0 ? 'Web + Documents' : 'Web only';
-  document.getElementById('resultsChipTime').textContent = formatAnalysisDuration(lastAnalysisDurationSec);
+  var webPart = nFiles > 0 ? 'Web + documents analysis' : 'Web-only analysis';
+  document.getElementById('resultsMetaLine').textContent = 'Medium confidence · ' + webPart + ' · ' + formatAnalysisSecondsBrief(lastAnalysisDurationSec);
   document.getElementById('memo-summary').textContent = 'Based on available signals, ' + company + ' appears well-positioned in ' + industry + '; full diligence would stress-test revenue quality, margins, and contractual risk.';
   document.getElementById('downloadBtn').href = API + '/memo/latest';
   var bandLink = document.getElementById('bandRoomLink');
