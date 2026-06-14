@@ -67,7 +67,62 @@
       line-height: 1.45;
     }
     .sidebar-nav-item:hover { background: rgba(79, 110, 247, 0.1); color: #111827; }
-    .recent-list { padding: 4px 8px 0; flex: 1; }
+    .recent-list { padding: 4px 8px 0; }
+    #starredChatList.recent-list { flex: 1; min-height: 0; overflow-y: auto; }
+    .recent-section {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      height: 220px;
+      overflow: hidden;
+      margin-bottom: 4px;
+    }
+    .recent-list-scroll {
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+      padding: 0 8px;
+    }
+    .recent-section.recent-section--expanded .recent-list-scroll {
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    .recent-section--empty .recent-list-scroll {
+      display: none;
+    }
+    .recent-empty {
+      display: none;
+      flex: 1;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 10px;
+      font-size: 13px;
+      font-weight: 400;
+      color: #9ca3af;
+      text-align: center;
+      line-height: 1.35;
+    }
+    .recent-section--empty .recent-empty {
+      display: flex;
+    }
+    #recentSection.recent-section--folded #recentList .recent-row:nth-child(n+5) {
+      display: none !important;
+    }
+    .recent-toggle-more {
+      flex-shrink: 0;
+      align-self: flex-start;
+      margin: 0 8px 4px;
+      padding: 0;
+      font-size: 12px;
+      font-weight: 400;
+      color: #999;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      letter-spacing: inherit;
+    }
+    .recent-toggle-more:hover { color: #64748b; }
     .chat-restore-banner {
       text-align: center;
       font-size: 11px;
@@ -895,7 +950,13 @@
     <div class="sidebar-nav-item">Watchlist</div>
     <div class="recent-list" id="starredChatList"></div>
     <div class="sidebar-nav-label">Recent</div>
-    <div class="recent-list" id="recentList"></div>
+    <div class="recent-section" id="recentSection">
+      <div class="recent-empty" id="recentEmpty">No recent analyses</div>
+      <div class="recent-list-scroll" id="recentListScroll">
+        <div class="recent-list" id="recentList"></div>
+      </div>
+      <button type="button" class="recent-toggle-more" id="recentToggleMore" hidden>Show more (0)</button>
+    </div>
     <div class="sidebar-footer">Powered by Band</div>
     <div class="sidebar-user">
       <div class="sidebar-user__avatar" aria-hidden="true">M</div>
@@ -1044,6 +1105,8 @@
 <script>
 const API = window.location.origin;
 const CHATS_KEY = 'dealflow_chats';
+const RECENT_LIST_MAX_COLLAPSED = 4;
+var recentListExpanded = false;
 let currentDealId = null, pollTimer = null, activityStep = 0, runTimerInterval = null, stepTimeoutId = null, lastAnalysisDurationSec = 0;
 const speechTimers = {};
 const AGENT_CHAT_CLASS = { orchestrator: 'chat-msg--orchestrator', webresearch: 'chat-msg--webresearch', documentparser: 'chat-msg--documentparser', financialanalyst: 'chat-msg--financialanalyst', legalrisk: 'chat-msg--legalrisk', synthesis: 'chat-msg--synthesis' };
@@ -1276,10 +1339,13 @@ function formatChatDate(ts) {
 function renderRecentList() {
   var recentList = document.getElementById('recentList');
   var starredList = document.getElementById('starredChatList');
+  var recentSection = document.getElementById('recentSection');
+  var toggleBtn = document.getElementById('recentToggleMore');
   if (!recentList) return;
   recentList.innerHTML = '';
   if (starredList) starredList.innerHTML = '';
   var chats = loadChatsFromStorage();
+  var recentCount = 0;
   function appendChatRow(entry, container) {
     var row = document.createElement('div');
     row.className = 'recent-row';
@@ -1289,8 +1355,26 @@ function renderRecentList() {
   }
   chats.forEach(function (entry) {
     if (entry.starred && starredList) appendChatRow(entry, starredList);
-    else appendChatRow(entry, recentList);
+    else {
+      appendChatRow(entry, recentList);
+      recentCount++;
+    }
   });
+  if (recentCount <= RECENT_LIST_MAX_COLLAPSED) recentListExpanded = false;
+  if (recentSection) {
+    recentSection.classList.toggle('recent-section--empty', recentCount === 0);
+    var folded = recentCount > RECENT_LIST_MAX_COLLAPSED && !recentListExpanded;
+    recentSection.classList.toggle('recent-section--folded', folded);
+    recentSection.classList.toggle('recent-section--expanded', recentListExpanded && recentCount > RECENT_LIST_MAX_COLLAPSED);
+  }
+  if (toggleBtn) {
+    if (recentCount > RECENT_LIST_MAX_COLLAPSED) {
+      toggleBtn.hidden = false;
+      toggleBtn.textContent = recentListExpanded ? 'Show less' : 'Show more (' + (recentCount - RECENT_LIST_MAX_COLLAPSED) + ')';
+    } else {
+      toggleBtn.hidden = true;
+    }
+  }
 }
 function appendHistoryMessage(m) {
   if (m.role === 'user') {
@@ -1330,6 +1414,12 @@ function restoreChatFromHistory(entry) {
   if (document.getElementById('industry')) document.getElementById('industry').value = entry.industry || '';
 }
 document.getElementById('sidebar').addEventListener('click', function (e) {
+  if (e.target.closest('#recentToggleMore')) {
+    e.preventDefault();
+    recentListExpanded = !recentListExpanded;
+    renderRecentList();
+    return;
+  }
   if (!e.target.closest('.recent-list')) return;
   var delBtn = e.target.closest('.recent-row__delete');
   if (delBtn) {
@@ -1338,10 +1428,11 @@ document.getElementById('sidebar').addEventListener('click', function (e) {
     var rowDel = delBtn.closest('.recent-row');
     var idDel = rowDel && rowDel.getAttribute('data-chat-id');
     if (!idDel || !rowDel) return;
+    rowDel.style.display = 'none';
     var chatsDel = loadChatsFromStorage();
     var nextChats = chatsDel.filter(function (c) { return String(c.id) !== String(idDel); });
     saveChatsToStorage(nextChats);
-    rowDel.remove();
+    renderRecentList();
     return;
   }
   var row = e.target.closest('.recent-row');
