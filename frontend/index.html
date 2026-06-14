@@ -773,145 +773,141 @@
     .results-rec-value--invest { color: #059669; }
     .results-rec-value--conditional { color: #d97706; }
     .results-rec-value--pass { color: #dc2626; }
-    #arena.arena--memo-view .blob-wrap {
+    #arena.arena--memo-view #inputCard {
       opacity: 0;
-      transform: translate(-50%, -50%) scale(0.6);
+      visibility: hidden;
       pointer-events: none;
+    }
+    #arena.arena--memo-view .blob-layer {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.35s ease, visibility 0.35s ease;
     }
     #arena.arena--memo-view .arena-lines {
       opacity: 0;
-      transition: opacity 0.4s ease;
+      visibility: hidden;
+      transition: opacity 0.35s ease, visibility 0.35s ease;
     }
-    .memo-preview {
+    #arena.arena--memo-view .blob-agent,
+    #arena.arena--memo-view .blob-label,
+    #arena.arena--memo-view .blob-check,
+    #arena.arena--memo-view .speech-bubble {
+      opacity: 0 !important;
+      visibility: hidden;
+      transition: opacity 0.35s ease, visibility 0.35s ease;
+    }
+    #memoView.memo-view {
       position: absolute;
       inset: 0;
-      z-index: 18;
-      display: none;
-      flex-direction: column;
-      background: #eef2f7;
-      animation: memo-preview-fade 0.45s ease;
-    }
-    .memo-preview:not([hidden]) { display: flex; }
-    @keyframes memo-preview-fade {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    .memo-preview__body {
-      flex: 1;
-      min-height: 0;
+      z-index: 19;
       overflow-y: auto;
-      padding: 24px 16px 16px;
-    }
-    .memo-preview__sheet {
-      max-width: 680px;
-      margin: 0 auto;
-      padding: 32px 36px 40px;
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 4px 24px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.06);
-      font-family: Georgia, 'Times New Roman', Times, ui-serif, serif;
+      background: #fafafa;
+      font-family: Inter, system-ui, sans-serif;
       font-size: 14px;
       line-height: 1.7;
-      color: #1e293b;
+      color: #1a1a2e;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
     }
-    .memo-preview__header {
+    #memoView.memo-view.memo-view--visible {
+      opacity: 1;
+      visibility: visible;
+    }
+    #memoView[hidden] {
+      display: none !important;
+    }
+    #memoView[hidden].memo-view--visible {
+      display: none !important;
+    }
+    .memo-view__header {
+      position: sticky;
+      top: 0;
+      z-index: 2;
       display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
       flex-wrap: wrap;
-      align-items: baseline;
-      gap: 10px 14px;
-      margin-bottom: 28px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid #e2e8f0;
+      padding: 20px 48px 16px;
+      background: #fafafa;
+      border-bottom: 1px solid #e5e7eb;
     }
-    .memo-preview__headline {
-      font-family: Inter, system-ui, sans-serif;
-      font-size: 1.5rem;
+    .memo-view__company {
+      font-size: 18px;
       font-weight: 700;
       letter-spacing: -0.02em;
-      color: #0f172a;
-      margin: 0;
-      line-height: 1.25;
+      color: #111827;
+      min-width: 0;
     }
-    .memo-preview__pill {
+    .memo-view__header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+    .memo-view__pill {
       display: inline-block;
-      font-family: Inter, system-ui, sans-serif;
       font-size: 11px;
       font-weight: 700;
       letter-spacing: 0.06em;
       text-transform: uppercase;
       padding: 5px 10px;
       border-radius: 999px;
-      vertical-align: middle;
     }
-    .memo-preview__pill--invest { background: #d1fae5; color: #047857; }
-    .memo-preview__pill--conditional { background: #fef3c7; color: #b45309; }
-    .memo-preview__pill--pass { background: #fee2e2; color: #b91c1c; }
-    .memo-preview__section {
-      margin-bottom: 26px;
-    }
-    .memo-preview__section:last-of-type { margin-bottom: 8px; }
-    .memo-preview__section h2 {
-      font-family: Inter, system-ui, sans-serif;
+    .memo-view__pill--invest { background: #d1fae5; color: #047857; }
+    .memo-view__pill--conditional { background: #fef3c7; color: #b45309; }
+    .memo-view__pill--pass { background: #fee2e2; color: #b91c1c; }
+    .memo-view__download {
       font-size: 12px;
+      font-weight: 600;
+      color: #4f6ef7;
+      text-decoration: none;
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid #c7d2fe;
+      background: #fff;
+      white-space: nowrap;
+    }
+    .memo-view__download:hover {
+      background: #eef2ff;
+      color: #3d5bd9;
+    }
+    .memo-view__body {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 40px 48px 48px;
+    }
+    .memo-view__section {
+      padding-bottom: 22px;
+      margin-bottom: 22px;
+      border-bottom: 1px solid #e8eaef;
+    }
+    .memo-view__section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    .memo-view__label {
+      display: block;
+      font-size: 11px;
       font-weight: 700;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: #64748b;
-      margin: 0 0 10px;
+      color: #6b7280;
+      margin-bottom: 8px;
     }
-    .memo-preview__section p {
-      margin: 0 0 10px;
+    .memo-view__section p {
+      margin: 0;
     }
-    .memo-preview__section p:last-child { margin-bottom: 0; }
-    .memo-preview__flags {
+    .memo-view__flags {
       margin: 0;
       padding-left: 1.2em;
     }
-    .memo-preview__flags li { margin-bottom: 6px; }
-    .memo-preview__flags li:last-child { margin-bottom: 0; }
-    .memo-preview__bar {
-      flex-shrink: 0;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      padding: 14px 20px;
-      border-top: 1px solid #e2e8f0;
-      background: rgba(255, 255, 255, 0.96);
-      backdrop-filter: blur(8px);
-    }
-    .memo-preview__btn {
-      font-family: Inter, system-ui, sans-serif;
-      font-size: 14px;
-      font-weight: 600;
-      padding: 12px 20px;
-      border-radius: 10px;
-      cursor: pointer;
-      text-decoration: none;
-      border: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-    .memo-preview__btn--primary {
-      color: #fff;
-      background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
-      box-shadow: 0 2px 10px rgba(5, 150, 105, 0.3);
-    }
-    .memo-preview__btn--primary:hover {
-      filter: brightness(1.05);
-    }
-    .memo-preview__btn--ghost {
-      color: #475569;
-      background: #f1f5f9;
-      border: 1px solid #e2e8f0;
-    }
-    .memo-preview__btn--ghost:hover {
-      background: #e2e8f0;
-      color: #0f172a;
-    }
+    .memo-view__flags li { margin-bottom: 6px; }
+    .memo-view__flags li:last-child { margin-bottom: 0; }
     .btn-download {
       display: inline-flex;
       align-items: center;
@@ -1042,37 +1038,35 @@
         <div class="blob-label">Wizard</div>
       </div>
     </div>
-    <div id="memoPreview" class="memo-preview" hidden>
-      <div class="memo-preview__body">
-        <article class="memo-preview__sheet">
-          <header class="memo-preview__header">
-            <h1 class="memo-preview__headline" id="memoPreviewHeadline"></h1>
-          </header>
-          <section class="memo-preview__section">
-            <h2>Executive Summary</h2>
-            <p id="memoPreviewExec"></p>
-          </section>
-          <section class="memo-preview__section">
-            <h2>Market Position</h2>
-            <p id="memoPreviewMarket"></p>
-          </section>
-          <section class="memo-preview__section">
-            <h2>Financial Highlights</h2>
-            <p id="memoPreviewFinancial"></p>
-          </section>
-          <section class="memo-preview__section">
-            <h2>Legal Risk</h2>
-            <p id="memoPreviewLegal"></p>
-          </section>
-          <section class="memo-preview__section">
-            <h2>Red Flags</h2>
-            <ul class="memo-preview__flags" id="memoPreviewFlags"></ul>
-          </section>
-        </article>
-      </div>
-      <div class="memo-preview__bar">
-        <a class="memo-preview__btn memo-preview__btn--primary" id="memoPreviewDownload" href="#" target="_blank" rel="noopener noreferrer">Download PDF</a>
-        <button type="button" class="memo-preview__btn memo-preview__btn--ghost" id="memoPreviewNewAnalysis">New Analysis</button>
+    <div id="memoView" class="memo-view" hidden>
+      <header class="memo-view__header">
+        <span class="memo-view__company" id="memoViewCompany"></span>
+        <div class="memo-view__header-right">
+          <span class="memo-view__pill memo-view__pill--conditional" id="memoViewRec"></span>
+          <a class="memo-view__download" id="memoViewDownload" href="#" target="_blank" rel="noopener noreferrer">Download PDF</a>
+        </div>
+      </header>
+      <div class="memo-view__body">
+        <section class="memo-view__section">
+          <span class="memo-view__label">Executive Summary</span>
+          <p id="memoViewExec"></p>
+        </section>
+        <section class="memo-view__section">
+          <span class="memo-view__label">Market Position</span>
+          <p id="memoViewMarket"></p>
+        </section>
+        <section class="memo-view__section">
+          <span class="memo-view__label">Financial Highlights</span>
+          <p id="memoViewFinancial"></p>
+        </section>
+        <section class="memo-view__section">
+          <span class="memo-view__label">Legal Risk</span>
+          <p id="memoViewLegal"></p>
+        </section>
+        <section class="memo-view__section">
+          <span class="memo-view__label">Red Flags</span>
+          <ul class="memo-view__flags" id="memoViewFlags"></ul>
+        </section>
       </div>
     </div>
     <div class="results-overlay" id="resultsOverlay">
@@ -1186,31 +1180,39 @@ function formatAnalysisSecondsBrief(sec) {
 function hideArenaMemoViewer() {
   var arena = document.getElementById('arena');
   if (arena) arena.classList.remove('arena--memo-view');
-  var mv = document.getElementById('memoPreview');
-  if (mv) { mv.setAttribute('hidden', ''); }
+  var mv = document.getElementById('memoView');
+  if (mv) {
+    mv.classList.remove('memo-view--visible');
+    mv.setAttribute('hidden', '');
+  }
 }
-function populateMemoPreview(company, industry, rec, nFiles, durationSec) {
+function populateMemoView(company, industry, rec, nFiles, durationSec) {
   var recLower = String(rec || 'CONDITIONAL').toLowerCase();
+  if (recLower !== 'invest' && recLower !== 'conditional' && recLower !== 'pass') recLower = 'conditional';
   var kfRaw = company + ' shows differentiated positioning in ' + industry + ' on open-web signals. Validate unit economics and governance with management.';
   var kfText = kfRaw.charAt(0).toUpperCase() + kfRaw.slice(1);
-  var memoDetail = 'Based on available signals, ' + company + ' appears well-positioned in ' + industry + '; full diligence would stress-test revenue quality, margins, and contractual risk.';
-  var hl = document.getElementById('memoPreviewHeadline');
-  if (hl) hl.innerHTML = escapeHtml(company) + ' — <span class="memo-preview__pill memo-preview__pill--' + recLower + '">' + escapeHtml(rec) + '</span>';
-  var ex = document.getElementById('memoPreviewExec');
+  var companyEl = document.getElementById('memoViewCompany');
+  if (companyEl) companyEl.textContent = company;
+  var recEl = document.getElementById('memoViewRec');
+  if (recEl) {
+    recEl.textContent = rec;
+    recEl.className = 'memo-view__pill memo-view__pill--' + recLower;
+  }
+  var ex = document.getElementById('memoViewExec');
   if (ex) ex.textContent = kfText;
-  var mk = document.getElementById('memoPreviewMarket');
+  var mk = document.getElementById('memoViewMarket');
   if (mk) {
     mk.textContent = company + ' operates in ' + industry + ', where competitive intensity and channel mix materially affect growth and margins. Open-web sources point to a coherent category narrative, but market share and pricing power remain unverified without primary research. We recommend a structured customer and competitor interview plan to ground the positioning view.';
   }
-  var fi = document.getElementById('memoPreviewFinancial');
+  var fi = document.getElementById('memoViewFinancial');
   if (fi) {
     fi.textContent = 'Illustrative work suggests a wide provisional valuation band (e.g., $50–95B for large-cap comparables in this demo) based on public-market heuristics only. Revenue quality, margin durability, and capital intensity were not audited here. Any range should be treated as indicative until management materials, audited financials, and a full operating model are available.';
   }
-  var lg = document.getElementById('memoPreviewLegal');
+  var lg = document.getElementById('memoViewLegal');
   if (lg) {
     lg.textContent = 'Contractual review flagged change-of-control and related provisions that could affect timing, economics, or certainty of close. IP and data rights were not fully mapped in this web-only pass. A targeted legal diligence workstream should validate reps and warranties, indemnities, and regulatory constraints relevant to ' + industry + '.';
   }
-  var ul = document.getElementById('memoPreviewFlags');
+  var ul = document.getElementById('memoViewFlags');
   if (ul) {
     var flags = [
       'Web-only signals: key facts not independently verified with management.',
@@ -1220,7 +1222,7 @@ function populateMemoPreview(company, industry, rec, nFiles, durationSec) {
     ];
     ul.innerHTML = flags.map(function (t) { return '<li>' + escapeHtml(t) + '</li>'; }).join('');
   }
-  var dl = document.getElementById('memoPreviewDownload');
+  var dl = document.getElementById('memoViewDownload');
   if (dl) dl.href = API + '/memo/latest';
 }
 function stripHtml(html) { var d = document.createElement('div'); d.innerHTML = html; return d.textContent || d.innerText || ''; }
@@ -1489,9 +1491,12 @@ function showResults() {
   recEl.className = 'rec-value results-rec-value results-rec-value--' + recLower;
   var fileInput = document.getElementById('fileInput');
   var nFiles = fileInput && fileInput.files ? fileInput.files.length : 0;
-  populateMemoPreview(company, industry, rec, nFiles, lastAnalysisDurationSec);
-  var mv0 = document.getElementById('memoPreview');
-  if (mv0) mv0.setAttribute('hidden', '');
+  populateMemoView(company, industry, rec, nFiles, lastAnalysisDurationSec);
+  var mv0 = document.getElementById('memoView');
+  if (mv0) {
+    mv0.classList.remove('memo-view--visible');
+    mv0.setAttribute('hidden', '');
+  }
   var webPart = nFiles > 0 ? 'Web + documents' : 'Web-only';
   document.getElementById('resultsMetaLine').textContent = 'Medium confidence · ' + webPart + ' · ' + formatAnalysisSecondsBrief(lastAnalysisDurationSec);
   document.getElementById('downloadBtn').href = API + '/memo/latest';
@@ -1512,9 +1517,18 @@ document.getElementById('resultsCloseBtn').addEventListener('click', function ()
   if (arena) {
     arena.classList.remove('arena--home-blobs');
     arena.classList.add('arena--memo-view');
+    arena.classList.remove('arena--running', 'arena--viewing-history');
   }
-  var mv = document.getElementById('memoPreview');
-  if (mv) mv.removeAttribute('hidden');
+  var mv = document.getElementById('memoView');
+  if (mv) {
+    mv.classList.remove('memo-view--visible');
+    mv.removeAttribute('hidden');
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        mv.classList.add('memo-view--visible');
+      });
+    });
+  }
 });
 document.getElementById('analyzeBtn').addEventListener('click', function () { startAnalysis(); });
 document.getElementById('runDemoBtn').addEventListener('click', function () {
@@ -1559,11 +1573,6 @@ function resetToInputCard(opts) {
   if (fl) fl.textContent = '';
 }
 document.getElementById('newAnalysisBtn').addEventListener('click', function () {
-  resetToInputCard();
-  document.getElementById('chatFeed').innerHTML = '';
-  updateChatEmpty();
-});
-document.getElementById('memoPreviewNewAnalysis').addEventListener('click', function () {
   resetToInputCard();
   document.getElementById('chatFeed').innerHTML = '';
   updateChatEmpty();
