@@ -23,40 +23,103 @@
       flex-direction: column;
       min-height: 100vh;
       flex-shrink: 0;
+      position: relative;
+      padding-bottom: 76px;
+      font-weight: 400;
+      letter-spacing: 0.01em;
     }
-    .sidebar-brand { padding: 20px 16px 12px; font-weight: 800; font-size: 15px; color: #f8fafc; letter-spacing: -0.02em; }
+    .sidebar-brand { padding: 18px 16px 14px; font-weight: 600; font-size: 15px; color: #f1f5f9; letter-spacing: -0.02em; }
     .btn-new {
-      margin: 0 12px 20px;
-      width: calc(100% - 24px);
-      padding: 10px 14px;
-      font-size: 13px;
-      font-weight: 600;
-      color: #fff;
-      background: linear-gradient(135deg, #2563eb, #1d4ed8);
-      border: none;
+      margin: 0 10px 6px;
+      width: calc(100% - 20px);
+      padding: 10px 12px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #e2e8f0;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 10px;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      line-height: 1.4;
     }
-    .btn-new:hover { filter: brightness(1.08); }
-    .sidebar-section-label {
-      padding: 0 16px 8px;
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      color: rgba(148, 163, 184, 0.85);
+    .btn-new:hover { background: rgba(255, 255, 255, 0.1); }
+    .btn-new__icon { font-size: 15px; font-weight: 400; opacity: 0.85; line-height: 1; }
+    .sidebar-nav-label {
+      padding: 14px 16px 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(148, 163, 184, 0.72);
+      letter-spacing: 0.02em;
     }
-    .recent-list { padding: 0 8px; flex: 1; }
-    .recent-row {
-      margin: 2px 0;
-      padding: 10px 12px;
+    .sidebar-nav-item {
+      margin: 1px 8px;
+      padding: 9px 12px;
       border-radius: 8px;
-      font-size: 13px;
+      font-size: 14px;
+      font-weight: 400;
       color: #cbd5e1;
       cursor: pointer;
-      transition: background 0.15s;
+      transition: background 0.12s;
+      line-height: 1.45;
     }
-    .recent-row:hover { background: rgba(255, 255, 255, 0.06); color: #f1f5f9; }
-    .sidebar-footer { padding: 16px; font-size: 11px; color: rgba(148, 163, 184, 0.65); }
+    .sidebar-nav-item:hover { background: rgba(255, 255, 255, 0.05); color: #f1f5f9; }
+    .recent-list { padding: 4px 8px 0; flex: 1; }
+    .recent-row {
+      margin: 2px 0;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 400;
+      color: #cbd5e1;
+      cursor: pointer;
+      transition: background 0.12s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      line-height: 1.4;
+    }
+    .recent-row:hover { background: rgba(255, 255, 255, 0.05); color: #f1f5f9; }
+    .recent-row__icon { flex-shrink: 0; opacity: 0.5; font-size: 14px; line-height: 1; }
+    .recent-row__meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    .recent-row__name { font-weight: 500; color: inherit; }
+    .recent-row__date { font-size: 12px; font-weight: 400; color: rgba(148, 163, 184, 0.88); }
+    .sidebar-user {
+      position: absolute;
+      bottom: 16px;
+      left: 0;
+      right: 0;
+      padding: 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .sidebar-user__avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #eab308, #ca8a04);
+      color: #0f172a;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .sidebar-user__name { font-size: 14px; font-weight: 500; color: #e2e8f0; flex: 1; min-width: 0; }
+    .sidebar-user__badge {
+      font-size: 11px;
+      font-weight: 500;
+      color: rgba(226, 232, 240, 0.9);
+      background: rgba(255, 255, 255, 0.08);
+      padding: 3px 8px;
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+    .sidebar-footer { padding: 10px 16px 0; font-size: 11px; font-weight: 400; color: rgba(148, 163, 184, 0.5); }
     #arena {
       position: relative;
       min-height: 100vh;
@@ -73,25 +136,25 @@
     }
     .app-grid.chat-collapsed .chat-shell { width: 0; min-width: 0; overflow: visible; }
     .chat-toggle {
-      position: absolute;
-      left: -32px;
-      top: 50%;
-      transform: translateY(-50%);
-      z-index: 30;
-      width: 28px;
-      height: 56px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-right: none;
-      border-radius: 8px 0 0 8px;
-      background: #1e293b;
-      color: #e2e8f0;
-      font-size: 14px;
+      flex-shrink: 0;
+      width: 30px;
+      height: 30px;
+      margin-right: 2px;
+      border: 1px solid #e2e8f0;
+      border-radius: 999px;
+      background: #f8fafc;
+      color: #475569;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 0;
+      transition: background 0.15s, color 0.15s;
     }
-    .chat-toggle:hover { background: #334155; }
+    .chat-toggle:hover { background: #f1f5f9; color: #0f172a; }
+    .chat-toggle svg { width: 14px; height: 14px; display: block; }
+    .chat-toggle .chev { transition: transform 0.25s ease; transform-origin: center; }
+    .app-grid.chat-collapsed .chat-toggle .chev { transform: rotate(180deg); }
     #chatPanel {
       width: 360px;
       max-width: 360px;
@@ -104,16 +167,24 @@
     }
     .app-grid.chat-collapsed #chatPanel { opacity: 0; pointer-events: none; }
     .chat-header {
-      padding: 14px 16px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      padding: 10px 12px 10px 10px;
       border-bottom: 1px solid #e2e8f0;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-weight: 700;
+      gap: 8px;
+      font-weight: 600;
       font-size: 15px;
       color: #0f172a;
+      background: #ffffff;
     }
-    .chat-header-meta { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 600; color: #64748b; }
+    .chat-header-title { display: flex; align-items: center; min-width: 0; flex: 1; }
+    .chat-header-title > span:last-of-type { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .chat-header-meta { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 500; color: #64748b; }
     .chat-live-wrap { display: none; align-items: center; gap: 6px; }
     .app-running .chat-live-wrap { display: flex; }
     .chat-live-dot {
@@ -134,6 +205,7 @@
       display: flex;
       flex-direction: column;
       gap: 14px;
+      align-items: stretch;
     }
     .chat-empty {
       position: absolute;
@@ -142,6 +214,7 @@
       align-items: center;
       justify-content: center;
       font-size: 13px;
+      font-weight: 400;
       color: #94a3b8;
       pointer-events: none;
     }
@@ -163,7 +236,7 @@
     .chat-msg--legalrisk .chat-msg__avatar { background: linear-gradient(135deg, #c084fc, #3b0764); }
     .chat-msg--synthesis .chat-msg__avatar { background: linear-gradient(135deg, #2dd4bf, #134e4a); }
     .chat-msg__body { flex: 1; min-width: 0; }
-    .chat-msg__name { font-size: 12px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+    .chat-msg__name { font-size: 12px; font-weight: 600; color: #0f172a; margin-bottom: 4px; }
     .chat-msg__bubble {
       background: #f8f9fc;
       border-radius: 4px 16px 16px 16px;
@@ -173,6 +246,101 @@
       color: #334155;
     }
     .chat-msg__bubble strong { color: #0f172a; }
+    .chat-msg--user {
+      flex-direction: row-reverse;
+      align-self: flex-end;
+      max-width: 92%;
+    }
+    .chat-msg--user .chat-msg__body { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+    .chat-msg--user .chat-msg__name { color: #64748b; font-weight: 600; }
+    .chat-msg--user .chat-msg__avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #eab308, #ca8a04);
+      color: #0f172a;
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .chat-msg--user .chat-msg__bubble {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px 16px 4px 16px;
+      text-align: left;
+    }
+    .chat-message-bar {
+      flex-shrink: 0;
+      border-top: 1px solid #e2e8f0;
+      padding: 12px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      background: #fff;
+    }
+    .chat-message-bar input {
+      flex: 1;
+      min-width: 0;
+      padding: 10px 12px;
+      font-size: 14px;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      outline: none;
+      color: #334155;
+    }
+    .chat-message-bar input:focus { border-color: #94a3b8; box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.2); }
+    .chat-message-bar__send {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .chat-message-bar__send:hover { filter: brightness(1.05); }
+    .chat-message-bar__send:disabled { opacity: 0.45; cursor: not-allowed; }
+    .chat-run-form {
+      flex-shrink: 0;
+      border-top: 1px solid #e2e8f0;
+      padding: 12px;
+      background: #fafafa;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .chat-run-form input[type="text"] {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 13px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      outline: none;
+      color: #334155;
+      background: #fff;
+    }
+    .chat-run-form input:focus { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12); }
+    .chat-run-form-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .chat-run-form-grow { flex: 1; min-width: 0; }
+    .btn-run-chat {
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-run-chat:disabled { opacity: 0.55; cursor: not-allowed; }
+    .chat-run-file { font-size: 11px; color: #64748b; }
+    .chat-run-file label { color: #2563eb; cursor: pointer; text-decoration: underline; }
     #inputCard {
       position: absolute;
       top: 50%;
@@ -188,41 +356,18 @@
       transition: opacity 0.45s ease, visibility 0.45s ease;
     }
     #arena.arena--running #inputCard { opacity: 0; visibility: hidden; pointer-events: none; }
-    #inputCard h1 { font-size: 24px; font-weight: 700; color: #0f172a; margin-bottom: 24px; }
-    #inputCard input[type="text"] {
-      width: 100%;
-      padding: 10px 12px;
-      margin-bottom: 12px;
-      font-size: 14px;
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      outline: none;
-      color: #334155;
-    }
-    #inputCard input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
-    .input-file-row { font-size: 13px; color: #64748b; margin-bottom: 20px; }
-    .input-file-row label { color: #2563eb; cursor: pointer; text-decoration: underline; }
-    .input-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-    .btn-run-analysis {
-      padding: 12px 22px;
-      font-size: 14px;
-      font-weight: 600;
-      color: #fff;
-      background: linear-gradient(135deg, #2563eb, #1d4ed8);
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-    }
-    .btn-run-analysis:disabled { opacity: 0.55; cursor: not-allowed; }
+    #inputCard h1 { font-size: 24px; font-weight: 700; color: #0f172a; margin-bottom: 12px; }
+    #inputCard .input-card-hint { font-size: 14px; font-weight: 400; color: #64748b; line-height: 1.5; margin-bottom: 20px; }
     .arena-demo-link {
-      font-size: 12px;
-      color: #64748b;
+      font-size: 13px;
+      font-weight: 500;
+      color: #2563eb;
       background: none;
       border: none;
       cursor: pointer;
       text-decoration: underline;
     }
-    .arena-demo-link:hover { color: #2563eb; }
+    .arena-demo-link:hover { color: #1d4ed8; }
     .blob-layer {
       position: absolute;
       inset: 0;
@@ -415,27 +560,28 @@
 <div class="app-grid" id="appGrid">
   <aside id="sidebar">
     <div class="sidebar-brand">⚡ DealFlow AI</div>
-    <button type="button" class="btn-new" id="newAnalysisBtn">New Analysis</button>
-    <div class="sidebar-section-label">RECENT</div>
+    <button type="button" class="btn-new" id="newAnalysisBtn"><span class="btn-new__icon">+</span> New Analysis</button>
+    <div class="sidebar-nav-label">Analyses</div>
+    <div class="sidebar-nav-item">All deals</div>
+    <div class="sidebar-nav-label">Starred</div>
+    <div class="sidebar-nav-item">Watchlist</div>
     <div class="recent-list">
-      <div class="recent-row">Stripe · Jun 13</div>
-      <div class="recent-row">OpenAI · Jun 12</div>
-      <div class="recent-row">Figma · Jun 11</div>
+      <div class="recent-row"><span class="recent-row__icon">💬</span><div class="recent-row__meta"><span class="recent-row__name">Stripe</span><span class="recent-row__date">Jun 13</span></div></div>
+      <div class="recent-row"><span class="recent-row__icon">💬</span><div class="recent-row__meta"><span class="recent-row__name">OpenAI</span><span class="recent-row__date">Jun 12</span></div></div>
+      <div class="recent-row"><span class="recent-row__icon">💬</span><div class="recent-row__meta"><span class="recent-row__name">Figma</span><span class="recent-row__date">Jun 11</span></div></div>
     </div>
     <div class="sidebar-footer">Powered by Band</div>
+    <div class="sidebar-user">
+      <div class="sidebar-user__avatar" aria-hidden="true">M</div>
+      <span class="sidebar-user__name">Max</span>
+      <span class="sidebar-user__badge">Pro</span>
+    </div>
   </aside>
   <main id="arena">
     <div id="inputCard">
       <h1>What company are you evaluating?</h1>
-      <input type="text" id="companyName" placeholder="Company name" autocomplete="organization" />
-      <input type="text" id="industry" placeholder="Industry" value="financial services" />
-      <input type="file" id="fileInput" multiple accept=".pdf,.xlsx,.csv,.txt" style="display: none" />
-      <div class="input-file-row"><label for="fileInput">Attach files</label> <span id="fileList"></span></div>
-      <div class="input-actions">
-        <button type="button" class="btn-run-analysis" id="analyzeBtn">Run Analysis →</button>
-        <span class="chat-timer" id="analyzeTimer" aria-live="polite" style="color:#64748b;font-size:13px;"></span>
-        <button type="button" class="arena-demo-link" id="runDemoBtn">Run demo</button>
-      </div>
+      <p class="input-card-hint">Enter company and industry in the chat panel on the right, then run the analysis.</p>
+      <button type="button" class="arena-demo-link" id="runDemoBtn">Run demo</button>
     </div>
     <svg class="arena-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
       <line x1="50" y1="45" x2="22" y2="22" stroke="rgba(255,255,255,0.08)" stroke-width="1.5" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"/>
@@ -494,18 +640,37 @@
     </div>
   </main>
   <div class="chat-shell">
-    <button type="button" class="chat-toggle" id="chatToggle" aria-expanded="true" title="Toggle chat">&lt;</button>
     <aside id="chatPanel">
       <div class="chat-header">
-        <span>Agent Chat</span>
+        <div class="chat-header-title">
+          <button type="button" class="chat-toggle" id="chatToggle" aria-expanded="true" title="Collapse chat">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline class="chev" points="15 6 9 12 15 18"/></svg>
+          </button>
+          <span>Agent Chat</span>
+        </div>
         <div class="chat-header-meta">
           <div class="chat-live-wrap"><span class="chat-live-dot" aria-hidden="true"></span><span>Live</span></div>
           <span class="chat-timer" id="analyzeTimerChat" aria-live="polite"></span>
+          <span id="analyzeTimer" style="position:absolute;width:0;height:0;overflow:hidden;clip:rect(0,0,0,0)" aria-hidden="true"></span>
         </div>
       </div>
       <div class="chat-feed-wrap">
         <div id="chatFeed"></div>
         <div class="chat-empty" id="chatEmpty">Agent messages will appear here</div>
+      </div>
+      <div class="chat-message-bar">
+        <input type="text" id="userChatInput" placeholder="Message the agents..." autocomplete="off" />
+        <button type="button" class="chat-message-bar__send" id="userChatSend" title="Send">→</button>
+      </div>
+      <div class="chat-run-form">
+        <input type="text" id="companyName" placeholder="Company name" autocomplete="organization" />
+        <input type="text" id="industry" placeholder="Industry" value="financial services" />
+        <input type="file" id="fileInput" multiple accept=".pdf,.xlsx,.csv,.txt" style="display: none" />
+        <div class="chat-run-file"><label for="fileInput">Attach files</label> <span id="fileList"></span></div>
+        <div class="chat-run-form-row">
+          <div class="chat-run-form-grow"></div>
+          <button type="button" class="btn-run-chat" id="analyzeBtn">Run Analysis →</button>
+        </div>
       </div>
     </aside>
   </div>
@@ -526,9 +691,7 @@ const AGENT_DISPLAY = { orchestrator: 'Orchestrator', webresearch: 'WebResearch'
 function toggleChat() {
   var g = document.getElementById('appGrid');
   var collapsed = g.classList.toggle('chat-collapsed');
-  var btn = document.getElementById('chatToggle');
-  btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
-  btn.textContent = collapsed ? '>' : '<';
+  document.getElementById('chatToggle').setAttribute('aria-expanded', collapsed ? 'false' : 'true');
 }
 document.getElementById('chatToggle').addEventListener('click', toggleChat);
 function syncTimerToChat() {
@@ -594,6 +757,30 @@ function updateChatEmpty() {
   if (!feed || !empty) return;
   empty.style.display = feed.children.length ? 'none' : 'flex';
 }
+function escapeHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+function addUserMessage(text) {
+  var feed = document.getElementById('chatFeed');
+  var row = document.createElement('div');
+  row.className = 'chat-msg chat-msg--user';
+  row.innerHTML = '<div class="chat-msg__avatar">M</div><div class="chat-msg__body"><div class="chat-msg__name">You</div><div class="chat-msg__bubble">' + escapeHtml(text) + '</div></div>';
+  feed.appendChild(row);
+  feed.scrollTop = feed.scrollHeight;
+  updateChatEmpty();
+}
+function sendUserChatMessage() {
+  var inp = document.getElementById('userChatInput');
+  if (!inp) return;
+  var t = (inp.value || '').trim();
+  if (!t) return;
+  addUserMessage(t);
+  inp.value = '';
+}
+document.getElementById('userChatSend').addEventListener('click', sendUserChatMessage);
+document.getElementById('userChatInput').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') { e.preventDefault(); sendUserChatMessage(); }
+});
 function addFeedItem(icon, html, agentId, speechText) {
   var feed = document.getElementById('chatFeed');
   var agent = agentId || inferAgentFromHtml(html);
