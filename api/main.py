@@ -42,6 +42,9 @@ app.add_middleware(
 UPLOAD_DIR = Path(os.environ.get("UPLOAD_DIR", "./uploads"))
 UPLOAD_DIR.mkdir(exist_ok=True)
 
+FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
+INDEX_HTML = FRONTEND_DIR / "index.html"
+
 # In-memory deal status store (replace with DB in production)
 deals: dict[str, dict] = {}
 
@@ -116,6 +119,9 @@ async def trigger_orchestrator(deal_id: str, company_name: str, file_paths: list
 
 @app.get("/")
 async def root():
+    """Serve the web UI when built frontend is present; otherwise JSON health stub."""
+    if INDEX_HTML.is_file():
+        return FileResponse(INDEX_HTML, media_type="text/html")
     return {"service": "DealFlow AI", "status": "running", "agents": 6}
 
 

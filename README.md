@@ -61,6 +61,12 @@ uv run python run_agents.py
 uv run uvicorn api.main:app --reload --port 8000
 ```
 
+Open [http://localhost:8000/](http://localhost:8000/) in a browser for the web UI (same origin as the API).
+
+### 6. Deploy on Railway
+
+The repo includes `Dockerfile` and `railway.json` (Docker builder). Create a Railway service from this repository, then add a **mounted or copied** `agent_config.yaml` (or equivalent secret file at the app working directory) plus any `.env` variables your agents need, since the gateway reads Band credentials from `agent_config.yaml` at runtime.
+
 ---
 
 ## Usage
@@ -125,7 +131,10 @@ dealflow-ai/
 ├── shared/
 │   ├── models.py                  # Pydantic schemas for agent outputs
 │   └── prompts.py                 # System prompts for each agent
-├── api/main.py                    # FastAPI gateway
+├── api/main.py                    # FastAPI gateway (serves frontend at /)
+├── frontend/index.html            # Web UI
+├── Dockerfile                     # Railway / container image
+├── railway.json                   # Railway build config (Dockerfile)
 ├── run_agents.py                  # Start all 6 agents
 ├── pyproject.toml
 └── agent_config.yaml.example
