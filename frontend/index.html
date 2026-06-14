@@ -661,28 +661,41 @@
     .results-meta-line {
       font-size: 12px;
       color: #888;
-      margin: 0 0 16px;
+      margin: 0 0 20px;
       line-height: 1.4;
     }
     .results-rec-value--invest { color: #059669; }
     .results-rec-value--conditional { color: #d97706; }
     .results-rec-value--pass { color: #dc2626; }
-    .results-key-finding {
-      font-size: 14px;
-      font-weight: 500;
-      color: #475569;
-      line-height: 1.5;
-      margin: 0 0 16px;
-      max-width: 36em;
-      margin-left: auto;
-      margin-right: auto;
+    .arena-memo-panel {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 15;
+      max-height: 40vh;
+      overflow-y: auto;
+      padding: 18px 22px 22px;
+      background: linear-gradient(180deg, rgba(248, 250, 252, 0) 0%, rgba(255, 255, 255, 0.97) 14%, #ffffff 100%);
+      border-top: 1px solid #e5e7eb;
+      text-align: left;
+      box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.06);
     }
-    .results-detail {
+    .arena-memo-panel[hidden] { display: none !important; }
+    .arena-memo-panel:not([hidden]) { display: block; }
+    .arena-memo-panel__lead {
+      font-size: 14px;
+      font-weight: 600;
+      color: #334155;
+      line-height: 1.5;
+      margin: 0 0 10px;
+    }
+    .arena-memo-panel__detail {
       font-size: 13px;
+      font-weight: 400;
       color: #64748b;
       line-height: 1.55;
-      margin: 0 0 20px;
-      text-align: left;
+      margin: 0;
     }
     .btn-download {
       display: inline-flex;
@@ -806,14 +819,13 @@
         <div class="blob-label">Wizard</div>
       </div>
     </div>
+    <div class="arena-memo-panel" id="arenaMemoPanel" hidden></div>
     <div class="results-overlay" id="resultsOverlay">
       <div class="results-card">
         <div class="results-success-icon" aria-hidden="true">✓</div>
         <div class="results-kicker">Analysis Complete</div>
         <div class="rec-value results-rec-value results-rec-value--conditional" id="recValue">CONDITIONAL</div>
         <p class="results-meta-line" id="resultsMetaLine"></p>
-        <p class="results-key-finding" id="resultsKeyFinding"></p>
-        <p class="results-detail" id="memo-summary"></p>
         <a class="btn-download" id="downloadBtn" href="#" target="_blank" rel="noopener noreferrer">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           <span>Download investment memo PDF</span>
@@ -913,6 +925,10 @@ function formatAnalysisSecondsBrief(sec) {
   var m = Math.floor(sec / 60);
   var r = sec % 60;
   return m + 'm ' + r + 's';
+}
+function hideArenaMemoPanel() {
+  var mp = document.getElementById('arenaMemoPanel');
+  if (mp) { mp.setAttribute('hidden', ''); mp.innerHTML = ''; }
 }
 function stripHtml(html) { var d = document.createElement('div'); d.innerHTML = html; return d.textContent || d.innerText || ''; }
 function inferAgentFromHtml(html) {
@@ -1074,6 +1090,7 @@ function appendHistoryMessage(m) {
   addFeedItem(null, safe, aid, null);
 }
 function restoreChatFromHistory(entry) {
+  hideArenaMemoPanel();
   var arena = document.getElementById('arena');
   arena.classList.add('arena--running');
   arena.classList.add('arena--viewing-history');
@@ -1129,12 +1146,19 @@ function showResults() {
   recEl.textContent = rec;
   recEl.className = 'rec-value results-rec-value results-rec-value--' + recLower;
   var kfRaw = company + ' shows differentiated positioning in ' + industry + ' on open-web signals. Validate unit economics and governance with management.';
-  document.getElementById('resultsKeyFinding').textContent = kfRaw.charAt(0).toUpperCase() + kfRaw.slice(1);
+  var kfText = kfRaw.charAt(0).toUpperCase() + kfRaw.slice(1);
+  var memoDetail = 'Based on available signals, ' + company + ' appears well-positioned in ' + industry + '; full diligence would stress-test revenue quality, margins, and contractual risk.';
+  var memoPanel = document.getElementById('arenaMemoPanel');
+  if (memoPanel) {
+    memoPanel.innerHTML = '<p class="arena-memo-panel__lead"></p><p class="arena-memo-panel__detail"></p>';
+    memoPanel.querySelector('.arena-memo-panel__lead').textContent = kfText;
+    memoPanel.querySelector('.arena-memo-panel__detail').textContent = memoDetail;
+    memoPanel.setAttribute('hidden', '');
+  }
   var fileInput = document.getElementById('fileInput');
   var nFiles = fileInput && fileInput.files ? fileInput.files.length : 0;
-  var webPart = nFiles > 0 ? 'Web + documents analysis' : 'Web-only analysis';
+  var webPart = nFiles > 0 ? 'Web + documents' : 'Web-only';
   document.getElementById('resultsMetaLine').textContent = 'Medium confidence · ' + webPart + ' · ' + formatAnalysisSecondsBrief(lastAnalysisDurationSec);
-  document.getElementById('memo-summary').textContent = 'Based on available signals, ' + company + ' appears well-positioned in ' + industry + '; full diligence would stress-test revenue quality, margins, and contractual risk.';
   document.getElementById('downloadBtn').href = API + '/memo/latest';
   var bandLink = document.getElementById('bandRoomLink');
   if (bandLink) bandLink.href = 'https://band.ai';
@@ -1147,7 +1171,11 @@ function showResults() {
   saveChatsToStorage(chats);
   renderRecentList();
 }
-document.getElementById('resultsCloseBtn').addEventListener('click', function () { document.getElementById('resultsOverlay').classList.remove('visible'); });
+document.getElementById('resultsCloseBtn').addEventListener('click', function () {
+  document.getElementById('resultsOverlay').classList.remove('visible');
+  var mp = document.getElementById('arenaMemoPanel');
+  if (mp && mp.innerHTML) mp.removeAttribute('hidden');
+});
 document.getElementById('analyzeBtn').addEventListener('click', function () { startAnalysis(); });
 document.getElementById('runDemoBtn').addEventListener('click', function () {
   document.getElementById('companyName').value = 'Demo Corp';
@@ -1155,6 +1183,7 @@ document.getElementById('runDemoBtn').addEventListener('click', function () {
   startAnalysis();
 });
 function resetToInputCard() {
+  hideArenaMemoPanel();
   if (stepTimeoutId) { clearTimeout(stepTimeoutId); stepTimeoutId = null; }
   window.analysisAborted = false;
   var arena = document.getElementById('arena');
@@ -1199,6 +1228,7 @@ document.getElementById('stopBtn').addEventListener('click', function () {
 async function startAnalysis() {
   var company = document.getElementById('companyName').value.trim();
   if (!company) { alert('Please enter a company name.'); return; }
+  hideArenaMemoPanel();
   window.analysisAborted = false;
   if (stepTimeoutId) { clearTimeout(stepTimeoutId); stepTimeoutId = null; }
   document.getElementById('arena').classList.remove('arena--viewing-history');
