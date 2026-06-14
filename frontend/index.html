@@ -108,8 +108,9 @@
     .app-running #stopBtn { display: flex; }
     #stopBtn:hover { background: #e5e7eb; color: #111827; }
     .recent-row {
+      position: relative;
       margin: 2px 0;
-      padding: 8px 12px;
+      padding: 8px 36px 8px 12px;
       border-radius: 8px;
       font-size: 13px;
       font-weight: 400;
@@ -122,6 +123,35 @@
       line-height: 1.4;
     }
     .recent-row:hover { background: rgba(79, 110, 247, 0.08); color: #111827; }
+    .recent-row__delete {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 22px;
+      height: 22px;
+      padding: 0;
+      margin: 0;
+      border: none;
+      background: transparent;
+      font-size: 14px;
+      line-height: 1;
+      color: #999;
+      cursor: pointer;
+      border-radius: 4px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease, color 0.12s ease;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .recent-row:hover .recent-row__delete {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .recent-row__delete:hover { color: #ef4444; }
     .recent-row__icon { flex-shrink: 0; opacity: 0.45; font-size: 14px; line-height: 1; }
     .recent-row__meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
     .recent-row__name { font-weight: 500; color: inherit; }
@@ -753,6 +783,8 @@
     <div class="sidebar-nav-item">All deals</div>
     <div class="sidebar-nav-label">Starred</div>
     <div class="sidebar-nav-item">Watchlist</div>
+    <div class="recent-list" id="starredChatList"></div>
+    <div class="sidebar-nav-label">Recent</div>
     <div class="recent-list" id="recentList"></div>
     <div class="sidebar-footer">Powered by Band</div>
     <div class="sidebar-user">
@@ -1064,16 +1096,22 @@ function formatChatDate(ts) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 function renderRecentList() {
-  var list = document.getElementById('recentList');
-  if (!list) return;
-  list.innerHTML = '';
+  var recentList = document.getElementById('recentList');
+  var starredList = document.getElementById('starredChatList');
+  if (!recentList) return;
+  recentList.innerHTML = '';
+  if (starredList) starredList.innerHTML = '';
   var chats = loadChatsFromStorage();
-  chats.forEach(function (entry) {
+  function appendChatRow(entry, container) {
     var row = document.createElement('div');
     row.className = 'recent-row';
     row.setAttribute('data-chat-id', entry.id);
-    row.innerHTML = '<span class="recent-row__icon">💬</span><div class="recent-row__meta"><span class="recent-row__name">' + escapeHtml(entry.company || 'Untitled') + '</span><span class="recent-row__date">' + formatChatDate(entry.timestamp) + '</span></div>';
-    list.appendChild(row);
+    row.innerHTML = '<span class="recent-row__icon">💬</span><div class="recent-row__meta"><span class="recent-row__name">' + escapeHtml(entry.company || 'Untitled') + '</span><span class="recent-row__date">' + formatChatDate(entry.timestamp) + '</span></div><button type="button" class="recent-row__delete" aria-label="Delete chat" title="Delete">×</button>';
+    container.appendChild(row);
+  }
+  chats.forEach(function (entry) {
+    if (entry.starred && starredList) appendChatRow(entry, starredList);
+    else appendChatRow(entry, recentList);
   });
 }
 function appendHistoryMessage(m) {
@@ -1113,7 +1151,21 @@ function restoreChatFromHistory(entry) {
   if (document.getElementById('companyName')) document.getElementById('companyName').value = entry.company || '';
   if (document.getElementById('industry')) document.getElementById('industry').value = entry.industry || '';
 }
-document.getElementById('recentList').addEventListener('click', function (e) {
+document.getElementById('sidebar').addEventListener('click', function (e) {
+  if (!e.target.closest('.recent-list')) return;
+  var delBtn = e.target.closest('.recent-row__delete');
+  if (delBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    var rowDel = delBtn.closest('.recent-row');
+    var idDel = rowDel && rowDel.getAttribute('data-chat-id');
+    if (!idDel || !rowDel) return;
+    var chatsDel = loadChatsFromStorage();
+    var nextChats = chatsDel.filter(function (c) { return String(c.id) !== String(idDel); });
+    saveChatsToStorage(nextChats);
+    rowDel.remove();
+    return;
+  }
   var row = e.target.closest('.recent-row');
   if (!row) return;
   var id = row.getAttribute('data-chat-id');
@@ -1164,7 +1216,7 @@ function showResults() {
   if (bandLink) bandLink.href = 'https://band.ai';
   document.getElementById('resultsOverlay').classList.add('visible');
   var messages = serializeChatFeed();
-  var entry = { id: String(Date.now()), company: company, industry: industry, timestamp: Date.now(), messages: messages };
+  var entry = { id: String(Date.now()), company: company, industry: industry, timestamp: Date.now(), messages: messages, starred: false };
   var chats = loadChatsFromStorage();
   chats.unshift(entry);
   if (chats.length > 20) chats = chats.slice(0, 20);
