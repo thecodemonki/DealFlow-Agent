@@ -219,7 +219,8 @@
       font-family: inherit;
       text-align: left;
       width: 100%;
-      display: block;
+      display: flex;
+      align-items: center;
       line-height: inherit;
     }
     .sidebar-brand:hover { color: #111827; }
@@ -1333,7 +1334,7 @@
 <div id="appShell">
 <div class="app-grid" id="appGrid">
   <aside id="sidebar">
-    <button type="button" class="sidebar-brand" id="sidebarLogoBtn" aria-label="AgentMax — home">⚡ AgentMax</button>
+    <button type="button" class="sidebar-brand" id="sidebarLogoBtn" aria-label="AgentMax — home"><div style="display:flex; align-items:center; gap:10px; padding: 8px 0"><img src="/static/agentmax-a-logo.svg" height="36" alt="AgentMax logo" /><span style="font-weight:700; font-size:18px; color:#1e1b4b">Agent<span style="color:#4f46e5">Max</span></span></div></button>
     <button type="button" class="btn-new" id="newAnalysisBtn"><span class="btn-new__icon">+</span> New Analysis</button>
     <div class="sidebar-recent-stack">
       <div class="sidebar-nav-label sidebar-nav-label--recent">Recent</div>
@@ -1769,6 +1770,12 @@ function updateChatEmpty() {
 function escapeHtml(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
+function displayCompanyName(company) {
+  var c = company == null ? '' : String(company).trim();
+  if (!c) return 'Untitled';
+  if (/^open\s+ai$/i.test(c)) return 'OpenAI';
+  return c;
+}
 function addUserMessage(text) {
   var feed = document.getElementById('chatFeed');
   var row = document.createElement('div');
@@ -1904,7 +1911,7 @@ function renderRecentList() {
     row.className = 'recent-row';
     row.setAttribute('data-chat-id', entry.id);
     row.setAttribute('data-timestamp', entry.timestamp != null ? String(entry.timestamp) : '');
-    row.innerHTML = '<span class="recent-row__icon">💬</span><div class="recent-row__meta"><span class="recent-row__name">' + escapeHtml(entry.company || 'Untitled') + '</span><span class="recent-row__date">' + formatRelativeTime(entry.timestamp) + '</span></div><button type="button" class="recent-row__delete" aria-label="Delete chat" title="Delete">×</button>';
+    row.innerHTML = '<span class="recent-row__icon">💬</span><div class="recent-row__meta"><span class="recent-row__name">' + escapeHtml(displayCompanyName(entry.company)) + '</span><span class="recent-row__date">' + formatRelativeTime(entry.timestamp) + '</span></div><button type="button" class="recent-row__delete" aria-label="Delete chat" title="Delete">×</button>';
     container.appendChild(row);
   }
   chats.forEach(function (entry) {

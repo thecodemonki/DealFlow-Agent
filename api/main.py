@@ -53,6 +53,7 @@ INDEX_HTML = FRONTEND_DIR / "index.html"
 CHARACTERS_DIR = FRONTEND_DIR / "characters"
 
 app.mount("/characters", StaticFiles(directory=str(CHARACTERS_DIR)), name="characters")
+app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
 # In-memory deal status store (replace with DB in production)
 deals: dict[str, dict] = {}
