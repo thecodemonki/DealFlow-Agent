@@ -27,6 +27,21 @@ from shared.prompts import DOCUMENT_PARSER_PROMPT
 load_dotenv()
 logger = logging.getLogger(__name__)
 
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+
+
+def _resolve_read_path(file_path: str) -> Path:
+    """Resolve uploads/... or absolute paths so the agent finds files from the repo root."""
+    p = Path(file_path)
+    if p.is_file():
+        return p
+    if not p.is_absolute():
+        candidate = _REPO_ROOT / file_path
+        if candidate.is_file():
+            return candidate
+    return p
+
+
 # -------------------------------------------------------------------
 # Model — GPT-4o-mini via AI/ML API (reliable tool calling, no Featherless 429s)
 # -------------------------------------------------------------------
@@ -46,8 +61,8 @@ def read_pdf_file(file_path: str) -> str:
     """Read and extract text from a PDF file."""
     try:
         import pypdf
-        path = Path(file_path)
-        if not path.exists():
+        path = _resolve_read_path(file_path)
+        if not path.is_file():
             return f"ERROR: File not found at {file_path}"
         reader = pypdf.PdfReader(str(path))
         text = "\n".join(page.extract_text() or "" for page in reader.pages)
@@ -60,7 +75,10 @@ def read_pdf_file(file_path: str) -> str:
 def read_text_file(file_path: str) -> str:
     """Read a plain text or CSV file."""
     try:
-        return Path(file_path).read_text(encoding="utf-8")[:10000]
+        path = _resolve_read_path(file_path)
+        if not path.is_file():
+            return f"ERROR: File not found at {file_path}"
+        return path.read_text(encoding="utf-8")[:10000]
     except Exception as e:
         return f"ERROR reading {file_path}: {e}"
 

@@ -48,6 +48,12 @@ app.add_middleware(
 UPLOAD_DIR = Path(os.environ.get("UPLOAD_DIR", "./uploads"))
 UPLOAD_DIR.mkdir(exist_ok=True)
 
+
+def _relative_upload_path(deal_id: str, safe_name: str) -> str:
+    """Repo-relative path for Band messages and Librarian (matches files under UPLOAD_DIR)."""
+    return f"uploads/{deal_id}/{safe_name}"
+
+
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 INDEX_HTML = FRONTEND_DIR / "index.html"
 CHARACTERS_DIR = FRONTEND_DIR / "characters"
@@ -188,7 +194,7 @@ async def _post_band_document_uploaded(room_id: str, file_path: str) -> bool:
         orchestrator_agent_id = orchestrator_config["agent_id"]
         orchestrator_api_key = orchestrator_config["api_key"]
         headers = {"X-API-Key": orchestrator_api_key, "Content-Type": "application/json"}
-        content = f"DOCUMENT_UPLOADED: {file_path} — please analyze this file"
+        content = f"DOCUMENT_UPLOADED: {file_path}"
         async with httpx.AsyncClient() as client:
             resp = await client.post(
                 f"{BAND_API_BASE}/chats/{room_id}/messages",
@@ -223,45 +229,84 @@ async def root():
     return {"service": "DealFlow AI", "status": "running", "agents": 6}
 
 
-@app.post("/analyze")
-async def submit_deal(
-    company_name: str = Form(...),
-    notes: str = Form(default=""),
-    files: list[UploadFile] = File(default=[]),
-):
+@app.post("/deals")
+async def create_draft_deal():
     """
-    Submit a company for M&A due diligence analysis.
-    Accepts company name, optional notes, and up to 10 document files.
+    Create a deal and uploads directory so the UI can POST /deals/{deal_id}/upload
+    before Run Analysis (Band room is created when /analyze runs).
     """
     deal_id = str(uuid.uuid4())
     deal_dir = UPLOAD_DIR / deal_id
-    deal_dir.mkdir(exist_ok=True)
-
-    # Save uploaded files
-    file_paths = []
-    for file in files:
-        if file.filename:
-            safe_name = Path(file.filename).name
-            dest = deal_dir / safe_name
-            content = await file.read()
-            dest.write_bytes(content)
-            file_paths.append(str(dest.absolute()))
-            logger.info(f"Saved {safe_name} for deal {deal_id}")
-
-    # Record deal in local store
+    deal_dir.mkdir(parents=True, exist_ok=True)
     deals[deal_id] = {
         "id": deal_id,
-        "company_name": company_name,
-        "status": "triggered",
-        "file_paths": file_paths,
+        "company_name": "",
+        "status": "draft",
+        "file_paths": [],
         "band_room_id": None,
         "created_at": datetime.utcnow().isoformat(),
         "completed_at": None,
         "memo_path": None,
         "memo_summary": None,
     }
+    return JSONResponse({"deal_id": deal_id, "status": "draft"})
 
-    # Trigger Orchestrator via Band
+
+@app.post("/analyze")
+async def submit_deal(
+    company_name: str = Form(...),
+    notes: str = Form(default=""),
+    deal_id: str = Form(default=""),
+    files: list[UploadFile] = File(default=[]),
+):
+    """
+    Submit a company for M&A due diligence analysis.
+    Optional deal_id continues a draft created via POST /deals with files from POST /deals/{id}/upload.
+    """
+    existing_id = (deal_id or "").strip()
+    reuse = bool(existing_id and existing_id in deals)
+    if reuse:
+        prev = deals[existing_id]
+        if prev.get("status") == "complete":
+            raise HTTPException(status_code=400, detail="Deal already complete")
+        if prev.get("band_room_id"):
+            raise HTTPException(
+                status_code=400,
+                detail="Analysis already triggered for this deal. Start a new analysis from the sidebar.",
+            )
+        deal_id = existing_id
+        file_paths = list(prev.get("file_paths") or [])
+        created_at = prev.get("created_at") or datetime.utcnow().isoformat()
+    else:
+        deal_id = str(uuid.uuid4())
+        file_paths = []
+        created_at = datetime.utcnow().isoformat()
+
+    deal_dir = UPLOAD_DIR / deal_id
+    deal_dir.mkdir(parents=True, exist_ok=True)
+
+    for file in files:
+        if file.filename:
+            safe_name = Path(file.filename).name
+            dest = deal_dir / safe_name
+            dest.write_bytes(await file.read())
+            rel = _relative_upload_path(deal_id, safe_name)
+            if rel not in file_paths:
+                file_paths.append(rel)
+            logger.info("Saved %s for deal %s (%s)", safe_name, deal_id, rel)
+
+    deals[deal_id] = {
+        "id": deal_id,
+        "company_name": company_name,
+        "status": "triggered",
+        "file_paths": file_paths,
+        "band_room_id": None,
+        "created_at": created_at,
+        "completed_at": None,
+        "memo_path": None,
+        "memo_summary": None,
+    }
+
     try:
         room_id = await trigger_orchestrator(deal_id, company_name, file_paths, notes)
         deals[deal_id]["band_room_id"] = room_id
@@ -298,25 +343,19 @@ async def upload_deal_document(deal_id: str, file: UploadFile = File(...)):
     safe_name = Path(file.filename).name
     dest = deal_dir / safe_name
     dest.write_bytes(await file.read())
-    saved_path = str(dest.resolve())
+    rel = _relative_upload_path(deal_id, safe_name)
 
     paths = deals[deal_id].setdefault("file_paths", [])
-    if saved_path not in paths:
-        paths.append(saved_path)
+    if rel not in paths:
+        paths.append(rel)
 
     room_id = deals[deal_id].get("band_room_id")
     if room_id:
-        await _post_band_document_uploaded(room_id, saved_path)
+        await _post_band_document_uploaded(room_id, rel)
     else:
         logger.warning("upload: deal %s has no band_room_id; file saved but not broadcast", deal_id)
 
-    return JSONResponse(
-        {
-            "deal_id": deal_id,
-            "saved_path": saved_path,
-            "filename": safe_name,
-        }
-    )
+    return JSONResponse({"file_path": rel, "status": "uploaded"})
 
 
 @app.get("/deals/{deal_id}")

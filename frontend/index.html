@@ -726,15 +726,33 @@
     .input-card-attach { font-size: 13px; color: #9ca3af; margin-bottom: 22px; }
     .input-card-attach label { color: #6b7280; cursor: pointer; text-decoration: underline; }
     .input-card-attach label:hover { color: #4f6ef7; }
-    .doc-upload-label {
-      display: block;
+    .doc-upload-zone {
+      position: relative;
+      border: 2px dashed #c7d2fe;
+      border-radius: 12px;
+      padding: 16px 18px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      background: #fafbff;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+    .doc-upload-zone:hover { border-color: #4f6ef7; background: #f5f7ff; }
+    .doc-upload-input {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      font-size: 0;
+    }
+    .doc-upload-zone__inner { pointer-events: none; display: flex; flex-direction: column; gap: 4px; }
+    .doc-upload-zone__title {
       font-size: 14px;
       font-weight: 600;
       color: #374151;
-      margin-bottom: 8px;
-      cursor: pointer;
     }
-    .doc-upload-label:hover { color: #1d4ed8; }
+    .doc-upload-zone__hint { font-size: 12px; font-weight: 500; color: #6b7280; }
     .doc-upload-badge {
       display: inline-block;
       font-size: 12px;
@@ -1360,9 +1378,14 @@
         <input type="text" id="companyName" placeholder="e.g. Stripe, OpenAI, Figma" autocomplete="organization" />
         <input type="text" id="industry" placeholder="e.g. fintech, SaaS, healthcare" />
       </div>
-      <label class="doc-upload-label" for="fileInput">Upload Pitch Deck or Financials (PDF, CSV, TXT)</label>
+      <div class="doc-upload-zone" id="docUploadZone">
+        <input type="file" id="fileInput" class="doc-upload-input" multiple accept=".pdf,.csv,.txt" />
+        <div class="doc-upload-zone__inner">
+          <span class="doc-upload-zone__title">Upload Pitch Deck or Financials (PDF, CSV, TXT)</span>
+          <span class="doc-upload-zone__hint">Click this area to choose files — they upload immediately for the Librarian</span>
+        </div>
+      </div>
       <div class="doc-upload-badge doc-upload-badge--muted" id="docUploadBadge" role="status">No documents — analysis from public data only</div>
-      <input type="file" id="fileInput" multiple accept=".pdf,.xlsx,.csv,.txt" style="display: none" />
       <div class="input-card-attach"><span id="fileList"></span></div>
       <button type="button" class="btn-run-analysis" id="analyzeBtn">Run Analysis →</button>
       <div class="arena-demo-wrap"><button type="button" class="arena-demo-link" id="runDemoBtn">Run demo</button></div>
@@ -1559,7 +1582,7 @@ function showLandingFromApp() {
   }, 300);
 }
 document.getElementById('landingGetStarted').addEventListener('click', showAppFromLanding);
-let currentDealId = null, pollTimer = null, activityStep = 0, runTimerInterval = null, stepTimeoutId = null, lastAnalysisDurationSec = 0;
+let currentDealId = null, dealUploadOk = false, pollTimer = null, activityStep = 0, runTimerInterval = null, stepTimeoutId = null, lastAnalysisDurationSec = 0;
 var lastDealScore = { score: 62, verdict: 'CONDITIONAL', risksFlagged: 3 };
 const speechTimers = {};
 const AGENT_CHAT_CLASS = { orchestrator: 'chat-msg--orchestrator', webresearch: 'chat-msg--webresearch', documentparser: 'chat-msg--documentparser', financialanalyst: 'chat-msg--financialanalyst', legalrisk: 'chat-msg--legalrisk', synthesis: 'chat-msg--synthesis' };
@@ -1740,18 +1763,61 @@ function updateDocUploadBadge() {
   var fi = document.getElementById('fileInput');
   var badge = document.getElementById('docUploadBadge');
   if (!badge || !fi) return;
+  if (dealUploadOk) {
+    badge.className = 'doc-upload-badge doc-upload-badge--ok';
+    badge.textContent = '✓ Document received — Librarian will analyze';
+    return;
+  }
   var n = fi.files && fi.files.length ? fi.files.length : 0;
   if (n > 0) {
     badge.className = 'doc-upload-badge doc-upload-badge--ok';
-    badge.textContent = 'Document received — Librarian will analyze';
+    badge.textContent = 'Document selected — will upload on save';
   } else {
     badge.className = 'doc-upload-badge doc-upload-badge--muted';
     badge.textContent = 'No documents — analysis from public data only';
   }
 }
-document.getElementById('fileInput').addEventListener('change', function () {
-  var names = Array.from(this.files).map(function (f) { return f.name; }).join(', ');
-  document.getElementById('fileList').textContent = names || '';
+document.getElementById('fileInput').addEventListener('change', async function () {
+  var fi = this;
+  var listEl = document.getElementById('fileList');
+  var names = Array.from(fi.files || []).map(function (f) { return f.name; }).join(', ');
+  if (listEl) listEl.textContent = names || '';
+  dealUploadOk = false;
+  if (!fi.files || !fi.files.length) {
+    updateDocUploadBadge();
+    return;
+  }
+  var badge = document.getElementById('docUploadBadge');
+  if (badge) {
+    badge.className = 'doc-upload-badge doc-upload-badge--muted';
+    badge.textContent = 'Uploading…';
+  }
+  try {
+    if (!currentDealId) {
+      var rd = await fetch(API + '/deals', { method: 'POST' });
+      if (!rd.ok) throw new Error('Could not create draft deal');
+      var dj = await rd.json();
+      if (!dj.deal_id) throw new Error('Invalid response from server');
+      currentDealId = dj.deal_id;
+    }
+    for (var i = 0; i < fi.files.length; i++) {
+      var fd = new FormData();
+      fd.append('file', fi.files[i]);
+      var up = await fetch(API + '/deals/' + encodeURIComponent(currentDealId) + '/upload', { method: 'POST', body: fd });
+      if (!up.ok) {
+        var errText = await up.text();
+        throw new Error(errText || 'Upload failed');
+      }
+      var uj = await up.json();
+      if (uj.status !== 'uploaded') throw new Error('Upload did not complete');
+    }
+    dealUploadOk = true;
+  } catch (err) {
+    dealUploadOk = false;
+    alert(err && err.message ? err.message : 'Upload failed');
+    fi.value = '';
+    if (listEl) listEl.textContent = '';
+  }
   updateDocUploadBadge();
 });
 function setAgentStatus(agent, state, label) {
@@ -2021,7 +2087,7 @@ function showResults() {
   var company = (document.getElementById('companyName').value || '').trim() || 'Unknown company';
   var industry = (document.getElementById('industry').value || '').trim() || 'your industry';
   var fileInput = document.getElementById('fileInput');
-  var nFiles = fileInput && fileInput.files ? fileInput.files.length : 0;
+  var nFiles = ((fileInput && fileInput.files) ? fileInput.files.length : 0) || (dealUploadOk ? 1 : 0);
   var demoBundle = { score: 62, verdict: 'CONDITIONAL', risksFlagged: 3 };
   lastDealScore = demoBundle;
   applyDealScoreUI(lastDealScore);
@@ -2124,6 +2190,8 @@ function resetToInputCard(opts) {
   if (ind) ind.value = '';
   if (fi) fi.value = '';
   if (fl) fl.textContent = '';
+  currentDealId = null;
+  dealUploadOk = false;
   updateDocUploadBadge();
 }
 document.getElementById('newAnalysisBtn').addEventListener('click', function () {
@@ -2185,6 +2253,7 @@ async function startAnalysis() {
     var fd = new FormData();
     fd.append('company_name', company);
     fd.append('notes', 'Industry: ' + document.getElementById('industry').value);
+    if (currentDealId) fd.append('deal_id', currentDealId);
     var files = document.getElementById('fileInput').files;
     for (var i = 0; i < files.length; i++) fd.append('files', files[i]);
     var resp = await fetch(API + '/analyze', { method: 'POST', body: fd });

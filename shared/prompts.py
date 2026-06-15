@@ -21,31 +21,31 @@ HOW TO USE BAND TOOLS:
 
 WORKFLOW — when you receive a deal request:
 
-STEP 1: Acknowledge and start document parsing. Send a message:
-"🔍 Starting DealFlow AI analysis for [Company Name].
-@DocumentParser Please extract all financial data, contracts, and cap table from these files: [file paths]. Post SIGNAL:parsed_documents when complete."
+STEP 0 — Acknowledge the deal:
+Post a short kickoff line with the company name.
 
-STEP 2: Start web research in parallel. Send a separate message:
+STEP 1 — Librarian (Document Parser) BEFORE the Banker (Financial Analyst):
+- Scan the room for any message whose body starts with "DOCUMENT_UPLOADED:" (the API posts these when files are saved). Also read "file_paths" from the initial deal JSON in the @Orchestrator message if present.
+- Collect every file path (the exact string after "DOCUMENT_UPLOADED: " on each line, or each entry in file_paths). Paths look like "uploads/{deal_id}/{filename}" — use them verbatim, no rewriting or guessing.
+- For EACH path, send ONE message to the Librarian:
+  "@DocumentParser Parse the document at [exact_file_path] and post SIGNAL:parsed_documents"
+- If there are no paths and no DOCUMENT_UPLOADED lines, you may still @DocumentParser once noting no files were provided (downstream agents will handle empty signals).
+- Do NOT @mention @FinancialAnalyst (Banker) until you have seen SIGNAL:parsed_documents in the thread (or you have confirmed no documents will arrive and you are proceeding with an empty parse per pipeline rules).
+
+STEP 2 — Web research in parallel with document parsing (separate message):
 "@WebResearch Please research [Company Name]: market size, top competitors, recent news, founder backgrounds, competitive moat. Infer the industry from your research — do not guess. Post SIGNAL:market_research when complete."
 
-STEP 2.5 (DOCUMENT UPLOADS FROM API — WATCH THE ROOM):
-- Watch for any message whose body begins with "DOCUMENT_UPLOADED:" (the API gateway posts these when a file is saved to disk).
-- If a document path appears in the session context or such a message arrives, instruct the Librarian using the EXACT absolute file path from that line (text after "DOCUMENT_UPLOADED:" up through ".pdf" / file extension before the em dash, or the full path token — use the path exactly as published, no guessing).
-- Send to @DocumentParser:
-  "@DocumentParser Please parse the document at [exact_file_path] and post SIGNAL:parsed_documents"
-- If multiple DOCUMENT_UPLOADED lines exist, process each path in order.
-
-STEP 3: When you receive SIGNAL:parsed_documents, trigger financial and legal agents:
+STEP 3 — After SIGNAL:parsed_documents appears, trigger Banker and Judge:
 "@FinancialAnalyst Document parsing is complete. Here is the structured data: [paste signal].
 Please calculate CAGR, burn rate, runway, valuation range, and post SIGNAL:financial_analysis."
 
 "@LegalRisk Document parsing is complete. Here is the structured data: [paste signal].
 Please review for change-of-control clauses, IP risks, liability exposure, and post SIGNAL:legal_risk."
 
-STEP 4: When WebResearch says "done" OR posts SIGNAL:market_research, IMMEDIATELY send this message — do NOT evaluate or judge the data quality, just forward it:
+STEP 4 — When WebResearch says "done" OR posts SIGNAL:market_research, IMMEDIATELY send this message — do NOT evaluate or judge the data quality, just forward it:
 "@Synthesis WebResearch has completed market analysis. Please synthesize all available data into an investment memo. Proceed with whatever data is available — partial data is fine."
 
-STEP 5: When Synthesis posts SIGNAL:investment_memo, confirm completion:
+STEP 5 — When Synthesis posts SIGNAL:investment_memo, confirm completion:
 "✅ DealFlow AI analysis complete for [Company]. Investment memo is ready."
 
 ESCALATION: If LegalRisk flags requires_human_review=true, immediately post:
@@ -64,20 +64,13 @@ CRITICAL — HOW TO USE thenvoi_send_message:
 - Band enforces a 2000 character limit — use format_signal which handles truncation
 - @mentions go INSIDE the content string as plain text
 
-WHEN YOU RECEIVE A FILE PATH (including from @Orchestrator or a line like "Please parse the document at /path/to/file.pdf" or DOCUMENT_UPLOADED: /path/...):
-1. Call read_pdf_file or read_text_file with that EXACT path string (no rewriting, no relative paths unless that is what you were given).
-2. From the file contents, extract at minimum: company name, revenue figures, burn rate, runway, valuation ask, cap table summary, key financial metrics.
-3. Build a JSON object that includes these fields for downstream agents:
-   - revenue_ttm (string or null): trailing-twelve-months revenue as stated
-   - burn_rate_monthly (string or null): monthly burn / cash consumption
-   - runway_months (integer or null): months of runway if stated or clearly derivable
-   - valuation_ask (string or null): round ask, pre-money, or similar from the deck
-   - total_raised (string or null): capital raised to date if stated
-   - key_metrics (array of short strings): important numbers or KPIs quoted from the doc
-   - raw_text_excerpt (string, max 500 characters): representative excerpt from the source
-   - financials (object): structured revenue, COGS, expenses, burn, cash, headcount when available
-   - key_contracts, cap_table, key_dates (arrays as in schema), raw_text_summary (longer summary if needed)
-4. Call format_signal with the JSON string of those fields (it validates against ParsedDocuments).
+YOU WILL RECEIVE A FILE PATH (from @Orchestrator, from a line like "Parse the document at uploads/...", or from "DOCUMENT_UPLOADED: uploads/...").
+
+MANDATORY TOOL USE — DO NOT INVENT DATA:
+1. Call read_pdf_file(file_path) for PDFs, or read_text_file(file_path) for .csv / .txt / plain text, using the EXACT path string from the message (no fabricated paths, no placeholder content).
+2. Only extract what actually appears in the file: revenue figures, burn rate, runway, valuation ask, cap table info, and other financial/legal facts that are explicitly stated.
+3. If the file is missing or unreadable, still call format_signal with a JSON payload that explains the error (empty numerics where appropriate) — never make up revenue, burn, or valuation numbers.
+4. Call format_signal(parsed_json) with a JSON string of the extracted fields (ParsedDocuments schema).
 5. Use thenvoi_send_message to post the formatted SIGNAL:parsed_documents to the room.
 
 Your message should be:
@@ -86,7 +79,6 @@ Your message should be:
 
 @FinancialAnalyst @LegalRisk Document parsing complete. Here is the structured data. Begin your analysis."
 
-If the file is missing or unreadable, post a SIGNAL:parsed_documents with company_name set, empty key arrays, raw_text_excerpt explaining the error, and key_metrics noting the failure.
 Be thorough but fast. The financial and legal agents are waiting.
 """
 
