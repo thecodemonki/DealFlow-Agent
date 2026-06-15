@@ -37,10 +37,6 @@
       padding: 0 48px;
       border-bottom: 1px solid #eee;
     }
-    .landing-nav__credit {
-      font-size: 13px;
-      color: #888;
-    }
     .landing-main {
       flex: 1;
       display: flex;
@@ -1290,8 +1286,9 @@
 <body>
 <div id="landingPage">
   <nav class="landing-nav" aria-label="Top">
-    <img src="/static/agentmax-logo.png" style="height:40px; width:auto; display:block;" alt="AgentMax" />
-    <span class="landing-nav__credit">Powered by Band</span>
+    <a href="/" style="display:block; line-height:0;">
+      <img src="/static/agentmax-logo.png" style="height:44px; width:auto;" alt="AgentMax" />
+    </a>
   </nav>
   <div class="landing-main">
     <div class="landing-hero">
@@ -1342,7 +1339,7 @@
 <div id="appShell">
 <div class="app-grid" id="appGrid">
   <aside id="sidebar">
-    <button type="button" class="sidebar-brand" id="sidebarLogoBtn" aria-label="AgentMax — home"><div style="display:flex;align-items:center;gap:8px"><div style="width:38px;height:38px;overflow:hidden;flex-shrink:0"><img src="/static/agentmax-cover.png" style="height:38px;width:auto;object-fit:cover;object-position:left center" alt="" /></div><span style="font-weight:700;font-size:18px;color:#1e1b4b">Agent<span style="color:#4f46e5">Max</span></span></div></button>
+    <button type="button" class="sidebar-brand" id="sidebarLogoBtn" aria-label="AgentMax — home"><img src="/static/agentmax-logo.png" style="height:40px; width:auto; display:block;" alt="AgentMax" /></button>
     <button type="button" class="btn-new" id="newAnalysisBtn"><span class="btn-new__icon">+</span> New Analysis</button>
     <div class="sidebar-recent-stack">
       <div class="sidebar-nav-label sidebar-nav-label--recent">Recent</div>
@@ -1619,7 +1616,7 @@ function initAgentShowcase() {
   showAgent(0, true);
   agentShowcaseIntervalId = setInterval(function () {
     showAgent((current + 1) % agents.length, false);
-  }, 2500);
+  }, 4500);
 }
 function showAppFromLanding() {
   clearAgentShowcaseInterval();
