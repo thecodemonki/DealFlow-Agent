@@ -107,35 +107,6 @@
       font-size: 13px;
       color: #888;
     }
-    .landing-characters {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      align-items: flex-end;
-      gap: 32px;
-      margin-top: 56px;
-    }
-    .landing-char {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      width: 72px;
-    }
-    .landing-char img {
-      width: 72px;
-      height: auto;
-      object-fit: contain;
-      mix-blend-mode: multiply;
-      display: block;
-    }
-    .landing-char span {
-      margin-top: 8px;
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: #888;
-    }
     .landing-how {
       width: 100%;
       margin-top: 64px;
@@ -1303,19 +1274,22 @@
     <div class="landing-hero">
       <p class="landing-eyebrow">AI-Powered M&amp;A Due Diligence</p>
       <h1 class="landing-headline">AgentMax</h1>
+      <img src="/static/agentmax-cover.png" style="max-width:520px; width:85%; display:block; margin:0 auto 28px; border-radius:18px; box-shadow:0 8px 48px rgba(79,70,229,0.18);" width="520" alt="AgentMax — your deal team, always on" />
       <p class="landing-headline landing-headline--accent">Six agents. Sixty seconds.</p>
       <p class="landing-headline landing-headline--accent">Full investment memo.</p>
       <p class="landing-desc">A team of AI specialists that research, analyze, and synthesize — collaborating through Band in real time.</p>
-      <img src="/static/agentmax-cover.png" style="max-width:580px; width:90%; border-radius:20px; box-shadow: 0 8px 40px rgba(79,70,229,0.15); margin: 32px auto 24px; display:block" width="580" alt="AgentMax — your deal team, always on" />
       <button type="button" class="landing-cta" id="landingGetStarted">Get Started →</button>
       <p class="landing-cta-hint">No signup required · runs a live demo</p>
-      <div class="landing-characters" aria-hidden="true">
-        <div class="landing-char"><img src="/characters/conductor.png" alt="" width="72" height="72" /><span>Conductor</span></div>
-        <div class="landing-char"><img src="/characters/detective.png" alt="" width="72" height="72" /><span>Detective</span></div>
-        <div class="landing-char"><img src="/characters/librarian.png" alt="" width="72" height="72" /><span>Librarian</span></div>
-        <div class="landing-char"><img src="/characters/banker.png" alt="" width="72" height="72" /><span>Banker</span></div>
-        <div class="landing-char"><img src="/characters/judge.png" alt="" width="72" height="72" /><span>Judge</span></div>
-        <div class="landing-char"><img src="/characters/wizard.png" alt="" width="72" height="72" /><span>Wizard</span></div>
+      <div id="agentShowcase" style="margin:48px auto; max-width:700px; text-align:center; min-height:180px; position:relative" aria-live="polite">
+        <div class="agent-slide" style="display:flex; align-items:center; justify-content:center; gap:24px; padding:24px 32px; background:white; border-radius:20px; box-shadow:0 4px 24px rgba(0,0,0,0.08); transition: opacity 0.5s ease; opacity:1">
+          <img id="showcaseImg" src="/characters/conductor.png" alt="" style="width:90px; height:90px; object-fit:contain" />
+          <div style="text-align:left">
+            <div id="showcaseName" style="font-size:11px; font-weight:700; letter-spacing:2px; color:#a78bfa; text-transform:uppercase; margin-bottom:4px"></div>
+            <div id="showcaseRole" style="font-size:20px; font-weight:700; color:#1e1b4b; margin-bottom:8px"></div>
+            <div id="showcaseDesc" style="font-size:15px; color:#6b7280; line-height:1.5; max-width:360px"></div>
+          </div>
+        </div>
+        <div id="showcaseDots" style="margin-top:16px; display:flex; justify-content:center; gap:8px"></div>
       </div>
     </div>
     <section class="landing-how" aria-labelledby="landing-how-heading">
@@ -1539,7 +1513,74 @@ const CHATS_KEY = 'dealflow_chats';
 const RECENT_LIST_MAX_COLLAPSED = 4;
 var recentListExpanded = false;
 var recentListRelativeInterval = null;
+var agentShowcaseIntervalId = null;
+function clearAgentShowcaseInterval() {
+  if (agentShowcaseIntervalId) {
+    clearInterval(agentShowcaseIntervalId);
+    agentShowcaseIntervalId = null;
+  }
+}
+function initAgentShowcase() {
+  var root = document.getElementById('agentShowcase');
+  if (!root) return;
+  clearAgentShowcaseInterval();
+  var agents = [
+    { name: 'CONDUCTOR', role: 'Orchestrator', desc: 'Runs point on the entire deal. Coordinates all 6 agents through Band in real time — nothing moves without the Conductor.', img: '/characters/conductor.png' },
+    { name: 'DETECTIVE', role: 'Web Researcher', desc: 'Scours the web for company intelligence — industry position, competitors, red flags, and recent news.', img: '/characters/detective.png' },
+    { name: 'LIBRARIAN', role: 'Document Parser', desc: 'Reads uploaded pitch decks and financial files. Extracts real revenue, burn rate, and runway numbers.', img: '/characters/librarian.png' },
+    { name: 'BANKER', role: 'Financial Analyst', desc: 'Models the financial picture. Evaluates valuation, unit economics, and capital efficiency.', img: '/characters/banker.png' },
+    { name: 'JUDGE', role: 'Legal & Risk', desc: 'Flags legal exposure, compliance issues, and deal-breakers before you commit capital.', img: '/characters/judge.png' },
+    { name: 'WIZARD', role: 'Synthesis', desc: 'Pulls everything together into a full investment memo with a 0–100 Deal Score and PASS / CONDITIONAL / FAIL verdict.', img: '/characters/wizard.png' }
+  ];
+  var current = 0;
+  var showcaseImg = document.getElementById('showcaseImg');
+  var showcaseName = document.getElementById('showcaseName');
+  var showcaseRole = document.getElementById('showcaseRole');
+  var showcaseDesc = document.getElementById('showcaseDesc');
+  var dotsEl = document.getElementById('showcaseDots');
+  var slide = root.querySelector('.agent-slide');
+  if (!showcaseImg || !showcaseName || !showcaseRole || !showcaseDesc || !dotsEl || !slide) return;
+  dotsEl.innerHTML = '';
+  agents.forEach(function (_, i) {
+    var dot = document.createElement('div');
+    dot.style.cssText = 'width:8px;height:8px;border-radius:50%;background:' + (i === 0 ? '#4f46e5' : '#e5e7eb') + ';cursor:pointer;transition:background 0.3s';
+    dot.setAttribute('role', 'button');
+    dot.setAttribute('tabindex', '0');
+    dot.setAttribute('aria-label', 'Show agent ' + (i + 1));
+    (function (idx) {
+      dot.onclick = function () { showAgent(idx); };
+      dot.onkeydown = function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          showAgent(idx);
+        }
+      };
+    }(i));
+    dotsEl.appendChild(dot);
+  });
+  function showAgent(i) {
+    slide.style.opacity = '0';
+    setTimeout(function () {
+      current = i;
+      var a = agents[i];
+      showcaseImg.src = a.img;
+      showcaseImg.alt = a.role;
+      showcaseName.textContent = a.name;
+      showcaseRole.textContent = a.role;
+      showcaseDesc.textContent = a.desc;
+      Array.prototype.forEach.call(dotsEl.children, function (d, j) {
+        d.style.background = j === i ? '#4f46e5' : '#e5e7eb';
+      });
+      slide.style.opacity = '1';
+    }, 250);
+  }
+  showAgent(0);
+  agentShowcaseIntervalId = setInterval(function () {
+    showAgent((current + 1) % agents.length);
+  }, 2500);
+}
 function showAppFromLanding() {
+  clearAgentShowcaseInterval();
   var land = document.getElementById('landingPage');
   var shell = document.getElementById('appShell');
   if (!land || !shell) return;
@@ -1569,6 +1610,7 @@ function showLandingFromApp() {
       requestAnimationFrame(function () {
         land.style.opacity = '1';
         setTimeout(function () { land.style.opacity = ''; }, 350);
+        initAgentShowcase();
       });
     });
   }, 300);
@@ -2272,6 +2314,7 @@ async function startAnalysis() {
 renderRecentList();
 updateChatEmpty();
 updateDocUploadBadge();
+initAgentShowcase();
 if (recentListRelativeInterval == null) {
   recentListRelativeInterval = setInterval(updateRecentListRelativeTimes, 60000);
 }
