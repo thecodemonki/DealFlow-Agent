@@ -80,15 +80,6 @@
     .landing-headline--accent {
       color: #3b82f6;
     }
-    .landing-hero__cover {
-      display: block;
-      max-width: 600px;
-      width: 100%;
-      height: auto;
-      margin: 28px auto 0;
-      border-radius: 16px;
-      box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
-    }
     .landing-desc {
       font-size: 17px;
       color: #64748b;
@@ -746,15 +737,6 @@
       transition: border-color 0.15s ease, background 0.15s ease;
     }
     .doc-upload-zone:hover { border-color: #4f6ef7; background: #f5f7ff; }
-    .doc-upload-input {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      opacity: 0;
-      cursor: pointer;
-      font-size: 0;
-    }
     .doc-upload-zone__inner { pointer-events: none; display: flex; flex-direction: column; gap: 4px; }
     .doc-upload-zone__title {
       font-size: 14px;
@@ -1323,8 +1305,8 @@
       <h1 class="landing-headline">AgentMax</h1>
       <p class="landing-headline landing-headline--accent">Six agents. Sixty seconds.</p>
       <p class="landing-headline landing-headline--accent">Full investment memo.</p>
-      <img class="landing-hero__cover" src="/static/agentmax-cover.png" width="600" alt="AgentMax — your deal team, always on" />
       <p class="landing-desc">A team of AI specialists that research, analyze, and synthesize — collaborating through Band in real time.</p>
+      <img src="/static/agentmax-cover.png" style="max-width:580px; width:90%; border-radius:20px; box-shadow: 0 8px 40px rgba(79,70,229,0.15); margin: 32px auto 24px; display:block" width="580" alt="AgentMax — your deal team, always on" />
       <button type="button" class="landing-cta" id="landingGetStarted">Get Started →</button>
       <p class="landing-cta-hint">No signup required · runs a live demo</p>
       <div class="landing-characters" aria-hidden="true">
@@ -1362,7 +1344,7 @@
 <div id="appShell">
 <div class="app-grid" id="appGrid">
   <aside id="sidebar">
-    <button type="button" class="sidebar-brand" id="sidebarLogoBtn" aria-label="AgentMax — home"><div style="display:flex;align-items:center;gap:8px"><img src="/static/agentmax-a-logo.svg" height="32" /><span style="font-weight:700;font-size:20px;color:#1e1b4b">Agent<span style="color:#4f46e5">Max</span></span></div></button>
+    <button type="button" class="sidebar-brand" id="sidebarLogoBtn" aria-label="AgentMax — home"><div style="display:flex;align-items:center;gap:8px"><div style="width:38px;height:38px;overflow:hidden;flex-shrink:0"><img src="/static/agentmax-cover.png" style="height:38px;width:auto;object-fit:cover;object-position:left center" alt="" /></div><span style="font-weight:700;font-size:18px;color:#1e1b4b">Agent<span style="color:#4f46e5">Max</span></span></div></button>
     <button type="button" class="btn-new" id="newAnalysisBtn"><span class="btn-new__icon">+</span> New Analysis</button>
     <div class="sidebar-recent-stack">
       <div class="sidebar-nav-label sidebar-nav-label--recent">Recent</div>
@@ -1388,15 +1370,15 @@
         <input type="text" id="companyName" placeholder="e.g. Stripe, OpenAI, Figma" autocomplete="organization" />
         <input type="text" id="industry" placeholder="e.g. fintech, SaaS, healthcare" />
       </div>
-      <div class="doc-upload-zone" id="docUploadZone">
-        <input type="file" id="fileInput" class="doc-upload-input" multiple accept=".pdf,.csv,.txt" />
+      <input type="file" id="docUpload" accept=".pdf,.csv,.txt" style="display:none" />
+      <div class="doc-upload-zone" id="docUploadZone" role="button" tabindex="0" onclick="document.getElementById('docUpload').click()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();document.getElementById('docUpload').click();}">
         <div class="doc-upload-zone__inner">
           <span class="doc-upload-zone__title">Upload Pitch Deck or Financials (PDF, CSV, TXT)</span>
-          <span class="doc-upload-zone__hint">Click this area to choose files — they upload immediately for the Librarian</span>
+          <span class="doc-upload-zone__hint">Click to choose a file — it uploads when you run analysis</span>
+          <span id="docUploadFilename" style="display:none;margin-top:8px;font-size:13px;font-weight:600;color:#334155"></span>
         </div>
       </div>
-      <div class="doc-upload-badge doc-upload-badge--muted" id="docUploadBadge" role="status">No documents — analysis from public data only</div>
-      <div class="input-card-attach"><span id="fileList"></span></div>
+      <div id="docUploadBadge" role="status" class="doc-upload-badge doc-upload-badge--muted">No documents — analysis from public data only</div>
       <button type="button" class="btn-run-analysis" id="analyzeBtn">Run Analysis →</button>
       <div class="arena-demo-wrap"><button type="button" class="arena-demo-link" id="runDemoBtn">Run demo</button></div>
       <span id="analyzeTimer" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0" aria-hidden="true"></span>
@@ -1592,7 +1574,7 @@ function showLandingFromApp() {
   }, 300);
 }
 document.getElementById('landingGetStarted').addEventListener('click', showAppFromLanding);
-let currentDealId = null, dealUploadOk = false, pollTimer = null, activityStep = 0, runTimerInterval = null, stepTimeoutId = null, lastAnalysisDurationSec = 0;
+let currentDealId = null, pendingDocFile = null, dealUploadOk = false, pollTimer = null, activityStep = 0, runTimerInterval = null, stepTimeoutId = null, lastAnalysisDurationSec = 0;
 var lastDealScore = { score: 62, verdict: 'CONDITIONAL', risksFlagged: 3 };
 const speechTimers = {};
 const AGENT_CHAT_CLASS = { orchestrator: 'chat-msg--orchestrator', webresearch: 'chat-msg--webresearch', documentparser: 'chat-msg--documentparser', financialanalyst: 'chat-msg--financialanalyst', legalrisk: 'chat-msg--legalrisk', synthesis: 'chat-msg--synthesis' };
@@ -1770,64 +1752,35 @@ function showSpeechBubble(agentId, text) {
   speechTimers[agentId] = setTimeout(function () { wrap.classList.remove('speech-on'); speechTimers[agentId] = null; }, 3000);
 }
 function updateDocUploadBadge() {
-  var fi = document.getElementById('fileInput');
   var badge = document.getElementById('docUploadBadge');
-  if (!badge || !fi) return;
+  if (!badge) return;
+  if (pendingDocFile && pendingDocFile.name) {
+    badge.className = '';
+    badge.innerHTML = '<span style="background:#d1fae5; color:#065f46; border-radius:20px; padding:4px 12px; font-size:13px; display:inline-block">✓ ' + escapeHtml(pendingDocFile.name) + ' — ready for Librarian</span>';
+    return;
+  }
   if (dealUploadOk) {
     badge.className = 'doc-upload-badge doc-upload-badge--ok';
-    badge.textContent = '✓ Document received — Librarian will analyze';
+    badge.textContent = '✓ Document uploaded — Librarian will analyze';
     return;
   }
-  var n = fi.files && fi.files.length ? fi.files.length : 0;
-  if (n > 0) {
-    badge.className = 'doc-upload-badge doc-upload-badge--ok';
-    badge.textContent = 'Document selected — will upload on save';
-  } else {
-    badge.className = 'doc-upload-badge doc-upload-badge--muted';
-    badge.textContent = 'No documents — analysis from public data only';
-  }
+  badge.className = 'doc-upload-badge doc-upload-badge--muted';
+  badge.textContent = 'No documents — analysis from public data only';
 }
-document.getElementById('fileInput').addEventListener('change', async function () {
-  var fi = this;
-  var listEl = document.getElementById('fileList');
-  var names = Array.from(fi.files || []).map(function (f) { return f.name; }).join(', ');
-  if (listEl) listEl.textContent = names || '';
+document.getElementById('docUpload').addEventListener('change', function () {
+  var du = this;
+  pendingDocFile = du.files && du.files[0] ? du.files[0] : null;
+  var fnEl = document.getElementById('docUploadFilename');
+  if (fnEl) {
+    if (pendingDocFile) {
+      fnEl.textContent = pendingDocFile.name;
+      fnEl.style.display = 'block';
+    } else {
+      fnEl.textContent = '';
+      fnEl.style.display = 'none';
+    }
+  }
   dealUploadOk = false;
-  if (!fi.files || !fi.files.length) {
-    updateDocUploadBadge();
-    return;
-  }
-  var badge = document.getElementById('docUploadBadge');
-  if (badge) {
-    badge.className = 'doc-upload-badge doc-upload-badge--muted';
-    badge.textContent = 'Uploading…';
-  }
-  try {
-    if (!currentDealId) {
-      var rd = await fetch(API + '/deals', { method: 'POST' });
-      if (!rd.ok) throw new Error('Could not create draft deal');
-      var dj = await rd.json();
-      if (!dj.deal_id) throw new Error('Invalid response from server');
-      currentDealId = dj.deal_id;
-    }
-    for (var i = 0; i < fi.files.length; i++) {
-      var fd = new FormData();
-      fd.append('file', fi.files[i]);
-      var up = await fetch(API + '/deals/' + encodeURIComponent(currentDealId) + '/upload', { method: 'POST', body: fd });
-      if (!up.ok) {
-        var errText = await up.text();
-        throw new Error(errText || 'Upload failed');
-      }
-      var uj = await up.json();
-      if (uj.status !== 'uploaded') throw new Error('Upload did not complete');
-    }
-    dealUploadOk = true;
-  } catch (err) {
-    dealUploadOk = false;
-    alert(err && err.message ? err.message : 'Upload failed');
-    fi.value = '';
-    if (listEl) listEl.textContent = '';
-  }
   updateDocUploadBadge();
 });
 function setAgentStatus(agent, state, label) {
@@ -2096,8 +2049,7 @@ function showResults() {
   document.body.classList.remove('app-running');
   var company = (document.getElementById('companyName').value || '').trim() || 'Unknown company';
   var industry = (document.getElementById('industry').value || '').trim() || 'your industry';
-  var fileInput = document.getElementById('fileInput');
-  var nFiles = ((fileInput && fileInput.files) ? fileInput.files.length : 0) || (dealUploadOk ? 1 : 0);
+  var nFiles = (pendingDocFile || dealUploadOk) ? 1 : 0;
   var demoBundle = { score: 62, verdict: 'CONDITIONAL', risksFlagged: 3 };
   lastDealScore = demoBundle;
   applyDealScoreUI(lastDealScore);
@@ -2194,12 +2146,13 @@ function resetToInputCard(opts) {
   if (btn) { btn.disabled = false; btn.textContent = 'Run Analysis →'; }
   var cn = document.getElementById('companyName');
   var ind = document.getElementById('industry');
-  var fi = document.getElementById('fileInput');
-  var fl = document.getElementById('fileList');
+  var du = document.getElementById('docUpload');
+  var fnEl = document.getElementById('docUploadFilename');
   if (cn) cn.value = '';
   if (ind) ind.value = '';
-  if (fi) fi.value = '';
-  if (fl) fl.textContent = '';
+  if (du) du.value = '';
+  if (fnEl) { fnEl.textContent = ''; fnEl.style.display = 'none'; }
+  pendingDocFile = null;
   currentDealId = null;
   dealUploadOk = false;
   updateDocUploadBadge();
@@ -2260,17 +2213,47 @@ async function startAnalysis() {
   activityStep = 0;
   if (pollTimer) clearInterval(pollTimer);
   try {
+    if (pendingDocFile) {
+      if (!currentDealId) {
+        var rd = await fetch(API + '/deals', { method: 'POST' });
+        if (!rd.ok) throw new Error('Could not create draft deal');
+        var dj = await rd.json();
+        if (!dj.deal_id) throw new Error('Invalid response from server');
+        currentDealId = dj.deal_id;
+      }
+      var ufd = new FormData();
+      ufd.append('file', pendingDocFile);
+      var upResp = await fetch(API + '/deals/' + encodeURIComponent(currentDealId) + '/upload', { method: 'POST', body: ufd });
+      if (!upResp.ok) {
+        var ut = await upResp.text();
+        throw new Error(ut || 'Document upload failed');
+      }
+      var uj = await upResp.json();
+      if (uj.status !== 'uploaded') throw new Error('Document upload did not complete');
+      dealUploadOk = true;
+      pendingDocFile = null;
+      var du0 = document.getElementById('docUpload');
+      var fnEl0 = document.getElementById('docUploadFilename');
+      if (du0) du0.value = '';
+      if (fnEl0) { fnEl0.textContent = ''; fnEl0.style.display = 'none'; }
+      updateDocUploadBadge();
+    }
     var fd = new FormData();
     fd.append('company_name', company);
     fd.append('notes', 'Industry: ' + document.getElementById('industry').value);
     if (currentDealId) fd.append('deal_id', currentDealId);
-    var files = document.getElementById('fileInput').files;
-    for (var i = 0; i < files.length; i++) fd.append('files', files[i]);
     var resp = await fetch(API + '/analyze', { method: 'POST', body: fd });
     var dealJson = null;
     try { dealJson = await resp.json(); } catch (e2) {}
     currentDealId = dealJson && dealJson.deal_id ? dealJson.deal_id : null;
-  } catch (e) {}
+  } catch (e) {
+    alert(e && e.message ? e.message : 'Something went wrong');
+    clearRunTimer();
+    btn.disabled = false;
+    btn.textContent = 'Run Analysis →';
+    document.body.classList.remove('app-running');
+    return;
+  }
   function nextStep() {
     if (window.analysisAborted) return;
     if (activityStep < STEPS.length) {
