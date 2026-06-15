@@ -37,10 +37,6 @@
       padding: 0 48px;
       border-bottom: 1px solid #eee;
     }
-    .landing-nav__logo {
-      display: block;
-      line-height: 0;
-    }
     .landing-nav__credit {
       font-size: 13px;
       color: #888;
@@ -105,6 +101,34 @@
       margin-top: 12px;
       font-size: 13px;
       color: #888;
+    }
+    .agent-showcase-viewport {
+      overflow: hidden;
+      width: 100%;
+      min-height: 160px;
+    }
+    .agent-slide {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      padding: 24px 32px;
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
+    }
+    .slide-out {
+      transform: translateX(-60px);
+      opacity: 0;
+    }
+    .slide-in {
+      transform: translateX(60px);
+      opacity: 0;
+    }
+    .slide-active {
+      transform: translateX(0);
+      opacity: 1;
     }
     .landing-how {
       width: 100%;
@@ -1266,7 +1290,7 @@
 <body>
 <div id="landingPage">
   <nav class="landing-nav" aria-label="Top">
-    <img class="landing-nav__logo" src="/static/agentmax-logo.png" style="height:38px; width:auto;" alt="AgentMax" />
+    <img src="/static/agentmax-logo.png" style="height:40px; width:auto; display:block;" alt="AgentMax" />
     <span class="landing-nav__credit">Powered by Band</span>
   </nav>
   <div class="landing-main">
@@ -1279,12 +1303,14 @@
       <button type="button" class="landing-cta" id="landingGetStarted">Get Started →</button>
       <p class="landing-cta-hint">No signup required · runs a live demo</p>
       <div id="agentShowcase" style="margin:48px auto; max-width:700px; text-align:center; min-height:180px; position:relative" aria-live="polite">
-        <div class="agent-slide" style="display:flex; align-items:center; justify-content:center; gap:24px; padding:24px 32px; background:white; border-radius:20px; box-shadow:0 4px 24px rgba(0,0,0,0.08); transition: opacity 0.5s ease; opacity:1">
-          <img id="showcaseImg" src="/characters/conductor.png" alt="" style="width:90px; height:90px; object-fit:contain" />
-          <div style="text-align:left">
-            <div id="showcaseName" style="font-size:11px; font-weight:700; letter-spacing:2px; color:#a78bfa; text-transform:uppercase; margin-bottom:4px"></div>
-            <div id="showcaseRole" style="font-size:20px; font-weight:700; color:#1e1b4b; margin-bottom:8px"></div>
-            <div id="showcaseDesc" style="font-size:15px; color:#6b7280; line-height:1.5; max-width:360px"></div>
+        <div class="agent-showcase-viewport">
+          <div class="agent-slide slide-active">
+            <img id="showcaseImg" src="/characters/conductor.png" alt="" style="width:90px; height:90px; object-fit:contain" />
+            <div style="text-align:left">
+              <div id="showcaseName" style="font-size:11px; font-weight:700; letter-spacing:2px; color:#a78bfa; text-transform:uppercase; margin-bottom:4px"></div>
+              <div id="showcaseRole" style="font-size:20px; font-weight:700; color:#1e1b4b; margin-bottom:8px"></div>
+              <div id="showcaseDesc" style="font-size:15px; color:#6b7280; line-height:1.5; max-width:360px"></div>
+            </div>
           </div>
         </div>
         <div id="showcaseDots" style="margin-top:16px; display:flex; justify-content:center; gap:8px"></div>
@@ -1523,14 +1549,14 @@ function initAgentShowcase() {
   if (!root) return;
   clearAgentShowcaseInterval();
   var agents = [
-    { name: 'CONDUCTOR', role: 'Orchestrator', desc: 'Runs point on the entire deal. Coordinates all 6 agents through Band in real time — nothing moves without the Conductor.', img: '/characters/conductor.png' },
-    { name: 'DETECTIVE', role: 'Web Researcher', desc: 'Scours the web for company intelligence — industry position, competitors, red flags, and recent news.', img: '/characters/detective.png' },
-    { name: 'LIBRARIAN', role: 'Document Parser', desc: 'Reads uploaded pitch decks and financial files. Extracts real revenue, burn rate, and runway numbers.', img: '/characters/librarian.png' },
-    { name: 'BANKER', role: 'Financial Analyst', desc: 'Models the financial picture. Evaluates valuation, unit economics, and capital efficiency.', img: '/characters/banker.png' },
-    { name: 'JUDGE', role: 'Legal & Risk', desc: 'Flags legal exposure, compliance issues, and deal-breakers before you commit capital.', img: '/characters/judge.png' },
-    { name: 'WIZARD', role: 'Synthesis', desc: 'Pulls everything together into a full investment memo with a 0–100 Deal Score and PASS / CONDITIONAL / FAIL verdict.', img: '/characters/wizard.png' }
+    { name: 'CONDUCTOR', role: 'Orchestrator', desc: 'The one running the show. Spins up all six agents, sequences their work, and makes sure the deal gets done start to finish.', img: '/characters/conductor.png' },
+    { name: 'DETECTIVE', role: 'Web Researcher', desc: "Digs through the web so you don't have to. Finds what the company does, who they compete with, and what people are saying about them.", img: '/characters/detective.png' },
+    { name: 'LIBRARIAN', role: 'Document Parser', desc: 'Hand it a pitch deck or financials and it reads every line. Pulls out the numbers that actually matter.', img: '/characters/librarian.png' },
+    { name: 'BANKER', role: 'Financial Analyst', desc: 'Looks at the money side. Burn rate, runway, how the valuation stacks up, and whether the unit economics hold.', img: '/characters/banker.png' },
+    { name: 'JUDGE', role: 'Legal & Risk', desc: 'Finds the landmines. Flags anything that could become a problem after the deal closes.', img: '/characters/judge.png' },
+    { name: 'WIZARD', role: 'Synthesis', desc: 'Takes everything the team found and turns it into a clean investment memo, complete with a deal score and a clear recommendation.', img: '/characters/wizard.png' }
   ];
-  var current = 0;
+  var current = -1;
   var showcaseImg = document.getElementById('showcaseImg');
   var showcaseName = document.getElementById('showcaseName');
   var showcaseRole = document.getElementById('showcaseRole');
@@ -1546,35 +1572,53 @@ function initAgentShowcase() {
     dot.setAttribute('tabindex', '0');
     dot.setAttribute('aria-label', 'Show agent ' + (i + 1));
     (function (idx) {
-      dot.onclick = function () { showAgent(idx); };
+      dot.onclick = function () { showAgent(idx, false); };
       dot.onkeydown = function (e) {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          showAgent(idx);
+          showAgent(idx, false);
         }
       };
     }(i));
     dotsEl.appendChild(dot);
   });
-  function showAgent(i) {
-    slide.style.opacity = '0';
-    setTimeout(function () {
-      current = i;
-      var a = agents[i];
-      showcaseImg.src = a.img;
-      showcaseImg.alt = a.role;
-      showcaseName.textContent = a.name;
-      showcaseRole.textContent = a.role;
-      showcaseDesc.textContent = a.desc;
-      Array.prototype.forEach.call(dotsEl.children, function (d, j) {
-        d.style.background = j === i ? '#4f46e5' : '#e5e7eb';
-      });
-      slide.style.opacity = '1';
-    }, 250);
+  function applyContent(idx) {
+    current = idx;
+    var a = agents[idx];
+    showcaseImg.src = a.img;
+    showcaseImg.alt = a.role;
+    showcaseName.textContent = a.name;
+    showcaseRole.textContent = a.role;
+    showcaseDesc.textContent = a.desc;
+    Array.prototype.forEach.call(dotsEl.children, function (d, j) {
+      d.style.background = j === idx ? '#4f46e5' : '#e5e7eb';
+    });
   }
-  showAgent(0);
+  function showAgent(i, instant) {
+    if (!instant && i === current) return;
+    if (instant) {
+      applyContent(i);
+      slide.classList.remove('slide-out', 'slide-in');
+      slide.classList.add('slide-active');
+      return;
+    }
+    slide.classList.remove('slide-in', 'slide-active');
+    slide.classList.add('slide-out');
+    setTimeout(function () {
+      applyContent(i);
+      slide.classList.remove('slide-out');
+      slide.classList.add('slide-in');
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          slide.classList.remove('slide-in');
+          slide.classList.add('slide-active');
+        });
+      });
+    }, 350);
+  }
+  showAgent(0, true);
   agentShowcaseIntervalId = setInterval(function () {
-    showAgent((current + 1) % agents.length);
+    showAgent((current + 1) % agents.length, false);
   }, 2500);
 }
 function showAppFromLanding() {
