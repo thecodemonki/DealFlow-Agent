@@ -3,8 +3,9 @@ Financial Analyst Agent — DealFlow AI
 Framework: LangGraph
 Model: GPT-4o-mini via AI/ML API
 
-Reliable tool calling + strong quantitative reasoning for financial analysis.
-Switched from Featherless Qwen2.5-72B to eliminate 429 concurrency errors.
+Quantitative analysis is driven by SIGNAL:parsed_documents from the Librarian.
+There is no hardcoded demo path in this module — behavior is defined in FINANCIAL_ANALYST_PROMPT
+(shared/prompts.py): use real parsed figures when present; otherwise post the explicit no-documents message.
 """
 
 import asyncio

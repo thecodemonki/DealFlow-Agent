@@ -43,21 +43,48 @@ class DealRequest(BaseModel):
 
 
 class ParsedDocuments(BaseModel):
-    """Output of the Document Parser agent."""
-    company_name: str
+    """Output of the Document Parser agent (Librarian)."""
+    company_name: str = Field(default="Unknown")
+    revenue_ttm: Optional[str] = Field(default=None, description="Trailing twelve months revenue as stated in docs")
+    burn_rate_monthly: Optional[str] = Field(default=None, description="Monthly burn / cash consumption if stated")
+    runway_months: Optional[int] = Field(default=None, description="Cash runway in months if derivable")
+    valuation_ask: Optional[str] = Field(default=None, description="Ask or implied valuation from deck")
+    total_raised: Optional[str] = Field(default=None, description="Funding raised to date if stated")
+    key_metrics: list[str] = Field(
+        default_factory=list,
+        description="Short bullet metrics extracted verbatim or paraphrased from the file",
+    )
+    raw_text_excerpt: str = Field(
+        default="",
+        max_length=500,
+        description="Up to 500 chars of representative text from the source document",
+    )
     financials: dict = Field(
-        description="Revenue, COGS, expenses, burn rate, cash, headcount"
+        default_factory=dict,
+        description="Revenue, COGS, expenses, burn rate, cash, headcount (structured)",
     )
     key_contracts: list[dict] = Field(
-        description="List of {type, parties, key_clauses[], expiry, risk_notes}"
+        default_factory=list,
+        description="List of {type, parties, key_clauses[], expiry, risk_notes}",
     )
     cap_table: list[dict] = Field(
-        description="List of {investor, shares, percentage, investment_round}"
+        default_factory=list,
+        description="List of {investor, shares, percentage, investment_round}",
     )
     key_dates: list[dict] = Field(
-        description="List of {event, date, significance}"
+        default_factory=list,
+        description="List of {event, date, significance}",
     )
-    raw_text_summary: str
+    raw_text_summary: str = Field(
+        default="",
+        description="Legacy longer summary; prefer raw_text_excerpt for new signals",
+    )
+
+    @model_validator(mode="after")
+    def _clip_raw_text_excerpt(self):
+        ex = (self.raw_text_excerpt or "")[:500]
+        object.__setattr__(self, "raw_text_excerpt", ex)
+        return self
 
 
 class FinancialAnalysis(BaseModel):

@@ -133,6 +133,10 @@ curl -X POST http://localhost:8000/analyze \
   -F "notes=Series B SaaS, considering acquisition" \
   -F "files=@financials.pdf"
 
+# Upload a document to an existing deal (saves under uploads/{deal_id}/, posts DOCUMENT_UPLOADED to Band)
+curl -X POST "http://localhost:8000/deals/{deal_id}/upload" \
+  -F "file=@./pitch.pdf"
+
 # Check status
 curl http://localhost:8000/deals/{deal_id}
 

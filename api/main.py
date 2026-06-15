@@ -174,6 +174,42 @@ async def trigger_orchestrator(deal_id: str, company_name: str, file_paths: list
         return room_id
 
 
+async def _post_band_document_uploaded(room_id: str, file_path: str) -> bool:
+    """
+    Publish DOCUMENT_UPLOADED to the deal Band room so the Orchestrator / Librarian pipeline can pick it up.
+    """
+    import yaml
+
+    try:
+        with open("agent_config.yaml") as f:
+            config = yaml.safe_load(f)
+        orchestrator_config = config["orchestrator"]
+        orchestrator_agent_id = orchestrator_config["agent_id"]
+        orchestrator_api_key = orchestrator_config["api_key"]
+        headers = {"X-API-Key": orchestrator_api_key, "Content-Type": "application/json"}
+        content = f"DOCUMENT_UPLOADED: {file_path} — please analyze this file"
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                f"{BAND_API_BASE}/chats/{room_id}/messages",
+                headers=headers,
+                json={
+                    "content": content,
+                    "mentions": [orchestrator_agent_id],
+                },
+            )
+            if resp.status_code not in (200, 201):
+                logger.warning(
+                    "DOCUMENT_UPLOADED post failed %s: %s",
+                    resp.status_code,
+                    resp.text[:500],
+                )
+                return False
+        return True
+    except Exception as e:
+        logger.error("Failed to post DOCUMENT_UPLOADED to Band: %s", e)
+        return False
+
+
 # -------------------------------------------------------------------
 # Routes
 # -------------------------------------------------------------------
@@ -229,6 +265,8 @@ async def submit_deal(
         room_id = await trigger_orchestrator(deal_id, company_name, file_paths, notes)
         deals[deal_id]["band_room_id"] = room_id
         deals[deal_id]["status"] = "in_progress"
+        for fp in file_paths:
+            await _post_band_document_uploaded(room_id, fp)
     except Exception as e:
         logger.error(f"Failed to trigger orchestrator: {e}")
         deals[deal_id]["status"] = "error"
@@ -242,6 +280,42 @@ async def submit_deal(
         "files_uploaded": len(file_paths),
         "message": "Analysis triggered. Agents are collaborating in your Band room.",
     })
+
+
+@app.post("/deals/{deal_id}/upload")
+async def upload_deal_document(deal_id: str, file: UploadFile = File(...)):
+    """
+    Save an additional document for an existing deal and notify the Band room (DOCUMENT_UPLOADED).
+    """
+    if deal_id not in deals:
+        raise HTTPException(status_code=404, detail="Deal not found")
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="File name is required")
+
+    deal_dir = UPLOAD_DIR / deal_id
+    deal_dir.mkdir(parents=True, exist_ok=True)
+    safe_name = Path(file.filename).name
+    dest = deal_dir / safe_name
+    dest.write_bytes(await file.read())
+    saved_path = str(dest.resolve())
+
+    paths = deals[deal_id].setdefault("file_paths", [])
+    if saved_path not in paths:
+        paths.append(saved_path)
+
+    room_id = deals[deal_id].get("band_room_id")
+    if room_id:
+        await _post_band_document_uploaded(room_id, saved_path)
+    else:
+        logger.warning("upload: deal %s has no band_room_id; file saved but not broadcast", deal_id)
+
+    return JSONResponse(
+        {
+            "deal_id": deal_id,
+            "saved_path": saved_path,
+            "filename": safe_name,
+        }
+    )
 
 
 @app.get("/deals/{deal_id}")
