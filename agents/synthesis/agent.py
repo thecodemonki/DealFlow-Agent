@@ -83,6 +83,22 @@ def generate_pdf_memo(memo_data: dict) -> str:
     Returns the file path of the saved PDF.
     """
     memo_data = normalize_deal_score_fields(dict(memo_data))
+    # Guardrail: if the LLM hallucinated a placeholder valuation despite no financial docs,
+    # replace it with the correct no-data message
+    financial_highlights = memo_data.get("financial_highlights", "")
+    placeholder_patterns = [
+        "$50",
+        "$95B",
+        "illustrative",
+        "provisional valuation band",
+        "large-cap comparables",
+        "in this demo",
+    ]
+    if any(p.lower() in financial_highlights.lower() for p in placeholder_patterns):
+        memo_data["financial_highlights"] = (
+            "No financial documents were provided. Valuation cannot be modelled "
+            "from public data alone. Recommend requesting audited financials before proceeding."
+        )
     try:
         from reportlab.lib.pagesizes import letter
         from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
