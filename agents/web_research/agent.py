@@ -47,6 +47,51 @@ llm = ChatOpenAI(
 # Internal helpers
 # -------------------------------------------------------------------
 
+# Phrases to match in Wikipedia-style company text (longer first for specificity).
+_INDUSTRY_LEXICON = (
+    "financial technology",
+    "payment processing",
+    "consumer electronics",
+    "financial services",
+    "telecommunications",
+    "pharmaceutical",
+    "biotechnology",
+    "manufacturing",
+    "e-commerce",
+    "healthcare",
+    "health care",
+    "cryptocurrency",
+    "semiconductor",
+    "aerospace",
+    "automotive",
+    "insurance",
+    "banking",
+    "logistics",
+    "transportation",
+    "real estate",
+    "agriculture",
+    "fintech",
+    "software",
+    "internet",
+    "retail",
+    "energy",
+    "media",
+    "saas",
+    "technology",
+)
+
+
+def _infer_industry_from_text(text: str) -> str | None:
+    """Infer a short industry label from company overview text (e.g. Wikipedia extract)."""
+    if not text:
+        return None
+    t = text.lower()
+    for phrase in sorted(_INDUSTRY_LEXICON, key=len, reverse=True):
+        if phrase in t:
+            return phrase.replace("-", " ").title()
+    return None
+
+
 def _web_search(query: str) -> str:
     """Wikipedia REST API search with DuckDuckGo fallback. Returns text or empty string."""
     # --- Wikipedia ---
@@ -157,11 +202,13 @@ def create_web_research() -> Agent:
 
 
     @tool
-    def do_complete_research(company_name: str, industry: str = "technology") -> str:
+    def do_complete_research(company_name: str) -> str:
         """
         THE ONLY TOOL YOU NEED. Call this ONCE when asked to research a company.
         Searches the web, posts the SIGNAL:market_research to Band, and sends the
         handoff to @Synthesis and @Orchestrator — all automatically.
+        Industry is inferred from the company article text plus a direct web search
+        for sector/market context (no industry argument).
         Returns a status string when complete. Do NOT call thenvoi_send_message.
         """
         # 1. Fetch company Wikipedia page directly (single call, most reliable)
@@ -184,10 +231,8 @@ def create_web_research() -> Agent:
             or _wiki_summary(wiki_title)
             or _web_search(f"{company_name} company")
         )
-        industry_extract = (
-            _wiki_summary(industry.replace(" ", "_"))
-            or _web_search(f"{industry} market size")
-        )
+        industry_extract = _web_search(f"{company_name} industry sector market")
+        inferred_industry = _infer_industry_from_text(company_extract) or "technology"
 
         # Extract specific fields from the company Wikipedia article
         def _extract_sentence(text: str, keywords: list[str]) -> str:
@@ -199,13 +244,19 @@ def create_web_research() -> Agent:
 
         founders_data = _extract_sentence(company_extract, ["founded", "founder", "brothers", "CEO", "Patrick", "John"])
         funding_data = _extract_sentence(company_extract, ["valued", "valuation", "billion", "funding", "raised", "investors"])
-        tam_data = industry_extract[:250] if industry_extract else _web_search(f"{industry} market size billion") or "Unknown"
-        competitors_data = _web_search(f"{company_name} main competitors") or _extract_sentence(company_extract, ["competitor", "compete", "rival", "PayPal", "Square", "Adyen"]) or "Unknown"
+        tam_raw = industry_extract or _web_search(f"{inferred_industry} market size") or ""
+        tam_data = tam_raw[:250] if tam_raw else "Unknown"
+        _competitor_kw = ["competitor", "compete", "rival", "alternative", "versus"]
+        competitors_data = (
+            _web_search(f"{company_name} main competitors")
+            or _extract_sentence(company_extract, _competitor_kw)
+            or "Unknown"
+        )
         news_data = _extract_sentence(company_extract, ["2023", "2024", "recent", "launched", "announced", "expanded"]) or "No recent news retrieved"
 
         research = {
             "company_name": company_name,
-            "industry": industry,
+            "industry": inferred_industry,
             "company_overview": company_extract[:200] if company_extract else "Unknown",
             "tam_estimate": tam_data,
             "top_competitors": competitors_data,

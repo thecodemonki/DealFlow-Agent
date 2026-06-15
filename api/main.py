@@ -18,11 +18,16 @@ from pathlib import Path
 from datetime import datetime
 
 import httpx
+from typing import Any, Optional
+
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
 from dotenv import load_dotenv
+
+from shared.models import verdict_from_deal_score
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -51,6 +56,58 @@ app.mount("/characters", StaticFiles(directory=str(CHARACTERS_DIR)), name="chara
 
 # In-memory deal status store (replace with DB in production)
 deals: dict[str, dict] = {}
+
+
+class DealCompleteBody(BaseModel):
+    """Webhook body when Synthesis finishes: PDF path plus optional memo summary for the UI."""
+
+    memo_path: str = Field(..., description="Absolute or project-relative path to the generated PDF")
+    memo_summary: Optional[dict[str, Any]] = Field(
+        default=None,
+        description="SIGNAL:investment_memo-style fields: deal_score, deal_verdict, risks_flagged_count, company_name, recommendation, confidence, etc.",
+    )
+
+
+def _latest_complete_deal_id() -> Optional[str]:
+    """Most recently completed deal that has a memo PDF on disk."""
+    best_id: Optional[str] = None
+    best_ts = ""
+    for did, d in deals.items():
+        if d.get("status") != "complete":
+            continue
+        mp = d.get("memo_path")
+        if not mp or not Path(mp).exists():
+            continue
+        ts = str(d.get("completed_at") or d.get("created_at") or "")
+        if ts >= best_ts:
+            best_ts = ts
+            best_id = did
+    return best_id
+
+
+def _public_memo_summary(deal_id: str) -> dict[str, Any]:
+    d = deals[deal_id]
+    raw = dict(d.get("memo_summary") or {})
+    try:
+        score = int(raw.get("deal_score", 50))
+    except (TypeError, ValueError):
+        score = 50
+    score = max(0, min(100, score))
+    verdict = verdict_from_deal_score(score)
+    try:
+        risks = max(0, int(raw.get("risks_flagged_count", 0)))
+    except (TypeError, ValueError):
+        risks = 0
+    return {
+        "deal_id": deal_id,
+        "company_name": raw.get("company_name") or d.get("company_name"),
+        "deal_score": score,
+        "deal_verdict": verdict,
+        "risks_flagged_count": risks,
+        "recommendation": raw.get("recommendation"),
+        "confidence": raw.get("confidence"),
+    }
+
 
 # -------------------------------------------------------------------
 # Band API helper — sends a message to the Orchestrator's inbox room.
@@ -162,7 +219,9 @@ async def submit_deal(
         "file_paths": file_paths,
         "band_room_id": None,
         "created_at": datetime.utcnow().isoformat(),
+        "completed_at": None,
         "memo_path": None,
+        "memo_summary": None,
     }
 
     # Trigger Orchestrator via Band
@@ -210,14 +269,38 @@ async def download_memo(deal_id: str):
     return FileResponse(memo_path, media_type="application/pdf", filename=Path(memo_path).name)
 
 
+@app.get("/memo/latest")
+async def download_latest_memo():
+    """Download the PDF for the most recently completed deal (same as README `curl /memo/latest`)."""
+    deal_id = _latest_complete_deal_id()
+    if not deal_id:
+        raise HTTPException(status_code=404, detail="No completed memo available")
+    memo_path = deals[deal_id]["memo_path"]
+    return FileResponse(memo_path, media_type="application/pdf", filename=Path(memo_path).name)
+
+
+@app.get("/memo/latest/summary")
+async def latest_memo_summary():
+    """JSON for the UI: Deal Score, verdict, and Judge risk count."""
+    deal_id = _latest_complete_deal_id()
+    if not deal_id:
+        raise HTTPException(status_code=404, detail="No completed memo available")
+    return _public_memo_summary(deal_id)
+
+
 @app.post("/deals/{deal_id}/complete")
-async def mark_deal_complete(deal_id: str, memo_path: str):
+async def mark_deal_complete(deal_id: str, body: DealCompleteBody):
     """
-    Called by the Synthesis agent (via webhook or Band message) when the memo is ready.
-    In production, the Synthesis agent posts a webhook to this endpoint.
+    Called by the Synthesis agent (via webhook) when the memo is ready.
+
+    Body JSON: {"memo_path": "/path/to.pdf", "memo_summary": { ... optional fields including
+    deal_score, deal_verdict, risks_flagged_count, company_name, recommendation, confidence }}
     """
     if deal_id not in deals:
         raise HTTPException(status_code=404, detail="Deal not found")
     deals[deal_id]["status"] = "complete"
-    deals[deal_id]["memo_path"] = memo_path
-    return {"status": "updated"}
+    deals[deal_id]["memo_path"] = body.memo_path
+    deals[deal_id]["completed_at"] = datetime.utcnow().isoformat()
+    if body.memo_summary is not None:
+        deals[deal_id]["memo_summary"] = body.memo_summary
+    return {"status": "updated", "deal_id": deal_id}

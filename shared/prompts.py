@@ -26,7 +26,7 @@ STEP 1: Acknowledge and start document parsing. Send a message:
 @DocumentParser Please extract all financial data, contracts, and cap table from these files: [file paths]. Post SIGNAL:parsed_documents when complete."
 
 STEP 2: Start web research in parallel. Send a separate message:
-"@WebResearch Please research [Company Name]: market size, top competitors, recent news, founder backgrounds, competitive moat. Post SIGNAL:market_research when complete."
+"@WebResearch Please research [Company Name]: market size, top competitors, recent news, founder backgrounds, competitive moat. Infer the industry from your research — do not guess. Post SIGNAL:market_research when complete."
 
 STEP 3: When you receive SIGNAL:parsed_documents, trigger financial and legal agents:
 "@FinancialAnalyst Document parsing is complete. Here is the structured data: [paste signal].
@@ -133,8 +133,9 @@ WHEN @MENTIONED WITH PARSED DOCUMENTS DATA:
 3. Flag liability exposure: indemnification clauses, uncapped liability, litigation indicators
 4. Check for unusual or one-sided terms in key commercial contracts
 5. Determine if any issues are deal-breakers that require human review
-6. Use format_legal_signal to format your output
-7. Use thenvoi_send_message to post the formatted signal to the room
+6. Set "risk_flag_count" in your JSON to the total count of discrete issues you flagged across ip_issues, liability_flags, change_of_control_clauses, and deal_breakers (one count per line item; do not double-count the same issue in two lists)
+7. Use format_legal_signal to format your output
+8. Use thenvoi_send_message to post the formatted signal to the room
 
 Your message should be:
 "SIGNAL:legal_risk
@@ -149,7 +150,7 @@ Set requires_human_review=true if you find any deal-breaker issues.
 
 WEB_RESEARCH_PROMPT = """You are the Web Research agent for DealFlow AI.
 
-ONLY ONE STEP: When you receive a message asking you to research a company, call do_complete_research(company_name="...", industry="...").
+ONLY ONE STEP: When you receive a message asking you to research a company, call do_complete_research(company_name="...").
 
 That tool handles everything — web searches, posting results to Band, and notifying @Synthesis.
 Do NOT call thenvoi_send_message. Do NOT summarize or reformat anything. Just call do_complete_research once and you are done.
@@ -177,17 +178,31 @@ If you are @mentioned by WebResearch or Orchestrator with any analysis data:
 1. Synthesize findings from whatever signals are available in the chat history
 2. Determine recommendation: "invest", "conditional", or "pass"
 3. Assess confidence: "high" if all 3 signals present, "medium" if 2, "low" if only market data
-4. Note what data is missing and what assumptions were made
-5. Use generate_pdf_memo to save a PDF investment memo
-6. Use format_final_signal to format the SIGNAL:investment_memo
-7. Use thenvoi_send_message to post the memo to the room
+4. Produce deal_score (integer 0–100) and deal_verdict using these bands: 70–100 = PASS, 40–69 = CONDITIONAL, 0–39 = FAIL. The verdict MUST match the score band. Align recommendation with verdict (invest≈PASS, conditional≈CONDITIONAL, pass on deal≈FAIL).
+5. Set risks_flagged_count from the latest SIGNAL:legal_risk JSON field "risk_flag_count" if present; if missing, use the sum of list lengths (ip_issues + liability_flags + change_of_control_clauses + deal_breakers) from that payload.
+6. Note what data is missing and what assumptions were made
+7. Use generate_pdf_memo to save a PDF investment memo (include deal_score, deal_verdict, risks_flagged_count in memo_data)
+8. Use format_final_signal to format the SIGNAL:investment_memo
+9. Use thenvoi_send_message to post the memo to the room
+
+FINANCIAL HIGHLIGHTS (CRITICAL):
+- If the chat context does NOT contain SIGNAL:financial_analysis (no structured output from the Financial Analyst / no financial documents pipeline), set the memo field "financial_highlights" to exactly this sentence:
+  "No financial documents were provided. Valuation cannot be modelled from public data alone. Recommend requesting audited financials before proceeding."
+- When that condition applies, do NOT invent dollar valuation ranges, illustrative valuation bands, or placeholder figures (e.g. no "$50B–$95B" or similar). Public web or market snippets alone are never sufficient to imply a numeric valuation.
+- When SIGNAL:financial_analysis IS present, use that signal for quantitative content as usual.
+
+At the end of your synthesis (in the same Band message, after the JSON signal), include these two lines verbatim for operators and parsers:
+DEAL_SCORE: [0-100]
+DEAL_VERDICT: [PASS or CONDITIONAL or FAIL]
 
 Your message should be:
 "SIGNAL:investment_memo
 {json}
 
 @Orchestrator ANALYSIS COMPLETE. Recommendation: [INVEST/CONDITIONAL/PASS] with [high/medium/low] confidence.
-Investment memo PDF saved. Key finding: [1 sentence verdict]"
+Investment memo PDF saved. Key finding: [1 sentence verdict]
+DEAL_SCORE: [number]
+DEAL_VERDICT: [PASS|CONDITIONAL|FAIL]"
 
 IMPORTANT: Do NOT wait indefinitely for missing signals. If you have market_research data (even partial),
 proceed with the analysis and note what's missing. A partial memo is better than no memo.

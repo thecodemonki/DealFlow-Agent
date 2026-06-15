@@ -22,7 +22,7 @@ from thenvoi import Agent
 from thenvoi.adapters import LangGraphAdapter
 from thenvoi.config import load_agent_config
 
-from shared.models import FinancialAnalysis, LegalRiskAnalysis, MarketResearch, InvestmentMemo
+from shared.models import FinancialAnalysis, LegalRiskAnalysis, MarketResearch, InvestmentMemo, verdict_from_deal_score
 from shared.prompts import SYNTHESIS_PROMPT
 
 load_dotenv()
@@ -42,6 +42,22 @@ llm = ChatOpenAI(
 # -------------------------------------------------------------------
 # Synthesis and PDF generation tools
 # -------------------------------------------------------------------
+
+def normalize_deal_score_fields(memo: dict) -> dict:
+    """Clamp deal_score to 0–100, align deal_verdict to score bands, coerce risks_flagged_count."""
+    out = dict(memo)
+    try:
+        s = int(out.get("deal_score", 50))
+    except (TypeError, ValueError):
+        s = 50
+    out["deal_score"] = max(0, min(100, s))
+    out["deal_verdict"] = verdict_from_deal_score(out["deal_score"])
+    try:
+        out["risks_flagged_count"] = max(0, int(out.get("risks_flagged_count", 0)))
+    except (TypeError, ValueError):
+        out["risks_flagged_count"] = 0
+    return out
+
 
 @tool
 def parse_signal_payload(message: str) -> dict:
@@ -66,6 +82,7 @@ def generate_pdf_memo(memo_data: dict) -> str:
     Generate a formatted PDF investment memo from the InvestmentMemo data.
     Returns the file path of the saved PDF.
     """
+    memo_data = normalize_deal_score_fields(dict(memo_data))
     try:
         from reportlab.lib.pagesizes import letter
         from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -108,6 +125,15 @@ def generate_pdf_memo(memo_data: dict) -> str:
         content.append(Spacer(1, 12))
 
         content.append(Paragraph(f"Recommendation: {recommendation} ({confidence} confidence)", verdict_style))
+        ds = memo_data.get("deal_score", 50)
+        dv = memo_data.get("deal_verdict", verdict_from_deal_score(ds))
+        rc = memo_data.get("risks_flagged_count", 0)
+        content.append(
+            Paragraph(
+                f"Deal score: {ds}/100 — {dv} — {rc} risk(s) flagged (Judge)",
+                body_style,
+            )
+        )
         content.append(Spacer(1, 12))
 
         sections = [
@@ -147,10 +173,14 @@ def format_final_signal(memo: dict) -> str:
     """Format InvestmentMemo as a SIGNAL message for the Band room.
     Posts a concise summary — full memo is saved to PDF separately.
     Keeps content under 2000 chars to comply with Band API limits."""
+    memo = normalize_deal_score_fields(dict(memo))
     summary = {
         "company_name": memo.get("company_name", ""),
         "recommendation": memo.get("recommendation", ""),
         "confidence": memo.get("confidence", ""),
+        "deal_score": memo.get("deal_score", 50),
+        "deal_verdict": memo.get("deal_verdict", "CONDITIONAL"),
+        "risks_flagged_count": memo.get("risks_flagged_count", 0),
         "executive_summary": (memo.get("executive_summary", "") or "")[:400],
         "red_flags": (memo.get("red_flags", []) or [])[:3],
     }

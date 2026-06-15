@@ -9,8 +9,11 @@ from agents.synthesis.agent import generate_pdf_memo
 
 memo_data = {
     "company_name": "Stripe",
-    "recommendation": "CONDITIONAL",
+    "recommendation": "conditional",
     "confidence": "medium",
+    "deal_score": 62,
+    "deal_verdict": "CONDITIONAL",
+    "risks_flagged_count": 4,
     "executive_summary": (
         "Stripe, Inc. is an Irish-American multinational financial services and SaaS company "
         "dual-headquartered in South San Francisco, CA and Dublin, Ireland. Founded in 2010 by "

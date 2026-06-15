@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AgentMax — Logo concepts</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --agent-blue: #3b82f6;
+      --agent-amber: #f59e0b;
+      --agent-green: #10b981;
+      --agent-orange: #f97316;
+      --agent-red: #ef4444;
+      --agent-purple: #a855f7;
+      --dark-bg: #0d0b2a;
+    }
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: #f1f5f9;
+      color: #0f172a;
+      padding: 32px 24px 64px;
+      line-height: 1.5;
+    }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+    .intro {
+      font-size: 14px;
+      color: #64748b;
+      max-width: 720px;
+      margin-bottom: 28px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      align-items: start;
+    }
+    .concept {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+    }
+    .concept h2 {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #64748b;
+      margin-bottom: 12px;
+    }
+    .row2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .swatch {
+      border-radius: 10px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 120px;
+    }
+    .swatch.light {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      color: #0f172a;
+    }
+    .swatch.dark {
+      background: var(--dark-bg);
+      border: 1px solid #1e1b4b;
+      color: #f1f5f9;
+    }
+    .swatch span.label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      opacity: 0.7;
+    }
+    .preview-lg { width: 200px; height: auto; display: block; }
+    .preview-sm { width: 32px; height: auto; display: block; }
+    .size-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .size-row .swatch { min-height: 72px; }
+  </style>
+</head>
+<body>
+  <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true">
+    <defs>
+      <symbol id="c1" viewBox="0 0 220 44"><g transform="translate(22,22)"><polygon points="0,-18 15.6,-9 0,0" fill="#f59e0b"/><polygon points="15.6,-9 15.6,9 0,0" fill="#10b981"/><polygon points="15.6,9 0,18 0,0" fill="#f97316"/><polygon points="0,18 -15.6,9 0,0" fill="#ef4444"/><polygon points="-15.6,9 -15.6,-9 0,0" fill="#a855f7"/><polygon points="-15.6,-9 0,-18 0,0" fill="#3b82f6"/></g><text x="52" y="28" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" font-weight="800" fill="#0f172a">AGENT<tspan fill="#3b82f6">MAX</tspan></text></symbol>
+      <symbol id="c1d" viewBox="0 0 220 44"><g transform="translate(22,22)"><polygon points="0,-18 15.6,-9 0,0" fill="#f59e0b"/><polygon points="15.6,-9 15.6,9 0,0" fill="#10b981"/><polygon points="15.6,9 0,18 0,0" fill="#f97316"/><polygon points="0,18 -15.6,9 0,0" fill="#ef4444"/><polygon points="-15.6,9 -15.6,-9 0,0" fill="#a855f7"/><polygon points="-15.6,-9 0,-18 0,0" fill="#3b82f6"/></g><text x="52" y="28" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" font-weight="800" fill="#f8fafc">AGENT<tspan fill="#60a5fa">MAX</tspan></text></symbol>
+      <symbol id="c2" viewBox="0 0 240 44"><line x1="22" y1="22" x2="46" y2="10" stroke="#94a3b8" stroke-width="1.5"/><line x1="22" y1="22" x2="46" y2="34" stroke="#94a3b8" stroke-width="1.5"/><line x1="22" y1="22" x2="22" y2="6" stroke="#94a3b8" stroke-width="1.5"/><line x1="22" y1="22" x2="4" y2="16" stroke="#94a3b8" stroke-width="1.5"/><line x1="22" y1="22" x2="4" y2="28" stroke="#94a3b8" stroke-width="1.5"/><line x1="22" y1="22" x2="22" y2="38" stroke="#94a3b8" stroke-width="1.5"/><circle cx="46" cy="10" r="5" fill="#3b82f6"/><circle cx="46" cy="34" r="5" fill="#f59e0b"/><circle cx="22" cy="6" r="5" fill="#10b981"/><circle cx="4" cy="16" r="5" fill="#f97316"/><circle cx="4" cy="28" r="5" fill="#ef4444"/><circle cx="22" cy="38" r="5" fill="#a855f7"/><circle cx="22" cy="22" r="7" fill="#1e293b"/><text x="58" y="28" font-family="ui-sans-serif, system-ui, sans-serif" font-size="17" font-weight="600" fill="#0f172a">Agent<tspan font-weight="800">Max</tspan></text></symbol>
+      <symbol id="c2d" viewBox="0 0 240 44"><line x1="22" y1="22" x2="46" y2="10" stroke="#64748b" stroke-width="1.5"/><line x1="22" y1="22" x2="46" y2="34" stroke="#64748b" stroke-width="1.5"/><line x1="22" y1="22" x2="22" y2="6" stroke="#64748b" stroke-width="1.5"/><line x1="22" y1="22" x2="4" y2="16" stroke="#64748b" stroke-width="1.5"/><line x1="22" y1="22" x2="4" y2="28" stroke="#64748b" stroke-width="1.5"/><line x1="22" y1="22" x2="22" y2="38" stroke="#64748b" stroke-width="1.5"/><circle cx="46" cy="10" r="5" fill="#3b82f6"/><circle cx="46" cy="34" r="5" fill="#f59e0b"/><circle cx="22" cy="6" r="5" fill="#10b981"/><circle cx="4" cy="16" r="5" fill="#f97316"/><circle cx="4" cy="28" r="5" fill="#ef4444"/><circle cx="22" cy="38" r="5" fill="#a855f7"/><circle cx="22" cy="22" r="7" fill="#f8fafc"/><text x="58" y="28" font-family="ui-sans-serif, system-ui, sans-serif" font-size="17" font-weight="500" fill="#e2e8f0">Agent<tspan font-weight="800" fill="#fff">Max</tspan></text></symbol>
+      <symbol id="c3" viewBox="0 0 220 44"><g transform="translate(22,22)"><circle cx="0" cy="-14" r="4.5" fill="#3b82f6"/><circle cx="12.1" cy="-7" r="4.5" fill="#f59e0b"/><circle cx="12.1" cy="7" r="4.5" fill="#10b981"/><circle cx="0" cy="14" r="4.5" fill="#f97316"/><circle cx="-12.1" cy="7" r="4.5" fill="#ef4444"/><circle cx="-12.1" cy="-7" r="4.5" fill="#a855f7"/></g><text x="48" y="29" font-family="ui-sans-serif, system-ui, sans-serif" font-size="20" font-weight="700" fill="#0f172a" letter-spacing="-0.03em">agent<tspan font-weight="800">MAX</tspan></text></symbol>
+      <symbol id="c3d" viewBox="0 0 220 44"><g transform="translate(22,22)"><circle cx="0" cy="-14" r="4.5" fill="#3b82f6"/><circle cx="12.1" cy="-7" r="4.5" fill="#f59e0b"/><circle cx="12.1" cy="7" r="4.5" fill="#10b981"/><circle cx="0" cy="14" r="4.5" fill="#f97316"/><circle cx="-12.1" cy="7" r="4.5" fill="#ef4444"/><circle cx="-12.1" cy="-7" r="4.5" fill="#a855f7"/></g><text x="48" y="29" font-family="ui-sans-serif, system-ui, sans-serif" font-size="20" font-weight="600" fill="#cbd5e1" letter-spacing="-0.03em">agent<tspan fill="#fff" font-weight="800">MAX</tspan></text></symbol>
+      <symbol id="c4" viewBox="0 0 230 44"><rect x="6" y="8" width="28" height="4" fill="#3b82f6" transform="skewX(-18)"/><rect x="9" y="14" width="24" height="4" fill="#f59e0b" transform="skewX(-14)"/><rect x="12" y="20" width="20" height="4" fill="#10b981" transform="skewX(-10)"/><rect x="15" y="26" width="16" height="4" fill="#f97316" transform="skewX(-6)"/><rect x="18" y="32" width="12" height="4" fill="#ef4444"/><rect x="21" y="8" width="4" height="28" fill="#a855f7"/><text x="44" y="30" font-family="ui-sans-serif, system-ui, sans-serif" font-size="19" font-weight="800" fill="#0f172a" letter-spacing="0.02em">AGENTMAX</text></symbol>
+      <symbol id="c4d" viewBox="0 0 230 44"><rect x="6" y="8" width="28" height="4" fill="#3b82f6" transform="skewX(-18)"/><rect x="9" y="14" width="24" height="4" fill="#f59e0b" transform="skewX(-14)"/><rect x="12" y="20" width="20" height="4" fill="#10b981" transform="skewX(-10)"/><rect x="15" y="26" width="16" height="4" fill="#f97316" transform="skewX(-6)"/><rect x="18" y="32" width="12" height="4" fill="#ef4444"/><rect x="21" y="8" width="4" height="28" fill="#a855f7"/><text x="44" y="30" font-family="ui-sans-serif, system-ui, sans-serif" font-size="19" font-weight="800" fill="#f8fafc" letter-spacing="0.02em">AGENTMAX</text></symbol>
+      <symbol id="c5" viewBox="0 0 220 44"><g transform="translate(22,22)"><rect x="-2" y="-16" width="4" height="10" rx="1" fill="#3b82f6" transform="rotate(0)"/><rect x="-2" y="-16" width="4" height="10" rx="1" fill="#f59e0b" transform="rotate(60)"/><rect x="-2" y="-16" width="4" height="10" rx="1" fill="#10b981" transform="rotate(120)"/><rect x="-2" y="-16" width="4" height="10" rx="1" fill="#f97316" transform="rotate(180)"/><rect x="-2" y="-16" width="4" height="10" rx="1" fill="#ef4444" transform="rotate(240)"/><rect x="-2" y="-16" width="4" height="10" rx="1" fill="#a855f7" transform="rotate(300)"/><circle cx="0" cy="0" r="4" fill="#0f172a"/></g><text x="48" y="28" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" font-weight="700" fill="#0f172a">Agent<tspan font-weight="300">Max</tspan></text></symbol>
+      <symbol id="c5d" viewBox="0 0 220 44"><g transform="translate(22,22)"><rect x="-2" y="-16" width="4" height="10" rx="1" fill="#3b82f6" transform="rotate(0)"/><rect x="-2" y="-16" width="4" height="10" rx="1" fill="#f59e0b" transform="rotate(60)"/><rect x="-2" y="-16" width="4" height="10" rx="1" fill="#10b981" transform="rotate(120)"/><rect x="-2" y="-16" width="4" height="10" rx="1" fill="#f97316" transform="rotate(180)"/><rect x="-2" y="-16" width="4" height="10" rx="1" fill="#ef4444" transform="rotate(240)"/><rect x="-2" y="-16" width="4" height="10" rx="1" fill="#a855f7" transform="rotate(300)"/><circle cx="0" cy="0" r="4" fill="#f8fafc"/></g><text x="48" y="28" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" font-weight="700" fill="#f8fafc">Agent<tspan font-weight="300" fill="#94a3b8">Max</tspan></text></symbol>
+      <symbol id="c6" viewBox="0 0 230 44"><g transform="translate(22,22)"><path d="M0,-16 L13.9,-8 L13.9,8 L0,16 L-13.9,8 L-13.9,-8 Z" fill="none" stroke="#e2e8f0" stroke-width="3"/><path d="M0,-16 L13.9,-8 L0,0 Z" fill="#3b82f6"/><path d="M13.9,-8 L13.9,8 L0,0 Z" fill="#f59e0b"/><path d="M13.9,8 L0,16 L0,0 Z" fill="#10b981"/><path d="M0,16 L-13.9,8 L0,0 Z" fill="#f97316"/><path d="M-13.9,8 L-13.9,-8 L0,0 Z" fill="#ef4444"/><path d="M-13.9,-8 L0,-16 L0,0 Z" fill="#a855f7"/></g><text x="50" y="28" font-family="ui-sans-serif, system-ui, sans-serif" font-size="17" font-weight="600" fill="#0f172a">AGENT<tspan font-weight="800" letter-spacing="0.04em">MAX</tspan></text></symbol>
+      <symbol id="c6d" viewBox="0 0 230 44"><g transform="translate(22,22)"><path d="M0,-16 L13.9,-8 L13.9,8 L0,16 L-13.9,8 L-13.9,-8 Z" fill="none" stroke="#312e81" stroke-width="3"/><path d="M0,-16 L13.9,-8 L0,0 Z" fill="#3b82f6"/><path d="M13.9,-8 L13.9,8 L0,0 Z" fill="#f59e0b"/><path d="M13.9,8 L0,16 L0,0 Z" fill="#10b981"/><path d="M0,16 L-13.9,8 L0,0 Z" fill="#f97316"/><path d="M-13.9,8 L-13.9,-8 L0,0 Z" fill="#ef4444"/><path d="M-13.9,-8 L0,-16 L0,0 Z" fill="#a855f7"/></g><text x="50" y="28" font-family="ui-sans-serif, system-ui, sans-serif" font-size="17" font-weight="600" fill="#e2e8f0">AGENT<tspan fill="#fff" font-weight="800" letter-spacing="0.04em">MAX</tspan></text></symbol>
+      <symbol id="c7" viewBox="0 0 230 44"><path d="M8 36 L20 8 L32 36 M12 28 L28 28" stroke="#0f172a" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="14" cy="28" r="2.2" fill="#3b82f6"/><circle cx="17.2" cy="28" r="2.2" fill="#f59e0b"/><circle cx="20.4" cy="28" r="2.2" fill="#10b981"/><circle cx="23.6" cy="28" r="2.2" fill="#f97316"/><circle cx="26.8" cy="28" r="2.2" fill="#ef4444"/><circle cx="30" cy="28" r="2.2" fill="#a855f7"/><text x="40" y="28" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" font-weight="600" fill="#0f172a">AgentMax</text></symbol>
+      <symbol id="c7d" viewBox="0 0 230 44"><path d="M8 36 L20 8 L32 36 M12 28 L28 28" stroke="#f8fafc" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="14" cy="28" r="2.2" fill="#3b82f6"/><circle cx="17.2" cy="28" r="2.2" fill="#f59e0b"/><circle cx="20.4" cy="28" r="2.2" fill="#10b981"/><circle cx="23.6" cy="28" r="2.2" fill="#f97316"/><circle cx="26.8" cy="28" r="2.2" fill="#ef4444"/><circle cx="30" cy="28" r="2.2" fill="#a855f7"/><text x="40" y="28" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" font-weight="600" fill="#f8fafc">AgentMax</text></symbol>
+      <symbol id="c8" viewBox="0 0 230 44"><rect x="4" y="10" width="10" height="10" rx="2" fill="#3b82f6"/><rect x="16" y="10" width="10" height="10" rx="2" fill="#f59e0b"/><rect x="28" y="10" width="10" height="10" rx="2" fill="#10b981"/><rect x="4" y="24" width="10" height="10" rx="2" fill="#f97316"/><rect x="16" y="24" width="10" height="10" rx="2" fill="#ef4444"/><rect x="28" y="24" width="10" height="10" rx="2" fill="#a855f7"/><text x="46" y="29" font-family="ui-sans-serif, system-ui, sans-serif" font-size="17" font-weight="800" fill="#0f172a"><tspan fill="#64748b" font-weight="600">Agent</tspan>Max</text></symbol>
+      <symbol id="c8d" viewBox="0 0 230 44"><rect x="4" y="10" width="10" height="10" rx="2" fill="#3b82f6"/><rect x="16" y="10" width="10" height="10" rx="2" fill="#f59e0b"/><rect x="28" y="10" width="10" height="10" rx="2" fill="#10b981"/><rect x="4" y="24" width="10" height="10" rx="2" fill="#f97316"/><rect x="16" y="24" width="10" height="10" rx="2" fill="#ef4444"/><rect x="28" y="24" width="10" height="10" rx="2" fill="#a855f7"/><text x="46" y="29" font-family="ui-sans-serif, system-ui, sans-serif" font-size="17" font-weight="800" fill="#f8fafc"><tspan fill="#94a3b8" font-weight="600">Agent</tspan>Max</text></symbol>
+    </defs>
+  </svg>
+  <h1>AgentMax — 8 logo concepts</h1>
+  <p class="intro">Pure SVG, flat fills. Six agent colors: blue, amber, green, orange, red, purple. Compare legibility at 200px and 32px on white and on <code>#0d0b2a</code>.</p>
+
+  <div class="grid">
+
+    <!-- 1: Hexagon divided into 6 wedges -->
+    <section class="concept">
+      <h2>01 — Hex wedges</h2>
+      <div class="row2">
+        <div class="swatch light">
+          <span class="label">200px / light</span>
+          <svg class="preview-lg" viewBox="0 0 220 44" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <g transform="translate(22,22)">
+              <polygon points="0,-18 15.6,-9 0,0" fill="#f59e0b"/>
+              <polygon points="15.6,-9 15.6,9 0,0" fill="#10b981"/>
+              <polygon points="15.6,9 0,18 0,0" fill="#f97316"/>
+              <polygon points="0,18 -15.6,9 0,0" fill="#ef4444"/>
+              <polygon points="-15.6,9 -15.6,-9 0,0" fill="#a855f7"/>
+              <polygon points="-15.6,-9 0,-18 0,0" fill="#3b82f6"/>
+            </g>
+            <text x="52" y="28" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" font-weight="800" fill="currentColor">AGENT<tspan fill="#3b82f6">MAX</tspan></text>
+          </svg>
+        </div>
+        <div class="swatch dark">
+          <span class="label">200px / dark</span>
+          <svg class="preview-lg" viewBox="0 0 220 44" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <g transform="translate(22,22)">
+              <polygon points="0,-18 15.6,-9 0,0" fill="#f59e0b"/>
+              <polygon points="15.6,-9 15.6,9 0,0" fill="#10b981"/>
+              <polygon points="15.6,9 0,18 0,0" fill="#f97316"/>
+              <polygon points="0,18 -15.6,9 0,0" fill="#ef4444"/>
+              <polygon points="-15.6,9 -15.6,-9 0,0" fill="#a855f7"/>
+              <polygon points="-15.6,-9 0,-18 0,0" fill="#3b82f6"/>
+            </g>
+            <text x="52" y="28" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" font-weight="800" fill="#f8fafc">AGENT<tspan fill="#60a5fa">MAX</tspan></text>
+          </svg>
+        </div>
+      </div>
+      <div class="size-row">
+        <div class="swatch light">
+          <span class="label">32px</span>
+          <svg class="preview-sm" viewBox="0 0 220 44" xmlns="http://www.w3.org/2000/svg"><use href="#c1"/></svg>
+        </div>
+        <div class="swatch dark">
+          <span class="label">32px</span>
+          <svg class="preview-sm" viewBox="0 0 220 44" xmlns="http://www.w3.org/2000/svg"><use href="#c1d"/></svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2: Hub + 6 nodes -->
+    <section class="concept">
+      <h2>02 — Hub network</h2>
+      <div class="row2">
+        <div class="swatch light">
+          <span class="label">200px / light</span>
+          <svg class="preview-lg" viewBox="0 0 240 44" xmlns="http://www.w3.org/2000/svg">
+            <line x1="22" y1="22" x2="46" y2="10" stroke="#94a3b8" stroke-width="1.5"/>
+            <line x1="22" y1="22" x2="46" y2="34" stroke="#94a3b8" stroke-width="1.5"/>
+            <line x1="22" y1="22" x2="22" y2="6" stroke="#94a3b8" stroke-width="1.5"/>
+            <line x1="22" y1="22" x2="4" y2="16" stroke="#94a3b8" stroke-width="1.5"/>
+            <line x1="22" y1="22" x2="4" y2="28" stroke="#94a3b8" stroke-width="1.5"/>
+            <line x1="22" y1="22" x2="22" y2="38" stroke="#94a3b8" stroke-width="1.5"/>
+            <circle cx="46" cy="10" r="5" fill="#3b82f6"/><circle cx="46" cy="34" r="5" fill="#f59e0b"/><circle cx="22" cy="6" r="5" fill="#10b981"/>
+            <circle cx="4" cy="16" r="5" fill="#f97316"/><circle cx="4" cy="28" r="5" fill="#ef4444"/><circle cx="22" cy="38" r="5" fill="#a855f7"/>
+            <circle cx="22" cy="22" r="7" fill="#1e293b"/>
+            <text x="58" y="28" font-family="ui-sans-serif, system-ui, sans-serif" font-size="17" font-weight="600" fill="currentColor">Agent<tspan font-weight="800">Max</tspan></text>
+          </svg>
+        </div>
+        <div class="swatch dark">
+          <span class="label">200px / dark</span>
+          <svg class="preview-lg" viewBox="0 0 240 44" xmlns="http://www.w3.org/2000/svg">
+            <line x1="22" y1="22" x2="46" y2="10" stroke="#64748b" stroke-width="1.5"/>
+            <line x1="22" y1="22" x2="46" y2="34" stroke="#64748b" stroke-width="1.5"/>
+            <line x1="22" y1="22" x2="22" y2="6" stroke="#64748b" stroke-width="1.5"/>
+            <line x1="22" y1="22" x2="4" y2="16" stroke="#64748b" stroke-width="1.5"/>
+            <line x1="22" y1="22" x2="4" y2="28" stroke="#64748b" stroke-width="1.5"/>
+            <line x1="22" y1="22" x2="22" y2="38" stroke="#64748b" stroke-width="1.5"/>
+            <circle cx="46" cy="10" r="5" fill="#3b82f6"/><circle cx="46" cy="34" r="5" fill="#f59e0b"/><circle cx="22" cy="6" r="5" fill="#10b981"/>
+            <circle cx="4" cy="16" r="5" fill="#f97316"/><circle cx="4" cy="28" r="5" fill="#ef4444"/><circle cx="22" cy="38" r="5" fill="#a855f7"/>
+            <circle cx="22" cy="22" r="7" fill="#f8fafc"/>
+            <text x="58" y="28" font-family="ui-sans-serif, system-ui, sans-serif" font-size="17" font-weight="500" fill="#e2e8f0">Agent<tspan font-weight="800" fill="#fff">Max</tspan></text>
+          </svg>
+        </div>
+      </div>
+      <div class="size-row">
+        <div class="swatch light"><span class="label">32px</span><svg class="preview-sm" viewBox="0 0 240 44" xmlns="http://www.w3.org/2000/svg"><use href="#c2"/></svg></div>
+        <div class="swatch dark"><span class="label">32px</span><svg class="preview-sm" viewBox="0 0 240 44" xmlns="http://www.w3.org/2000/svg"><use href="#c2d"/></svg></div>
+      </div>
+    </section>
+
+    <!-- 3: Six dots ring only + wordmark -->
+    <section class="concept">
+      <h2>03 — Dot ring</h2>
+      <div class="row2">
+        <div class="swatch light">
+          <span class="label">200px / light</span>
+          <svg class="preview-lg" viewBox="0 0 220 44" xmlns="http://www.w3.org/2000/svg">
+            <g transform="translate(22,22)">
+              <circle cx="0" cy="-14" r="4.5" fill="#3b82f6"/><circle cx="12.1" cy="-7" r="4.5" fill="#f59e0b"/><circle cx="12.1" cy="7" r="4.5" fill="#10b981"/>
+              <circle cx="0" cy="14" r="4.5" fill="#f97316"/><circle cx="-12.1" cy="7" r="4.5" fill="#ef4444"/><circle cx="-12.1" cy="-7" r="4.5" fill="#a855f7"/>
+            </g>
+            <text x="48" y="29" font-family="ui-sans-serif, system-ui, sans-serif" font-size="20" font-weight="700" fill="currentColor" letter-spacing="-0.03em">agent<tspan font-weight="800">MAX</tspan></text>
+          </svg>
+        </div>
+        <div class="swatch dark">
+          <span class="label">200px / dark</span>
+          <svg class="preview-lg" viewBox="0 0 220 44" xmlns="http://www.w3.org/2000/svg">
+            <g transform="translate(22,22)">
+              <circle cx="0" cy="-14" r="4.5" fill="#3b82f6"/><circle cx="12.1" cy="-7" r="4.5" fill="#f59e0b"/><circle cx="12.1" cy="7" r="4.5" fill="#10b981"/>
+              <circle cx="0" cy="14" r="4.5" fill="#f97316"/><circle cx="-12.1" cy="7" r="4.5" fill="#ef4444"/><circle cx="-12.1" cy="-7" r="4.5" fill="#a855f7"/>
+            </g>
+            <text x="48" y="29" font-family="ui-sans-serif, system-ui, sans-serif" font-size="20" font-weight="600" fill="#cbd5e1" letter-spacing="-0.03em">agent<tspan fill="#fff" font-weight="800">MAX</tspan></text>
+          </svg>
+        </div>
+      </div>
+      <div class="size-row">
+        <div class="swatch light"><span class="label">32px</span><svg class="preview-sm" viewBox="0 0 220 44" xmlns="http://www.w3.org/2000/svg"><use href="#c3"/></svg></div>
+        <div class="swatch dark"><span class="label">32px</span><svg class="preview-sm" viewBox="0 0 220 44" xmlns="http://www.w3.org/2000/svg"><use href="#c3d"/></svg></div>
+      </div>
+    </section>
+
+    <!-- 4: Abstract A from 6 bars -->
+    <section class="concept">
+      <h2>04 — Six-bar A</h2>
+      <div class="row2">
+        <div class="swatch light">
+          <span class="label">200px / light</span>
+          <svg class="preview-lg" viewBox="0 0 230 44" xmlns="http://www.w3.org/2000/svg">
+            <rect x="6" y="8" width="28" height="4" fill="#3b82f6" transform="skewX(-18)"/>
+            <rect x="9" y="14" width="24" height="4" fill="#f59e0b" transform="skewX(-14)"/>
+            <rect x="12" y="20" width="20" height="4" fill="#10b981" transform="skewX(-10)"/>
+            <rect x="15" y="26" width="16" height="4" fill="#f97316" transform="skewX(-6)"/>
+            <rect x="18" y="32" width="12" height="4" fill="#ef4444"/>
+            <rect x="21" y="8" width="4" height="28" fill="#a855f7"/>
+            <text x="44" y="30" font-family="ui-sans-serif, system-ui, sans-serif" font-size="19" font-weight="800" fill="currentColor" letter-spacing="0.02em">AGENTMAX</text>
+          </svg>
+        </div>
+        <div class="swatch dark">
+          <span class="label">200px / dark</span>
+          <svg class="preview-lg" viewBox="0 0 230 44" xmlns="http://www.w3.org/2000/svg">
+            <rect x="6" y="8" width="28" height="4" fill="#3b82f6" transform="skewX(-18)"/>
+            <rect x="9" y="14" width="24" height="4" fill="#f59e0b" transform="skewX(-14)"/>
+            <rect x="12" y="20" width="20" height="4" fill="#10b981" transform="skewX(-10)"/>
+            <rect x="15" y="26" width="16" height="4" fill="#f97316" transform="skewX(-6)"/>
+            <rect x="18" y="32" width="12" height="4" fill="#ef4444"/>
+            <rect x="21" y="8" width="4" height="28" fill="#a855f7"/>
+            <text x="44" y="30" font-family="ui-sans-serif, system-ui, sans-serif" font-size="19" font-weight="800" fill="#f8fafc" letter-spacing="0.02em">AGENTMAX</text>
+          </svg>
+        </div>
+      </div>
+      <div class="size-row">
+        <div class="swatch light"><span class="label">32px</span><svg class="preview-sm" viewBox="0 0 230 44" xmlns="http://www.w3.org/2000/svg"><use href="#c4"/></svg></div>
+        <div class="swatch dark"><span class="label">32px</span><svg class="preview-sm" viewBox="0 0 230 44" xmlns="http://www.w3.org/2000/svg"><use href="#c4d"/></svg></div>
+      </div>
+    </section>
+
+    <!-- 5: Six rays -->
+    <section class="concept">
+      <h2>05 — Six rays</h2>
+      <div class="row2">
+        <div class="swatch light">
+          <span class="label">200px / light</span>
+          <svg class="preview-lg" viewBox="0 0 220 44" xmlns="http://www.w3.org/2000/svg">
+            <g transform="translate(22,22)">
+              <rect x="-2" y="-16" width="4" height="10" rx="1" fill="#3b82f6" transform="rotate(0)"/>
+              <rect x="-2" y="-16" width="4" height="10" rx="1" fill="#f59e0b" transform="rotate(60)"/>
+              <rect x="-2" y="-16" width="4" height="10" rx="1" fill="#10b981" transform="rotate(120)"/>
+              <rect x="-2" y="-16" width="4" height="10" rx="1" fill="#f97316" transform="rotate(180)"/>
+              <rect x="-2" y="-16" width="4" height="10" rx="1" fill="#ef4444" transform="rotate(240)"/>
+              <rect x="-2" y="-16" width="4" height="10" rx="1" fill="#a855f7" transform="rotate(300)"/>
+              <circle cx="0" cy="0" r="4" fill="#0f172a"/>
+            </g>
+            <text x="48" y="28" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" font-weight="700" fill="currentColor">Agent<tspan font-weight="300">Max</tspan></text>
+          </svg>
+        </div>
+        <div class="swatch dark">
+          <span class="label">200px / dark</span>
+          <svg class="preview-lg" viewBox="0 0 220 44" xmlns="http://www.w3.org/2000/svg">
+            <g transform="translate(22,22)">
+              <rect x="-2" y="-16" width="4" height="10" rx="1" fill="#3b82f6" transform="rotate(0)"/>
+              <rect x="-2" y="-16" width="4" height="10" rx="1" fill="#f59e0b" transform="rotate(60)"/>
+              <rect x="-2" y="-16" width="4" height="10" rx="1" fill="#10b981" transform="rotate(120)"/>
+              <rect x="-2" y="-16" width="4" height="10" rx="1" fill="#f97316" transform="rotate(180)"/>
+              <rect x="-2" y="-16" width="4" height="10" rx="1" fill="#ef4444" transform="rotate(240)"/>
+              <rect x="-2" y="-16" width="4" height="10" rx="1" fill="#a855f7" transform="rotate(300)"/>
+              <circle cx="0" cy="0" r="4" fill="#f8fafc"/>
+            </g>
+            <text x="48" y="28" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" font-weight="700" fill="#f8fafc">Agent<tspan font-weight="300" fill="#94a3b8">Max</tspan></text>
+          </svg>
+        </div>
+      </div>
+      <div class="size-row">
+        <div class="swatch light"><span class="label">32px</span><svg class="preview-sm" viewBox="0 0 220 44" xmlns="http://www.w3.org/2000/svg"><use href="#c5"/></svg></div>
+        <div class="swatch dark"><span class="label">32px</span><svg class="preview-sm" viewBox="0 0 220 44" xmlns="http://www.w3.org/2000/svg"><use href="#c5d"/></svg></div>
+      </div>
+    </section>
+
+    <!-- 6: Thick hex outline 6 colors as segments -->
+    <section class="concept">
+      <h2>06 — Hex band</h2>
+      <div class="row2">
+        <div class="swatch light">
+          <span class="label">200px / light</span>
+          <svg class="preview-lg" viewBox="0 0 230 44" xmlns="http://www.w3.org/2000/svg">
+            <g transform="translate(22,22)">
+              <path d="M0,-16 L13.9,-8 L13.9,8 L0,16 L-13.9,8 L-13.9,-8 Z" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+              <path d="M0,-16 L13.9,-8 L0,0 Z" fill="#3b82f6"/><path d="M13.9,-8 L13.9,8 L0,0 Z" fill="#f59e0b"/><path d="M13.9,8 L0,16 L0,0 Z" fill="#10b981"/>
+              <path d="M0,16 L-13.9,8 L0,0 Z" fill="#f97316"/><path d="M-13.9,8 L-13.9,-8 L0,0 Z" fill="#ef4444"/><path d="M-13.9,-8 L0,-16 L0,0 Z" fill="#a855f7"/>
+            </g>
+            <text x="50" y="28" font-family="ui-sans-serif, system-ui, sans-serif" font-size="17" font-weight="600" fill="currentColor">AGENT<tspan font-weight="800" letter-spacing="0.04em">MAX</tspan></text>
+          </svg>
+        </div>
+        <div class="swatch dark">
+          <span class="label">200px / dark</span>
+          <svg class="preview-lg" viewBox="0 0 230 44" xmlns="http://www.w3.org/2000/svg">
+            <g transform="translate(22,22)">
+              <path d="M0,-16 L13.9,-8 L13.9,8 L0,16 L-13.9,8 L-13.9,-8 Z" fill="none" stroke="#312e81" stroke-width="3"/>
+              <path d="M0,-16 L13.9,-8 L0,0 Z" fill="#3b82f6"/><path d="M13.9,-8 L13.9,8 L0,0 Z" fill="#f59e0b"/><path d="M13.9,8 L0,16 L0,0 Z" fill="#10b981"/>
+              <path d="M0,16 L-13.9,8 L0,0 Z" fill="#f97316"/><path d="M-13.9,8 L-13.9,-8 L0,0 Z" fill="#ef4444"/><path d="M-13.9,-8 L0,-16 L0,0 Z" fill="#a855f7"/>
+            </g>
+            <text x="50" y="28" font-family="ui-sans-serif, system-ui, sans-serif" font-size="17" font-weight="600" fill="#e2e8f0">AGENT<tspan fill="#fff" font-weight="800" letter-spacing="0.04em">MAX</tspan></text>
+          </svg>
+        </div>
+      </div>
+      <div class="size-row">
+        <div class="swatch light"><span class="label">32px</span><svg class="preview-sm" viewBox="0 0 230 44" xmlns="http://www.w3.org/2000/svg"><use href="#c6"/></svg></div>
+        <div class="swatch dark"><span class="label">32px</span><svg class="preview-sm" viewBox="0 0 230 44" xmlns="http://www.w3.org/2000/svg"><use href="#c6d"/></svg></div>
+      </div>
+    </section>
+
+    <!-- 7: Letter A + 6 micro-dots on crossbar -->
+    <section class="concept">
+      <h2>07 — A + six dots</h2>
+      <div class="row2">
+        <div class="swatch light">
+          <span class="label">200px / light</span>
+          <svg class="preview-lg" viewBox="0 0 230 44" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 36 L20 8 L32 36 M12 28 L28 28" stroke="#0f172a" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="14" cy="28" r="2.2" fill="#3b82f6"/><circle cx="17.2" cy="28" r="2.2" fill="#f59e0b"/><circle cx="20.4" cy="28" r="2.2" fill="#10b981"/>
+            <circle cx="23.6" cy="28" r="2.2" fill="#f97316"/><circle cx="26.8" cy="28" r="2.2" fill="#ef4444"/><circle cx="30" cy="28" r="2.2" fill="#a855f7"/>
+            <text x="40" y="28" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" font-weight="600" fill="currentColor">AgentMax</text>
+          </svg>
+        </div>
+        <div class="swatch dark">
+          <span class="label">200px / dark</span>
+          <svg class="preview-lg" viewBox="0 0 230 44" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 36 L20 8 L32 36 M12 28 L28 28" stroke="#f8fafc" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="14" cy="28" r="2.2" fill="#3b82f6"/><circle cx="17.2" cy="28" r="2.2" fill="#f59e0b"/><circle cx="20.4" cy="28" r="2.2" fill="#10b981"/>
+            <circle cx="23.6" cy="28" r="2.2" fill="#f97316"/><circle cx="26.8" cy="28" r="2.2" fill="#ef4444"/><circle cx="30" cy="28" r="2.2" fill="#a855f7"/>
+            <text x="40" y="28" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" font-weight="600" fill="#f8fafc">AgentMax</text>
+          </svg>
+        </div>
+      </div>
+      <div class="size-row">
+        <div class="swatch light"><span class="label">32px</span><svg class="preview-sm" viewBox="0 0 230 44" xmlns="http://www.w3.org/2000/svg"><use href="#c7"/></svg></div>
+        <div class="swatch dark"><span class="label">32px</span><svg class="preview-sm" viewBox="0 0 230 44" xmlns="http://www.w3.org/2000/svg"><use href="#c7d"/></svg></div>
+      </div>
+    </section>
+
+    <!-- 8: Two rows of 3 rounded squares (team grid) -->
+    <section class="concept">
+      <h2>08 — Agent grid</h2>
+      <div class="row2">
+        <div class="swatch light">
+          <span class="label">200px / light</span>
+          <svg class="preview-lg" viewBox="0 0 230 44" xmlns="http://www.w3.org/2000/svg">
+            <rect x="4" y="10" width="10" height="10" rx="2" fill="#3b82f6"/><rect x="16" y="10" width="10" height="10" rx="2" fill="#f59e0b"/><rect x="28" y="10" width="10" height="10" rx="2" fill="#10b981"/>
+            <rect x="4" y="24" width="10" height="10" rx="2" fill="#f97316"/><rect x="16" y="24" width="10" height="10" rx="2" fill="#ef4444"/><rect x="28" y="24" width="10" height="10" rx="2" fill="#a855f7"/>
+            <text x="46" y="29" font-family="ui-sans-serif, system-ui, sans-serif" font-size="17" font-weight="800" fill="currentColor"><tspan fill="#64748b" font-weight="600">Agent</tspan>Max</text>
+          </svg>
+        </div>
+        <div class="swatch dark">
+          <span class="label">200px / dark</span>
+          <svg class="preview-lg" viewBox="0 0 230 44" xmlns="http://www.w3.org/2000/svg">
+            <rect x="4" y="10" width="10" height="10" rx="2" fill="#3b82f6"/><rect x="16" y="10" width="10" height="10" rx="2" fill="#f59e0b"/><rect x="28" y="10" width="10" height="10" rx="2" fill="#10b981"/>
+            <rect x="4" y="24" width="10" height="10" rx="2" fill="#f97316"/><rect x="16" y="24" width="10" height="10" rx="2" fill="#ef4444"/><rect x="28" y="24" width="10" height="10" rx="2" fill="#a855f7"/>
+            <text x="46" y="29" font-family="ui-sans-serif, system-ui, sans-serif" font-size="17" font-weight="800" fill="#f8fafc"><tspan fill="#94a3b8" font-weight="600">Agent</tspan>Max</text>
+          </svg>
+        </div>
+      </div>
+      <div class="size-row">
+        <div class="swatch light"><span class="label">32px</span><svg class="preview-sm" viewBox="0 0 230 44" xmlns="http://www.w3.org/2000/svg"><use href="#c8"/></svg></div>
+        <div class="swatch dark"><span class="label">32px</span><svg class="preview-sm" viewBox="0 0 230 44" xmlns="http://www.w3.org/2000/svg"><use href="#c8d"/></svg></div>
+      </div>
+    </section>
+
+  </div>
+
+</body>
+</html>

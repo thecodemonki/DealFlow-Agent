@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AgentMax — Cover</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      background: #faf8ff;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100%;
+      padding: clamp(12px, 3vw, 32px);
+    }
+    .slide {
+      width: min(100%, 1280px);
+      aspect-ratio: 16 / 9;
+      background: #faf8ff;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: clamp(24px, 4.5vw, 72px);
+      padding: clamp(24px, 5vw, 80px) clamp(32px, 6vw, 100px);
+    }
+    .mark {
+      flex: 0 0 auto;
+      width: clamp(120px, 22vw, 280px);
+      height: auto;
+      display: block;
+    }
+    .copy {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: clamp(10px, 1.5vw, 20px);
+      min-width: 0;
+    }
+    .wordmark {
+      font-size: clamp(1.75rem, 4.2vw, 3.25rem);
+      font-weight: 300;
+      letter-spacing: -0.06em;
+      line-height: 1.05;
+      white-space: nowrap;
+    }
+    .wordmark .agent { color: #1e1b4b; }
+    .wordmark .max { color: #4f46e5; }
+    .tagline {
+      font-size: clamp(0.65rem, 1.15vw, 0.8125rem);
+      font-weight: 500;
+      font-variant: all-small-caps;
+      letter-spacing: 0.35em;
+      color: #a78bfa;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <div class="slide">
+    <img class="mark" src="agentmax-a-logo.svg" width="320" height="168" alt="" />
+    <div class="copy">
+      <p class="wordmark"><span class="agent">Agent</span><span class="max">Max</span></p>
+      <p class="tagline">YOUR DEAL TEAM, ALWAYS ON</p>
+    </div>
+  </div>
+</body>
+</html>

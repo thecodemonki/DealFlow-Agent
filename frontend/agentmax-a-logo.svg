@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 168" width="320" height="168" aria-label="AgentMax letter A mark">
+  <title>AgentMax A, six horizontal bars</title>
+  <!-- Bar geometry: h=8, gap=11, rx=3; rows 1-4 full width; 5-6 split; centered at x=160 -->
+  <g>
+    <rect x="138" y="28" width="44" height="8" rx="3" fill="#a855f7"/>
+    <rect x="128" y="47" width="64" height="8" rx="3" fill="#3b82f6"/>
+    <rect x="118" y="66" width="84" height="8" rx="3" fill="#f59e0b"/>
+    <rect x="108" y="85" width="104" height="8" rx="3" fill="#10b981"/>
+    <rect x="102" y="104" width="46" height="8" rx="3" fill="#f97316"/>
+    <rect x="172" y="104" width="46" height="8" rx="3" fill="#f97316"/>
+    <rect x="96" y="123" width="46" height="8" rx="3" fill="#ef4444"/>
+    <rect x="178" y="123" width="46" height="8" rx="3" fill="#ef4444"/>
+  </g>
+</svg>

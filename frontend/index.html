@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DealFlow AI</title>
+  <title>AgentMax</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Inter, system-ui, sans-serif; min-height: 100vh; overflow-x: hidden; overflow-y: auto; background: #fff; color: #111827; }
@@ -932,12 +932,63 @@
       color: #64748b;
       margin-bottom: 10px;
     }
-    .results-rec-value {
-      font-size: 2rem;
+    .results-rec-value { display: none; }
+    .results-score-cluster {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin: 4px 0 18px;
+    }
+    .results-ring-wrap {
+      position: relative;
+      width: 132px;
+      height: 132px;
+    }
+    .results-ring-svg {
+      width: 132px;
+      height: 132px;
+      transform: rotate(-90deg);
+    }
+    .results-ring-track { stroke: #e5e7eb; }
+    .results-ring-progress {
+      stroke: #d97706;
+      fill: none;
+      stroke-width: 9;
+      stroke-linecap: round;
+      stroke-dasharray: 0 400;
+    }
+    .memo-score-band--pass .results-ring-progress { stroke: #059669; }
+    .memo-score-band--conditional .results-ring-progress { stroke: #d97706; }
+    .memo-score-band--fail .results-ring-progress { stroke: #dc2626; }
+    .results-ring-num {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
       font-weight: 800;
-      letter-spacing: -0.04em;
-      line-height: 1.1;
-      margin-bottom: 6px;
+      letter-spacing: -0.05em;
+      color: #111827;
+    }
+    .memo-score-band--pass .results-ring-num { color: #059669; }
+    .memo-score-band--conditional .results-ring-num { color: #d97706; }
+    .memo-score-band--fail .results-ring-num { color: #dc2626; }
+    .results-verdict {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .memo-score-band--pass .results-verdict { color: #059669; }
+    .memo-score-band--conditional .results-verdict { color: #d97706; }
+    .memo-score-band--fail .results-verdict { color: #dc2626; }
+    .results-risks-line {
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      margin-top: 2px;
     }
     .results-meta-line {
       font-size: 12px;
@@ -1001,13 +1052,86 @@
       top: 0;
       z-index: 2;
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
       flex-wrap: wrap;
+      align-items: center;
+      gap: 20px 32px;
       padding: 20px 48px 16px;
       background: #fafafa;
       border-bottom: 1px solid #e5e7eb;
+    }
+    .memo-view__score-cluster {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      flex-shrink: 0;
+    }
+    .memo-view__ring-wrap {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      flex-shrink: 0;
+    }
+    .memo-view__ring-track,
+    .memo-view__ring-progress {
+      stroke-width: 9;
+      fill: none;
+    }
+    .memo-view__ring-track {
+      stroke: #e5e7eb;
+    }
+    .memo-view__ring-progress {
+      stroke: #d97706;
+      fill: none;
+      stroke-linecap: round;
+      stroke-dasharray: 0 326.73;
+    }
+    .memo-score-band--pass .memo-view__ring-progress { stroke: #059669; }
+    .memo-score-band--conditional .memo-view__ring-progress { stroke: #d97706; }
+    .memo-score-band--fail .memo-view__ring-progress { stroke: #dc2626; }
+    .memo-view__ring-num {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      color: #111827;
+      transform: rotate(0deg);
+      pointer-events: none;
+    }
+    .memo-score-band--pass .memo-view__ring-num { color: #059669; }
+    .memo-score-band--conditional .memo-view__ring-num { color: #d97706; }
+    .memo-score-band--fail .memo-view__ring-num { color: #dc2626; }
+    .memo-view__verdict-col {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+    .memo-view__verdict {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .memo-score-band--pass .memo-view__verdict { color: #059669; }
+    .memo-score-band--conditional .memo-view__verdict { color: #d97706; }
+    .memo-score-band--fail .memo-view__verdict { color: #dc2626; }
+    .memo-view__risks {
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      white-space: nowrap;
+    }
+    .memo-view__header-main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-width: 200px;
     }
     .memo-view__company {
       font-size: 18px;
@@ -1133,13 +1257,14 @@
 <body>
 <div id="landingPage">
   <nav class="landing-nav" aria-label="Top">
-    <span class="landing-nav__logo">⚡ DealFlow AI</span>
+    <span class="landing-nav__logo">⚡ AgentMax</span>
     <span class="landing-nav__credit">Powered by Band</span>
   </nav>
   <div class="landing-main">
     <div class="landing-hero">
       <p class="landing-eyebrow">AI-Powered M&amp;A Due Diligence</p>
-      <h1 class="landing-headline">Six agents. Sixty seconds.</h1>
+      <h1 class="landing-headline">AgentMax</h1>
+      <p class="landing-headline landing-headline--accent">Six agents. Sixty seconds.</p>
       <p class="landing-headline landing-headline--accent">Full investment memo.</p>
       <p class="landing-desc">A team of AI specialists that research, analyze, and synthesize — collaborating through Band in real time.</p>
       <button type="button" class="landing-cta" id="landingGetStarted">Get Started →</button>
@@ -1179,7 +1304,7 @@
 <div id="appShell">
 <div class="app-grid" id="appGrid">
   <aside id="sidebar">
-    <button type="button" class="sidebar-brand" id="sidebarLogoBtn" aria-label="DealFlow AI — home">⚡ DealFlow AI</button>
+    <button type="button" class="sidebar-brand" id="sidebarLogoBtn" aria-label="AgentMax — home">⚡ AgentMax</button>
     <button type="button" class="btn-new" id="newAnalysisBtn"><span class="btn-new__icon">+</span> New Analysis</button>
     <div class="sidebar-recent-stack">
       <div class="sidebar-nav-label sidebar-nav-label--recent">Recent</div>
@@ -1258,10 +1383,25 @@
     </div>
     <div id="memoView" class="memo-view" hidden>
       <header class="memo-view__header">
-        <span class="memo-view__company" id="memoViewCompany"></span>
-        <div class="memo-view__header-right">
-          <span class="memo-view__pill memo-view__pill--conditional" id="memoViewRec"></span>
-          <a class="memo-view__download" id="memoViewDownload" href="#" target="_blank" rel="noopener noreferrer">Download PDF</a>
+        <div class="memo-view__score-cluster memo-score-band--conditional" id="memoScoreCluster">
+          <div class="memo-view__ring-wrap">
+            <svg class="memo-view__ring-svg" viewBox="0 0 120 120" aria-hidden="true">
+              <circle class="memo-view__ring-track" cx="60" cy="60" r="52" fill="none" />
+              <circle class="memo-view__ring-progress" id="memoScoreProgress" cx="60" cy="60" r="52" fill="none" />
+            </svg>
+            <span class="memo-view__ring-num" id="memoScoreNum">62</span>
+          </div>
+          <div class="memo-view__verdict-col">
+            <span class="memo-view__verdict" id="memoVerdict">CONDITIONAL</span>
+            <span class="memo-view__risks" id="memoRisksLine">3 risks flagged</span>
+          </div>
+        </div>
+        <div class="memo-view__header-main">
+          <span class="memo-view__company" id="memoViewCompany"></span>
+          <div class="memo-view__header-right">
+            <span class="memo-view__pill memo-view__pill--conditional" id="memoViewRec"></span>
+            <a class="memo-view__download" id="memoViewDownload" href="#" target="_blank" rel="noopener noreferrer">Download PDF</a>
+          </div>
         </div>
       </header>
       <div class="memo-view__body">
@@ -1290,8 +1430,19 @@
     <div class="results-overlay" id="resultsOverlay">
       <div class="results-card">
         <div class="results-success-icon" aria-hidden="true">✓</div>
+        <div class="results-score-cluster memo-score-band--conditional" id="resultsScoreCluster">
+          <div class="results-ring-wrap">
+            <svg class="results-ring-svg" viewBox="0 0 120 120" aria-hidden="true">
+              <circle class="results-ring-track" cx="60" cy="60" r="52" fill="none" stroke-width="9" />
+              <circle class="results-ring-progress" id="resultsScoreProgress" cx="60" cy="60" r="52" fill="none" stroke-width="9" stroke-linecap="round" />
+            </svg>
+            <span class="results-ring-num" id="resultsScoreNum">62</span>
+          </div>
+          <span class="results-verdict" id="resultsVerdict">CONDITIONAL</span>
+          <span class="results-risks-line" id="resultsRisksLine">3 risks flagged</span>
+        </div>
         <div class="results-kicker">Analysis Complete</div>
-        <div class="rec-value results-rec-value results-rec-value--conditional" id="recValue">CONDITIONAL</div>
+        <div class="rec-value results-rec-value results-rec-value--conditional" id="recValue" aria-hidden="true"></div>
         <p class="results-meta-line" id="resultsMetaLine"></p>
         <a class="btn-download" id="downloadBtn" href="#" target="_blank" rel="noopener noreferrer">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -1377,6 +1528,7 @@ function showLandingFromApp() {
 }
 document.getElementById('landingGetStarted').addEventListener('click', showAppFromLanding);
 let currentDealId = null, pollTimer = null, activityStep = 0, runTimerInterval = null, stepTimeoutId = null, lastAnalysisDurationSec = 0;
+var lastDealScore = { score: 62, verdict: 'CONDITIONAL', risksFlagged: 3 };
 const speechTimers = {};
 const AGENT_CHAT_CLASS = { orchestrator: 'chat-msg--orchestrator', webresearch: 'chat-msg--webresearch', documentparser: 'chat-msg--documentparser', financialanalyst: 'chat-msg--financialanalyst', legalrisk: 'chat-msg--legalrisk', synthesis: 'chat-msg--synthesis' };
 const AGENT_AVATAR_SRC = { orchestrator: '/characters/conductor.png', webresearch: '/characters/detective.png', documentparser: '/characters/librarian.png', financialanalyst: '/characters/banker.png', legalrisk: '/characters/judge.png', synthesis: '/characters/wizard.png' };
@@ -1441,18 +1593,69 @@ function hideArenaMemoViewer() {
     mv.setAttribute('hidden', '');
   }
 }
+function verdictFromScore(score) {
+  var s = Math.max(0, Math.min(100, parseInt(score, 10) || 0));
+  if (s >= 70) return 'PASS';
+  if (s >= 40) return 'CONDITIONAL';
+  return 'FAIL';
+}
+function dealScoreBandClass(verdict) {
+  var v = String(verdict || '').toUpperCase();
+  if (v === 'PASS') return 'memo-score-band--pass';
+  if (v === 'FAIL') return 'memo-score-band--fail';
+  return 'memo-score-band--conditional';
+}
+function updateDealScoreRing(progressEl, score) {
+  if (!progressEl) return;
+  var r = parseFloat(progressEl.getAttribute('r')) || 52;
+  var c = 2 * Math.PI * r;
+  var pct = Math.max(0, Math.min(100, parseInt(score, 10) || 0)) / 100;
+  progressEl.style.strokeDasharray = (c * pct) + ' ' + c;
+}
+function applyDealScoreUI(bundle) {
+  bundle = bundle || lastDealScore;
+  if (!bundle) return;
+  var score = parseInt(bundle.score, 10);
+  if (isNaN(score)) score = 62;
+  score = Math.max(0, Math.min(100, score));
+  var verdict = verdictFromScore(score);
+  var risks = parseInt(bundle.risksFlagged, 10);
+  if (isNaN(risks)) risks = 0;
+  var bandClass = dealScoreBandClass(verdict);
+  var memoCluster = document.getElementById('memoScoreCluster');
+  if (memoCluster) memoCluster.className = 'memo-view__score-cluster ' + bandClass;
+  var resCluster = document.getElementById('resultsScoreCluster');
+  if (resCluster) resCluster.className = 'results-score-cluster ' + bandClass;
+  updateDealScoreRing(document.getElementById('memoScoreProgress'), score);
+  updateDealScoreRing(document.getElementById('resultsScoreProgress'), score);
+  var mn = document.getElementById('memoScoreNum');
+  if (mn) mn.textContent = String(score);
+  var rn = document.getElementById('resultsScoreNum');
+  if (rn) rn.textContent = String(score);
+  var mv = document.getElementById('memoVerdict');
+  if (mv) mv.textContent = verdict;
+  var rv = document.getElementById('resultsVerdict');
+  if (rv) rv.textContent = verdict;
+  var riskStr = risks === 1 ? '1 risk flagged' : risks + ' risks flagged';
+  var mr = document.getElementById('memoRisksLine');
+  if (mr) mr.textContent = riskStr;
+  var rr = document.getElementById('resultsRisksLine');
+  if (rr) rr.textContent = riskStr;
+}
 function populateMemoView(company, industry, rec, nFiles, durationSec) {
-  var recLower = String(rec || 'CONDITIONAL').toLowerCase();
-  if (recLower !== 'invest' && recLower !== 'conditional' && recLower !== 'pass') recLower = 'conditional';
+  var bundle = lastDealScore || { score: 62, verdict: 'CONDITIONAL', risksFlagged: 3 };
+  var verdict = verdictFromScore(bundle.score);
+  var pillMod = verdict === 'PASS' ? 'invest' : verdict === 'FAIL' ? 'pass' : 'conditional';
   var kfRaw = company + ' shows differentiated positioning in ' + industry + ' on open-web signals. Validate unit economics and governance with management.';
   var kfText = kfRaw.charAt(0).toUpperCase() + kfRaw.slice(1);
   var companyEl = document.getElementById('memoViewCompany');
   if (companyEl) companyEl.textContent = company;
   var recEl = document.getElementById('memoViewRec');
   if (recEl) {
-    recEl.textContent = rec;
-    recEl.className = 'memo-view__pill memo-view__pill--' + recLower;
+    recEl.textContent = verdict;
+    recEl.className = 'memo-view__pill memo-view__pill--' + pillMod;
   }
+  applyDealScoreUI(bundle);
   var ex = document.getElementById('memoViewExec');
   if (ex) ex.textContent = kfText;
   var mk = document.getElementById('memoViewMarket');
@@ -1461,7 +1664,7 @@ function populateMemoView(company, industry, rec, nFiles, durationSec) {
   }
   var fi = document.getElementById('memoViewFinancial');
   if (fi) {
-    fi.textContent = 'Illustrative work suggests a wide provisional valuation band (e.g., $50–95B for large-cap comparables in this demo) based on public-market heuristics only. Revenue quality, margin durability, and capital intensity were not audited here. Any range should be treated as indicative until management materials, audited financials, and a full operating model are available.';
+    fi.textContent = 'No financial documents were provided. Valuation cannot be modelled from public data alone. Recommend requesting audited financials before proceeding.';
   }
   var lg = document.getElementById('memoViewLegal');
   if (lg) {
@@ -1756,7 +1959,7 @@ const STEPS = [
   function () { setAgentStatus('documentparser', 'done'); showSpeechBubble('documentparser', 'Parse complete.'); addFeedItem(null, 'Documents scanned and extracted.', 'documentparser'); },
   function () { setAgentStatus('financialanalyst', 'active'); showSpeechBubble('financialanalyst', 'Crunching numbers…'); addFeedItem(null, 'Running financial models…', 'financialanalyst'); },
   function () { setAgentStatus('legalrisk', 'active'); showSpeechBubble('legalrisk', 'Reviewing clauses…'); addFeedItem(null, 'Reviewing contracts for risks…', 'legalrisk'); },
-  function () { setAgentStatus('financialanalyst', 'done'); setSignal('financial', true, '✓ Received'); showSpeechBubble('financialanalyst', 'Financials in.'); addFeedItem(null, 'Valuation range: $50–95B (illustrative). Analysis posted.', 'financialanalyst'); },
+  function () { setAgentStatus('financialanalyst', 'done'); setSignal('financial', true, '✓ Received'); showSpeechBubble('financialanalyst', 'Financials in.'); addFeedItem(null, 'Financial analysis posted (demo). No audited financials in this run.', 'financialanalyst'); },
   function () { setAgentStatus('legalrisk', 'done'); setSignal('legal', true, '✓ Received'); showSpeechBubble('legalrisk', 'Legal memo in.'); addFeedItem(null, 'Legal review done. Change-of-control clauses flagged.', 'legalrisk'); },
   function () { setAgentStatus('synthesis', 'active'); showSpeechBubble('synthesis', 'Weaving the memo…'); addFeedItem(null, 'Writing investment memo…', 'synthesis'); },
   function () { setAgentStatus('synthesis', 'done'); setSignal('memo', true, '✓ Generated'); showSpeechBubble('synthesis', 'Done. Memo ready.'); addFeedItem(null, 'Investment memo ready. PDF generated.', 'synthesis'); showResults(); }
@@ -1765,14 +1968,12 @@ function showResults() {
   document.body.classList.remove('app-running');
   var company = (document.getElementById('companyName').value || '').trim() || 'Unknown company';
   var industry = (document.getElementById('industry').value || '').trim() || 'your industry';
-  var rec = 'CONDITIONAL';
-  var recLower = rec.toLowerCase();
-  var recEl = document.getElementById('recValue');
-  recEl.textContent = rec;
-  recEl.className = 'rec-value results-rec-value results-rec-value--' + recLower;
   var fileInput = document.getElementById('fileInput');
   var nFiles = fileInput && fileInput.files ? fileInput.files.length : 0;
-  populateMemoView(company, industry, rec, nFiles, lastAnalysisDurationSec);
+  var demoBundle = { score: 62, verdict: 'CONDITIONAL', risksFlagged: 3 };
+  lastDealScore = demoBundle;
+  applyDealScoreUI(lastDealScore);
+  populateMemoView(company, industry, null, nFiles, lastAnalysisDurationSec);
   var mv0 = document.getElementById('memoView');
   if (mv0) {
     mv0.classList.remove('memo-view--visible');
@@ -1791,6 +1992,25 @@ function showResults() {
   if (chats.length > 20) chats = chats.slice(0, 20);
   saveChatsToStorage(chats);
   renderRecentList();
+  fetch(API + '/memo/latest/summary')
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .catch(function () { return null; })
+    .then(function (j) {
+      if (!j) return;
+      var ds = j.deal_score;
+      if (typeof ds === 'string') ds = parseInt(ds, 10);
+      if (typeof ds !== 'number' || isNaN(ds)) return;
+      var rc = j.risks_flagged_count;
+      if (typeof rc === 'string') rc = parseInt(rc, 10);
+      if (typeof rc !== 'number' || isNaN(rc)) rc = 0;
+      lastDealScore = {
+        score: ds,
+        verdict: j.deal_verdict || verdictFromScore(ds),
+        risksFlagged: rc
+      };
+      applyDealScoreUI(lastDealScore);
+      populateMemoView(company, industry, null, nFiles, lastAnalysisDurationSec);
+    });
 }
 document.getElementById('resultsCloseBtn').addEventListener('click', function () {
   document.getElementById('resultsOverlay').classList.remove('visible');
@@ -1914,7 +2134,10 @@ async function startAnalysis() {
     fd.append('notes', 'Industry: ' + document.getElementById('industry').value);
     var files = document.getElementById('fileInput').files;
     for (var i = 0; i < files.length; i++) fd.append('files', files[i]);
-    await fetch(API + '/analyze', { method: 'POST', body: fd });
+    var resp = await fetch(API + '/analyze', { method: 'POST', body: fd });
+    var dealJson = null;
+    try { dealJson = await resp.json(); } catch (e2) {}
+    currentDealId = dealJson && dealJson.deal_id ? dealJson.deal_id : null;
   } catch (e) {}
   function nextStep() {
     if (window.analysisAborted) return;
