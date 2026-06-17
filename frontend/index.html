@@ -37,6 +37,18 @@
       padding: 0 48px;
       border-bottom: 1px solid #eee;
     }
+    .agentmax-lockup {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: sans-serif;
+    }
+    .agentmax-lockup__icon {
+      display: block;
+      flex-shrink: 0;
+      margin: 0;
+      padding: 0;
+    }
     .landing-main {
       flex: 1;
       display: flex;
@@ -1283,8 +1295,8 @@
 <body>
 <div id="landingPage">
   <nav class="landing-nav" aria-label="Top">
-    <div style="display: flex; align-items: center; gap: 16px; font-family: sans-serif;">
-      <svg width="42" height="36" viewBox="-5 -12 215 180" fill="none" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
+    <div class="agentmax-lockup">
+      <svg class="agentmax-lockup__icon" width="42" height="36" viewBox="-5 -12 215 180" fill="none" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
         <path d="M95 26 L112 -5 L165 100" stroke="#1e1b4b" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         <line x1="55" y1="34" x2="115" y2="34" stroke="#a855f7" stroke-width="7.5" stroke-linecap="round"/>
         <line x1="43" y1="58" x2="110" y2="58" stroke="#3b82f6" stroke-width="7.5" stroke-linecap="round"/>
@@ -1349,8 +1361,8 @@
 <div id="appShell">
 <div class="app-grid" id="appGrid">
   <aside id="sidebar">
-    <div id="sidebarLogoBtn" style="display: flex; align-items: center; gap: 16px; font-family: sans-serif; cursor:pointer; margin-bottom:8px;" role="button" tabindex="0" aria-label="AgentMax — home">
-      <svg width="42" height="36" viewBox="-5 -12 215 180" fill="none" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
+    <div id="sidebarLogoBtn" class="agentmax-lockup" style="cursor:pointer; margin-bottom:8px;" role="button" tabindex="0" aria-label="AgentMax — home">
+      <svg class="agentmax-lockup__icon" width="42" height="36" viewBox="-5 -12 215 180" fill="none" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
         <path d="M95 26 L112 -5 L165 100" stroke="#1e1b4b" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         <line x1="55" y1="34" x2="115" y2="34" stroke="#a855f7" stroke-width="7.5" stroke-linecap="round"/>
         <line x1="43" y1="58" x2="110" y2="58" stroke="#3b82f6" stroke-width="7.5" stroke-linecap="round"/>
