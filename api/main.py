@@ -13,6 +13,7 @@ Run with: uvicorn api.main:app --reload --port 8000
 import json
 import logging
 import os
+import shutil
 import uuid
 from pathlib import Path
 from datetime import datetime
@@ -76,6 +77,115 @@ class DealCompleteBody(BaseModel):
     )
 
 
+class DealChatBody(BaseModel):
+    """Persist agent chat replay and optional metadata from the UI."""
+
+    messages: list[dict[str, Any]] = Field(default_factory=list)
+    industry: Optional[str] = None
+    company_name: Optional[str] = None
+
+
+DEALS_INDEX_PATH = UPLOAD_DIR / "deals_index.json"
+
+
+def _canonical_memo_path(deal_id: str) -> Path:
+    return UPLOAD_DIR / deal_id / "memo.pdf"
+
+
+def _resolve_path(raw: str) -> Path:
+    p = Path(raw)
+    if not p.is_absolute():
+        p = Path.cwd() / p
+    return p
+
+
+def _normalize_memo_path(deal_id: str, raw_path: str) -> str:
+    """Copy memo PDF to uploads/{deal_id}/memo.pdf and return that path string."""
+    dest = _canonical_memo_path(deal_id)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    src = _resolve_path(raw_path)
+    if src.is_file():
+        if src.resolve() != dest.resolve():
+            shutil.copy2(src, dest)
+    elif dest.is_file():
+        pass
+    else:
+        logger.warning("memo PDF not found at %s for deal %s", raw_path, deal_id)
+    return str(dest)
+
+
+def _scores_from_memo_summary(raw: Optional[dict[str, Any]]) -> dict[str, Any]:
+    raw = dict(raw or {})
+    try:
+        score = int(raw.get("deal_score", 50))
+    except (TypeError, ValueError):
+        score = 50
+    score = max(0, min(100, score))
+    verdict = raw.get("deal_verdict") or verdict_from_deal_score(score)
+    try:
+        risks = max(0, int(raw.get("risks_flagged_count", 0)))
+    except (TypeError, ValueError):
+        risks = 0
+    return {"deal_score": score, "deal_verdict": str(verdict).upper(), "risks_flagged_count": risks}
+
+
+def _apply_memo_summary_to_deal(deal: dict[str, Any], memo_summary: Optional[dict[str, Any]]) -> None:
+    if memo_summary is None:
+        return
+    deal["memo_summary"] = memo_summary
+    scores = _scores_from_memo_summary(memo_summary)
+    deal.update(scores)
+
+
+def _scores_from_deal(d: dict[str, Any]) -> dict[str, Any]:
+    ms = d.get("memo_summary")
+    if isinstance(ms, dict) and ms.get("deal_score") is not None:
+        return _scores_from_memo_summary(ms)
+    if d.get("deal_score") is not None:
+        try:
+            score = int(d["deal_score"])
+        except (TypeError, ValueError):
+            score = 50
+        score = max(0, min(100, score))
+        verdict = d.get("deal_verdict") or verdict_from_deal_score(score)
+        try:
+            risks = max(0, int(d.get("risks_flagged_count", 0)))
+        except (TypeError, ValueError):
+            risks = 0
+        return {"deal_score": score, "deal_verdict": str(verdict).upper(), "risks_flagged_count": risks}
+    return _scores_from_memo_summary(ms if isinstance(ms, dict) else {})
+
+
+def _public_deal_row(deal_id: str, d: dict[str, Any]) -> dict[str, Any]:
+    """Deal list/detail shape with top-level score fields for the sidebar."""
+    scores = _scores_from_deal(d)
+    row = dict(d)
+    row["deal_score"] = scores["deal_score"]
+    row["deal_verdict"] = scores["deal_verdict"]
+    row["risks_flagged_count"] = scores["risks_flagged_count"]
+    row["has_memo_pdf"] = bool(d.get("memo_path") and Path(d["memo_path"]).exists())
+    return row
+
+
+def _save_deals_index() -> None:
+    try:
+        DEALS_INDEX_PATH.write_text(json.dumps(deals, indent=2, default=str))
+    except OSError as e:
+        logger.error("Failed to persist deals index: %s", e)
+
+
+def _load_deals_index() -> None:
+    if not DEALS_INDEX_PATH.is_file():
+        return
+    try:
+        loaded = json.loads(DEALS_INDEX_PATH.read_text())
+        if isinstance(loaded, dict):
+            deals.update(loaded)
+            logger.info("Loaded %d deals from %s", len(loaded), DEALS_INDEX_PATH)
+    except (OSError, json.JSONDecodeError) as e:
+        logger.warning("Could not load deals index: %s", e)
+
+
 def _latest_complete_deal_id() -> Optional[str]:
     """Most recently completed deal that has a memo PDF on disk."""
     best_id: Optional[str] = None
@@ -134,9 +244,17 @@ def _full_deal_summary(deal_id: str) -> dict[str, Any]:
             "market_position": raw.get("market_position"),
             "legal_risks": raw.get("legal_risks"),
             "red_flags": raw.get("red_flags") or [],
+            "investment_thesis": raw.get("investment_thesis")
+            or raw.get("deal_terms_suggested")
+            or raw.get("recommendation"),
+            "recommendation": raw.get("recommendation"),
+            "confidence": raw.get("confidence"),
         }
     )
     return out
+
+
+_load_deals_index()
 
 
 # -------------------------------------------------------------------
@@ -271,7 +389,13 @@ async def create_draft_deal():
         "completed_at": None,
         "memo_path": None,
         "memo_summary": None,
+        "deal_score": None,
+        "deal_verdict": None,
+        "risks_flagged_count": None,
+        "chat_messages": [],
+        "industry": None,
     }
+    _save_deals_index()
     return JSONResponse({"deal_id": deal_id, "status": "draft"})
 
 
@@ -328,6 +452,11 @@ async def submit_deal(
         "completed_at": None,
         "memo_path": None,
         "memo_summary": None,
+        "deal_score": None,
+        "deal_verdict": None,
+        "risks_flagged_count": None,
+        "chat_messages": list((prev.get("chat_messages") or []) if reuse else []),
+        "industry": None,
     }
 
     try:
@@ -341,6 +470,7 @@ async def submit_deal(
         deals[deal_id]["status"] = "error"
         deals[deal_id]["error"] = str(e)
 
+    _save_deals_index()
     return JSONResponse({
         "deal_id": deal_id,
         "company_name": company_name,
@@ -378,6 +508,7 @@ async def upload_deal_document(deal_id: str, file: UploadFile = File(...)):
     else:
         logger.warning("upload: deal %s has no band_room_id; file saved but not broadcast", deal_id)
 
+    _save_deals_index()
     return JSONResponse({"file_path": rel, "status": "uploaded"})
 
 
@@ -386,13 +517,13 @@ async def get_deal_status(deal_id: str):
     """Check the status of a deal analysis."""
     if deal_id not in deals:
         raise HTTPException(status_code=404, detail="Deal not found")
-    return deals[deal_id]
+    return _public_deal_row(deal_id, deals[deal_id])
 
 
 @app.get("/deals")
 async def list_deals():
     """List all deal analyses."""
-    return list(deals.values())
+    return [_public_deal_row(did, d) for did, d in deals.items()]
 
 
 @app.get("/deals/{deal_id}/memo")
@@ -444,8 +575,22 @@ async def mark_deal_complete(deal_id: str, body: DealCompleteBody):
     if deal_id not in deals:
         raise HTTPException(status_code=404, detail="Deal not found")
     deals[deal_id]["status"] = "complete"
-    deals[deal_id]["memo_path"] = body.memo_path
+    deals[deal_id]["memo_path"] = _normalize_memo_path(deal_id, body.memo_path)
     deals[deal_id]["completed_at"] = datetime.utcnow().isoformat()
-    if body.memo_summary is not None:
-        deals[deal_id]["memo_summary"] = body.memo_summary
+    _apply_memo_summary_to_deal(deals[deal_id], body.memo_summary)
+    _save_deals_index()
     return {"status": "updated", "deal_id": deal_id}
+
+
+@app.post("/deals/{deal_id}/chat")
+async def save_deal_chat(deal_id: str, body: DealChatBody):
+    """Persist agent chat replay from the UI for restoring past deal views."""
+    if deal_id not in deals:
+        raise HTTPException(status_code=404, detail="Deal not found")
+    deals[deal_id]["chat_messages"] = body.messages
+    if body.industry:
+        deals[deal_id]["industry"] = body.industry
+    if body.company_name:
+        deals[deal_id]["company_name"] = body.company_name
+    _save_deals_index()
+    return {"status": "saved", "deal_id": deal_id, "message_count": len(body.messages)}

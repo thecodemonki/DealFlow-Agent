@@ -400,6 +400,18 @@
     .recent-row__badge--pass { background: #d1fae5; color: #047857; }
     .recent-row__badge--conditional { background: #fef3c7; color: #b45309; }
     .recent-row__badge--fail { background: #fee2e2; color: #b91c1c; }
+    .recent-row__spinner {
+      flex-shrink: 0;
+      width: 12px;
+      height: 12px;
+      border: 2px solid #e5e7eb;
+      border-top-color: #4f46e5;
+      border-radius: 50%;
+      animation: recent-row-spin 0.7s linear infinite;
+    }
+    @keyframes recent-row-spin {
+      to { transform: rotate(360deg); }
+    }
     .recent-row__date { font-size: 12px; font-weight: 400; color: #6b7280; }
     .sidebar-user {
       position: absolute;
@@ -1504,6 +1516,10 @@
           <span class="memo-view__label">Red Flags</span>
           <ul class="memo-view__flags" id="memoViewFlags"></ul>
         </section>
+        <section class="memo-view__section">
+          <span class="memo-view__label">Investment Thesis</span>
+          <p id="memoViewThesis"></p>
+        </section>
       </div>
     </div>
     <div class="results-overlay" id="resultsOverlay">
@@ -1759,9 +1775,48 @@ function verdictBadgeClass(verdict) {
   return 'recent-row__badge--conditional';
 }
 function entryVerdict(entry) {
+  if (entry.dealStatus === 'in_progress' || entry.dealStatus === 'triggered') return '';
   if (entry.dealVerdict) return String(entry.dealVerdict).toUpperCase();
   if (entry.dealScore != null) return verdictFromScore(entry.dealScore);
   return '';
+}
+function entryInProgress(entry) {
+  return entry && (entry.dealStatus === 'in_progress' || entry.dealStatus === 'triggered');
+}
+function dealSummaryFromRecord(deal) {
+  if (!deal) return null;
+  var ms = deal.memo_summary || {};
+  var score = deal.deal_score != null ? deal.deal_score : ms.deal_score;
+  if (typeof score === 'string') score = parseInt(score, 10);
+  if (typeof score !== 'number' || isNaN(score)) return null;
+  var rc = deal.risks_flagged_count != null ? deal.risks_flagged_count : ms.risks_flagged_count;
+  if (typeof rc === 'string') rc = parseInt(rc, 10);
+  if (typeof rc !== 'number' || isNaN(rc)) rc = 0;
+  return {
+    deal_id: deal.id,
+    company_name: deal.company_name,
+    deal_score: score,
+    deal_verdict: deal.deal_verdict || ms.deal_verdict || verdictFromScore(score),
+    risks_flagged_count: rc,
+    status: deal.status,
+    completed_at: deal.completed_at,
+    band_room_id: deal.band_room_id,
+    has_memo_pdf: deal.has_memo_pdf || !!(deal.memo_path),
+    executive_summary: ms.executive_summary,
+    financial_highlights: ms.financial_highlights,
+    market_position: ms.market_position,
+    legal_risks: ms.legal_risks,
+    red_flags: ms.red_flags || [],
+    investment_thesis: ms.investment_thesis || ms.deal_terms_suggested || ms.recommendation
+  };
+}
+function saveDealChatToServer(dealId, messages, company, industry) {
+  if (!dealId || !messages || !messages.length) return;
+  fetch(API + '/deals/' + encodeURIComponent(dealId) + '/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages: messages, company_name: company || undefined, industry: industry || undefined })
+  }).catch(function () {});
 }
 function scoreBundleFromSummary(summary) {
   if (!summary) return null;
@@ -1830,7 +1885,7 @@ function replayChatFromEntry(entry, bannerText) {
 }
 function fillFormFromEntry(entry, deal) {
   var company = (entry && entry.company) || (deal && deal.company_name) || '';
-  var industry = (entry && entry.industry) || '';
+  var industry = (entry && entry.industry) || (deal && deal.industry) || '';
   if (document.getElementById('companyName')) document.getElementById('companyName').value = company;
   if (document.getElementById('industry')) document.getElementById('industry').value = industry;
 }
@@ -1956,6 +2011,13 @@ function populateMemoView(company, industry, rec, nFiles, durationSec, apiSummar
         'Integration, culture, and key-person risk not assessed in this automated preview.'
       ];
     ul.innerHTML = flags.map(function (t) { return '<li>' + escapeHtml(String(t)) + '</li>'; }).join('');
+  }
+  var th = document.getElementById('memoViewThesis');
+  if (th) {
+    th.textContent = (apiSummary && apiSummary.investment_thesis)
+      || (apiSummary && apiSummary.recommendation
+        ? ('Recommendation: ' + String(apiSummary.recommendation).toUpperCase() + (apiSummary.confidence ? ' (' + apiSummary.confidence + ' confidence)' : '') + '. ' + kfText)
+        : kfText);
   }
   var dealId = (apiSummary && apiSummary.deal_id) || currentDealId;
   var hasPdf = apiSummary ? !!apiSummary.has_memo_pdf : !!dealId;
@@ -2172,12 +2234,22 @@ function enrichRecentEntriesFromServer() {
         if (!c.dealId) return;
         var d = byId[c.dealId];
         if (!d) return;
-        var ms = d.memo_summary || {};
-        var score = ms.deal_score;
+        c.dealStatus = d.status || c.dealStatus;
+        if (d.industry) c.industry = d.industry;
+        if (d.status === 'in_progress' || d.status === 'triggered') {
+          c.dealVerdict = null;
+          c.dealScore = null;
+          changed = true;
+          return;
+        }
+        if (d.status !== 'complete') return;
+        var score = d.deal_score;
+        if (score == null && d.memo_summary) score = d.memo_summary.deal_score;
         if (typeof score === 'string') score = parseInt(score, 10);
         if (typeof score !== 'number' || isNaN(score)) return;
         c.dealScore = score;
-        c.dealVerdict = ms.deal_verdict || verdictFromScore(score);
+        c.dealVerdict = d.deal_verdict || (d.memo_summary && d.memo_summary.deal_verdict) || verdictFromScore(score);
+        c.dealStatus = 'complete';
         changed = true;
       });
       if (changed) {
@@ -2196,9 +2268,11 @@ function renderRecentList() {
   var recentCount = 0;
   function appendChatRow(entry, container) {
     var verdict = entryVerdict(entry);
-    var badgeHtml = verdict
-      ? '<span class="recent-row__badge ' + verdictBadgeClass(verdict) + '">' + escapeHtml(verdict) + '</span>'
-      : '';
+    var badgeHtml = entryInProgress(entry)
+      ? '<span class="recent-row__spinner" aria-label="In progress"></span>'
+      : (verdict
+        ? '<span class="recent-row__badge ' + verdictBadgeClass(verdict) + '">' + escapeHtml(verdict) + '</span>'
+        : '');
     var row = document.createElement('div');
     row.className = 'recent-row';
     row.setAttribute('data-chat-id', entry.id);
@@ -2268,10 +2342,11 @@ function restoreChatFromHistory(entry) {
 function restoreCompletedDeal(deal, entry, summary) {
   clearDealPoll();
   currentDealId = deal.id;
+  if (!summary) summary = dealSummaryFromRecord(deal);
   fillFormFromEntry(entry, deal);
   document.getElementById('resultsOverlay').classList.remove('visible');
   var company = ((entry && entry.company) || (deal && deal.company_name) || '').trim() || 'Unknown company';
-  var industry = ((entry && entry.industry) || '').trim() || 'your industry';
+  var industry = ((entry && entry.industry) || (deal && deal.industry) || '').trim() || 'your industry';
   var nFiles = (deal.file_paths && deal.file_paths.length) || 0;
   if (summary) {
     var bundle = scoreBundleFromSummary(summary);
@@ -2279,7 +2354,7 @@ function restoreCompletedDeal(deal, entry, summary) {
       lastDealScore = bundle;
       updateStoredEntryVerdict(deal.id, bundle.verdict, bundle.score);
     }
-  } else if (entry.dealScore != null) {
+  } else if (entry && entry.dealScore != null) {
     lastDealScore = {
       score: entry.dealScore,
       verdict: entry.dealVerdict || verdictFromScore(entry.dealScore),
@@ -2287,7 +2362,17 @@ function restoreCompletedDeal(deal, entry, summary) {
     };
   }
   populateMemoView(company, industry, null, nFiles, 0, summary);
-  replayChatFromEntry(entry, 'Restored analysis results');
+  var msgs = (entry && entry.messages && entry.messages.length)
+    ? entry.messages
+    : (deal.chat_messages || []);
+  if (msgs.length) {
+    replayChatFromEntry({ messages: msgs }, 'Restored analysis results');
+  } else if (deal.completed_at) {
+    replayChatFromEntry({ messages: [] });
+    addSystemChat('Analysis completed ' + formatRelativeTime(deal.completed_at) + '. 6 agents ran.');
+  } else {
+    replayChatFromEntry({ messages: [] }, 'Restored analysis results');
+  }
   var bandLink = document.getElementById('bandRoomLink');
   if (bandLink) bandLink.href = deal.band_room_id ? 'https://band.ai' : 'https://band.ai';
   showMemoViewPanel();
@@ -2338,7 +2423,7 @@ async function openRecentDeal(entry) {
     var deal = await dealResp.json();
     if (deal.status === 'complete' && deal.completed_at) {
       var sumResp = await fetch(API + '/deals/' + encodeURIComponent(entry.dealId) + '/summary');
-      var summary = sumResp.ok ? await sumResp.json() : null;
+      var summary = sumResp.ok ? await sumResp.json() : dealSummaryFromRecord(deal);
       restoreCompletedDeal(deal, entry, summary);
     } else if (deal.status === 'in_progress' || deal.status === 'triggered') {
       restoreLiveDeal(deal, entry);
@@ -2427,7 +2512,8 @@ function showResults() {
     starred: false,
     dealId: currentDealId,
     dealVerdict: lastDealScore.verdict,
-    dealScore: lastDealScore.score
+    dealScore: lastDealScore.score,
+    dealStatus: 'complete'
   };
   var entryId = entry.id;
   var chats = loadChatsFromStorage();
@@ -2435,6 +2521,7 @@ function showResults() {
   if (chats.length > 20) chats = chats.slice(0, 20);
   saveChatsToStorage(chats);
   renderRecentList();
+  saveDealChatToServer(currentDealId, messages, company, industry);
   var summaryUrl = currentDealId
     ? (API + '/deals/' + encodeURIComponent(currentDealId) + '/summary')
     : (API + '/memo/latest/summary');
@@ -2463,6 +2550,7 @@ function showResults() {
           stored[si].dealId = j.deal_id || currentDealId || stored[si].dealId;
           stored[si].dealVerdict = lastDealScore.verdict;
           stored[si].dealScore = lastDealScore.score;
+          stored[si].dealStatus = 'complete';
           break;
         }
       }
