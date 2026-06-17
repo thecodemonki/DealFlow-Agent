@@ -117,6 +117,28 @@ def _public_memo_summary(deal_id: str) -> dict[str, Any]:
     }
 
 
+def _full_deal_summary(deal_id: str) -> dict[str, Any]:
+    d = deals[deal_id]
+    raw = dict(d.get("memo_summary") or {})
+    memo_path = d.get("memo_path")
+    has_memo_pdf = bool(memo_path and Path(memo_path).exists())
+    out = _public_memo_summary(deal_id)
+    out.update(
+        {
+            "status": d.get("status"),
+            "completed_at": d.get("completed_at"),
+            "band_room_id": d.get("band_room_id"),
+            "has_memo_pdf": has_memo_pdf,
+            "executive_summary": raw.get("executive_summary"),
+            "financial_highlights": raw.get("financial_highlights"),
+            "market_position": raw.get("market_position"),
+            "legal_risks": raw.get("legal_risks"),
+            "red_flags": raw.get("red_flags") or [],
+        }
+    )
+    return out
+
+
 # -------------------------------------------------------------------
 # Band API helper — sends a message to the Orchestrator's inbox room.
 # The Orchestrator agent is always running and listening for incoming messages.
@@ -382,6 +404,14 @@ async def download_memo(deal_id: str):
     if not memo_path or not Path(memo_path).exists():
         raise HTTPException(status_code=404, detail="Memo not yet generated")
     return FileResponse(memo_path, media_type="application/pdf", filename=Path(memo_path).name)
+
+
+@app.get("/deals/{deal_id}/summary")
+async def deal_memo_summary(deal_id: str):
+    """JSON summary for a specific deal: score, verdict, memo sections, PDF availability."""
+    if deal_id not in deals:
+        raise HTTPException(status_code=404, detail="Deal not found")
+    return _full_deal_summary(deal_id)
 
 
 @app.get("/memo/latest")

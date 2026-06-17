@@ -373,7 +373,21 @@
     .recent-row__delete:hover { color: #ef4444; }
     .recent-row__icon { flex-shrink: 0; opacity: 0.45; font-size: 14px; line-height: 1; }
     .recent-row__meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-    .recent-row__name { font-weight: 500; color: inherit; }
+    .recent-row__title-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
+    .recent-row__name { font-weight: 500; color: inherit; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+    .recent-row__badge {
+      flex-shrink: 0;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 4px;
+      line-height: 1.2;
+    }
+    .recent-row__badge--pass { background: #d1fae5; color: #047857; }
+    .recent-row__badge--conditional { background: #fef3c7; color: #b45309; }
+    .recent-row__badge--fail { background: #fee2e2; color: #b91c1c; }
     .recent-row__date { font-size: 12px; font-weight: 400; color: #6b7280; }
     .sidebar-user {
       position: absolute;
@@ -1271,22 +1285,21 @@
   <nav class="landing-nav" aria-label="Top">
     <div style="display: flex; align-items: center; gap: 16px; font-family: sans-serif;">
       <svg width="42" height="36" viewBox="0 0 200 160" fill="none" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
-        <!-- The dark navy right structural frame angled peak line -->
-        <path d="M104 22 L158 122" stroke="#1e1b4b" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
-        <!-- 6 Exact Color Bars from top to bottom -->
+        <!-- Complete A frame: left leg + right leg (no separate crossbar — color bars serve as crossbar) -->
+        <path d="M14 155 L95 5 L176 155" stroke="#1e1b4b" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         <!-- Bar 1: Purple -->
-        <line x1="55" y1="34" x2="115" y2="34" stroke="#a855f7" stroke-width="7.5" stroke-linecap="round"/>
+        <line x1="55"  y1="34"  x2="115" y2="34"  stroke="#a855f7" stroke-width="7.5" stroke-linecap="round"/>
         <!-- Bar 2: Blue -->
-        <line x1="43" y1="58" x2="110" y2="58" stroke="#3b82f6" stroke-width="7.5" stroke-linecap="round"/>
+        <line x1="43"  y1="58"  x2="110" y2="58"  stroke="#3b82f6" stroke-width="7.5" stroke-linecap="round"/>
         <!-- Bar 3: Amber -->
-        <line x1="28" y1="82" x2="98" y2="82" stroke="#f59e0b" stroke-width="7.5" stroke-linecap="round"/>
+        <line x1="28"  y1="82"  x2="98"  y2="82"  stroke="#f59e0b" stroke-width="7.5" stroke-linecap="round"/>
         <!-- Bar 4: Green -->
         <line x1="110" y1="106" x2="175" y2="106" stroke="#10b981" stroke-width="7.5" stroke-linecap="round"/>
-        <!-- Bar 5: Orange (Split) -->
-        <line x1="41" y1="130" x2="73" y2="130" stroke="#f97316" stroke-width="7.5" stroke-linecap="round"/>
+        <!-- Bar 5: Orange split -->
+        <line x1="41"  y1="130" x2="73"  y2="130" stroke="#f97316" stroke-width="7.5" stroke-linecap="round"/>
         <line x1="148" y1="130" x2="190" y2="130" stroke="#f97316" stroke-width="7.5" stroke-linecap="round"/>
-        <!-- Bar 6: Red (Split) -->
-        <line x1="26" y1="154" x2="58" y2="154" stroke="#ef4444" stroke-width="7.5" stroke-linecap="round"/>
+        <!-- Bar 6: Red split -->
+        <line x1="26"  y1="154" x2="58"  y2="154" stroke="#ef4444" stroke-width="7.5" stroke-linecap="round"/>
         <line x1="162" y1="154" x2="198" y2="154" stroke="#ef4444" stroke-width="7.5" stroke-linecap="round"/>
       </svg>
       <span style="font-size: 24px; font-weight: 700; letter-spacing: -0.03em; line-height: 1;">
@@ -1345,22 +1358,21 @@
   <aside id="sidebar">
     <div id="sidebarLogoBtn" style="display: flex; align-items: center; gap: 16px; font-family: sans-serif; cursor:pointer; margin-bottom:8px;" role="button" tabindex="0" aria-label="AgentMax — home">
       <svg width="42" height="36" viewBox="0 0 200 160" fill="none" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
-        <!-- The dark navy right structural frame angled peak line -->
-        <path d="M104 22 L158 122" stroke="#1e1b4b" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
-        <!-- 6 Exact Color Bars from top to bottom -->
+        <!-- Complete A frame: left leg + right leg (no separate crossbar — color bars serve as crossbar) -->
+        <path d="M14 155 L95 5 L176 155" stroke="#1e1b4b" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         <!-- Bar 1: Purple -->
-        <line x1="55" y1="34" x2="115" y2="34" stroke="#a855f7" stroke-width="7.5" stroke-linecap="round"/>
+        <line x1="55"  y1="34"  x2="115" y2="34"  stroke="#a855f7" stroke-width="7.5" stroke-linecap="round"/>
         <!-- Bar 2: Blue -->
-        <line x1="43" y1="58" x2="110" y2="58" stroke="#3b82f6" stroke-width="7.5" stroke-linecap="round"/>
+        <line x1="43"  y1="58"  x2="110" y2="58"  stroke="#3b82f6" stroke-width="7.5" stroke-linecap="round"/>
         <!-- Bar 3: Amber -->
-        <line x1="28" y1="82" x2="98" y2="82" stroke="#f59e0b" stroke-width="7.5" stroke-linecap="round"/>
+        <line x1="28"  y1="82"  x2="98"  y2="82"  stroke="#f59e0b" stroke-width="7.5" stroke-linecap="round"/>
         <!-- Bar 4: Green -->
         <line x1="110" y1="106" x2="175" y2="106" stroke="#10b981" stroke-width="7.5" stroke-linecap="round"/>
-        <!-- Bar 5: Orange (Split) -->
-        <line x1="41" y1="130" x2="73" y2="130" stroke="#f97316" stroke-width="7.5" stroke-linecap="round"/>
+        <!-- Bar 5: Orange split -->
+        <line x1="41"  y1="130" x2="73"  y2="130" stroke="#f97316" stroke-width="7.5" stroke-linecap="round"/>
         <line x1="148" y1="130" x2="190" y2="130" stroke="#f97316" stroke-width="7.5" stroke-linecap="round"/>
-        <!-- Bar 6: Red (Split) -->
-        <line x1="26" y1="154" x2="58" y2="154" stroke="#ef4444" stroke-width="7.5" stroke-linecap="round"/>
+        <!-- Bar 6: Red split -->
+        <line x1="26"  y1="154" x2="58"  y2="154" stroke="#ef4444" stroke-width="7.5" stroke-linecap="round"/>
         <line x1="162" y1="154" x2="198" y2="154" stroke="#ef4444" stroke-width="7.5" stroke-linecap="round"/>
       </svg>
       <span style="font-size: 24px; font-weight: 300; letter-spacing: -0.03em; line-height: 1;">
@@ -1682,7 +1694,7 @@ function showLandingFromApp() {
   }, 300);
 }
 document.getElementById('landingGetStarted').addEventListener('click', showAppFromLanding);
-let currentDealId = null, pendingDocFile = null, dealUploadOk = false, pollTimer = null, activityStep = 0, runTimerInterval = null, stepTimeoutId = null, lastAnalysisDurationSec = 0;
+let currentDealId = null, pendingDocFile = null, dealUploadOk = false, pollTimer = null, dealPollTimer = null, activityStep = 0, runTimerInterval = null, stepTimeoutId = null, lastAnalysisDurationSec = 0;
 var lastDealScore = { score: 62, verdict: 'CONDITIONAL', risksFlagged: 3 };
 const speechTimers = {};
 const AGENT_CHAT_CLASS = { orchestrator: 'chat-msg--orchestrator', webresearch: 'chat-msg--webresearch', documentparser: 'chat-msg--documentparser', financialanalyst: 'chat-msg--financialanalyst', legalrisk: 'chat-msg--legalrisk', synthesis: 'chat-msg--synthesis' };
@@ -1738,6 +1750,107 @@ function formatAnalysisSecondsBrief(sec) {
   var m = Math.floor(sec / 60);
   var r = sec % 60;
   return m + 'm ' + r + 's';
+}
+function clearDealPoll() {
+  if (dealPollTimer) { clearInterval(dealPollTimer); dealPollTimer = null; }
+}
+function verdictBadgeClass(verdict) {
+  var v = String(verdict || '').toUpperCase();
+  if (v === 'PASS') return 'recent-row__badge--pass';
+  if (v === 'FAIL') return 'recent-row__badge--fail';
+  return 'recent-row__badge--conditional';
+}
+function entryVerdict(entry) {
+  if (entry.dealVerdict) return String(entry.dealVerdict).toUpperCase();
+  if (entry.dealScore != null) return verdictFromScore(entry.dealScore);
+  return '';
+}
+function scoreBundleFromSummary(summary) {
+  if (!summary) return null;
+  var ds = summary.deal_score;
+  if (typeof ds === 'string') ds = parseInt(ds, 10);
+  if (typeof ds !== 'number' || isNaN(ds)) return null;
+  var rc = summary.risks_flagged_count;
+  if (typeof rc === 'string') rc = parseInt(rc, 10);
+  if (typeof rc !== 'number' || isNaN(rc)) rc = 0;
+  return {
+    score: ds,
+    verdict: summary.deal_verdict || verdictFromScore(ds),
+    risksFlagged: rc
+  };
+}
+function setDownloadLinks(dealId, hasMemoPdf) {
+  var href = (dealId && hasMemoPdf) ? (API + '/deals/' + encodeURIComponent(dealId) + '/memo') : (dealId ? '#' : (API + '/memo/latest'));
+  var dl = document.getElementById('memoViewDownload');
+  var db = document.getElementById('downloadBtn');
+  if (dl) {
+    dl.href = href;
+    dl.style.display = hasMemoPdf ? '' : 'none';
+  }
+  if (db) {
+    db.href = href;
+    db.style.display = hasMemoPdf ? '' : 'none';
+  }
+}
+function showMemoViewPanel() {
+  document.getElementById('resultsOverlay').classList.remove('visible');
+  var arena = document.getElementById('arena');
+  if (arena) {
+    arena.classList.remove('arena--home-blobs', 'arena--running', 'arena--viewing-history');
+    arena.classList.add('arena--memo-view');
+  }
+  document.body.classList.remove('app-running');
+  clearRunTimer();
+  ['orchestrator', 'webresearch', 'documentparser', 'financialanalyst', 'legalrisk', 'synthesis'].forEach(function (a) {
+    var w = document.getElementById('blob-' + a);
+    if (w) w.classList.remove('blob-wrap--active', 'speech-on');
+    setAgentStatus(a, 'done');
+  });
+  var mv = document.getElementById('memoView');
+  if (mv) {
+    mv.classList.remove('memo-view--visible');
+    mv.removeAttribute('hidden');
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        mv.classList.add('memo-view--visible');
+      });
+    });
+  }
+}
+function replayChatFromEntry(entry, bannerText) {
+  var feed = document.getElementById('chatFeed');
+  feed.innerHTML = '';
+  if (bannerText) {
+    var banner = document.createElement('div');
+    banner.className = 'chat-restore-banner';
+    banner.textContent = bannerText;
+    feed.appendChild(banner);
+  }
+  (entry.messages || []).forEach(function (m) { appendHistoryMessage(m); });
+  updateChatEmpty();
+  feed.scrollTop = 0;
+}
+function fillFormFromEntry(entry, deal) {
+  var company = (entry && entry.company) || (deal && deal.company_name) || '';
+  var industry = (entry && entry.industry) || '';
+  if (document.getElementById('companyName')) document.getElementById('companyName').value = company;
+  if (document.getElementById('industry')) document.getElementById('industry').value = industry;
+}
+function updateStoredEntryVerdict(dealId, verdict, score) {
+  if (!dealId) return;
+  var chats = loadChatsFromStorage();
+  var changed = false;
+  chats.forEach(function (c) {
+    if (c.dealId === dealId) {
+      if (verdict) c.dealVerdict = verdict;
+      if (score != null) c.dealScore = score;
+      changed = true;
+    }
+  });
+  if (changed) {
+    saveChatsToStorage(chats);
+    renderRecentList();
+  }
 }
 function hideArenaMemoViewer() {
   var arena = document.getElementById('arena');
@@ -1797,9 +1910,16 @@ function applyDealScoreUI(bundle) {
   var rr = document.getElementById('resultsRisksLine');
   if (rr) rr.textContent = riskStr;
 }
-function populateMemoView(company, industry, rec, nFiles, durationSec) {
+function populateMemoView(company, industry, rec, nFiles, durationSec, apiSummary) {
   var bundle = lastDealScore || { score: 62, verdict: 'CONDITIONAL', risksFlagged: 3 };
-  var verdict = verdictFromScore(bundle.score);
+  if (apiSummary) {
+    var fromSum = scoreBundleFromSummary(apiSummary);
+    if (fromSum) {
+      bundle = fromSum;
+      lastDealScore = bundle;
+    }
+  }
+  var verdict = bundle.verdict || verdictFromScore(bundle.score);
   var pillMod = verdict === 'PASS' ? 'invest' : verdict === 'FAIL' ? 'pass' : 'conditional';
   var kfRaw = company + ' shows differentiated positioning in ' + industry + ' on open-web signals. Validate unit economics and governance with management.';
   var kfText = kfRaw.charAt(0).toUpperCase() + kfRaw.slice(1);
@@ -1812,31 +1932,36 @@ function populateMemoView(company, industry, rec, nFiles, durationSec) {
   }
   applyDealScoreUI(bundle);
   var ex = document.getElementById('memoViewExec');
-  if (ex) ex.textContent = kfText;
+  if (ex) ex.textContent = (apiSummary && apiSummary.executive_summary) || kfText;
   var mk = document.getElementById('memoViewMarket');
   if (mk) {
-    mk.textContent = company + ' operates in ' + industry + ', where competitive intensity and channel mix materially affect growth and margins. Open-web sources point to a coherent category narrative, but market share and pricing power remain unverified without primary research. We recommend a structured customer and competitor interview plan to ground the positioning view.';
+    mk.textContent = (apiSummary && apiSummary.market_position) || (company + ' operates in ' + industry + ', where competitive intensity and channel mix materially affect growth and margins. Open-web sources point to a coherent category narrative, but market share and pricing power remain unverified without primary research. We recommend a structured customer and competitor interview plan to ground the positioning view.');
   }
   var fi = document.getElementById('memoViewFinancial');
   if (fi) {
-    fi.textContent = 'No financial documents were provided. Valuation cannot be modelled from public data alone. Recommend requesting audited financials before proceeding.';
+    fi.textContent = (apiSummary && apiSummary.financial_highlights) || (nFiles > 0
+      ? 'Financial highlights from uploaded documents were incorporated where available. Recommend validating audited financials and management forecasts before proceeding.'
+      : 'No financial documents were provided. Valuation cannot be modelled from public data alone. Recommend requesting audited financials before proceeding.');
   }
   var lg = document.getElementById('memoViewLegal');
   if (lg) {
-    lg.textContent = 'Contractual review flagged change-of-control and related provisions that could affect timing, economics, or certainty of close. IP and data rights were not fully mapped in this web-only pass. A targeted legal diligence workstream should validate reps and warranties, indemnities, and regulatory constraints relevant to ' + industry + '.';
+    lg.textContent = (apiSummary && apiSummary.legal_risks) || ('Contractual review flagged change-of-control and related provisions that could affect timing, economics, or certainty of close. IP and data rights were not fully mapped in this web-only pass. A targeted legal diligence workstream should validate reps and warranties, indemnities, and regulatory constraints relevant to ' + industry + '.');
   }
   var ul = document.getElementById('memoViewFlags');
   if (ul) {
-    var flags = [
-      'Web-only signals: key facts not independently verified with management.',
-      'Sector cyclicality or regulatory shifts in ' + industry + ' could alter the outlook materially.',
-      'Valuation band is illustrative and sensitive to small changes in growth or margin assumptions.',
-      'Integration, culture, and key-person risk not assessed in this automated preview.'
-    ];
-    ul.innerHTML = flags.map(function (t) { return '<li>' + escapeHtml(t) + '</li>'; }).join('');
+    var flags = (apiSummary && apiSummary.red_flags && apiSummary.red_flags.length)
+      ? apiSummary.red_flags
+      : [
+        'Web-only signals: key facts not independently verified with management.',
+        'Sector cyclicality or regulatory shifts in ' + industry + ' could alter the outlook materially.',
+        'Valuation band is illustrative and sensitive to small changes in growth or margin assumptions.',
+        'Integration, culture, and key-person risk not assessed in this automated preview.'
+      ];
+    ul.innerHTML = flags.map(function (t) { return '<li>' + escapeHtml(String(t)) + '</li>'; }).join('');
   }
-  var dl = document.getElementById('memoViewDownload');
-  if (dl) dl.href = API + '/memo/latest';
+  var dealId = (apiSummary && apiSummary.deal_id) || currentDealId;
+  var hasPdf = apiSummary ? !!apiSummary.has_memo_pdf : !!dealId;
+  setDownloadLinks(dealId, hasPdf);
 }
 function stripHtml(html) { var d = document.createElement('div'); d.innerHTML = html; return d.textContent || d.innerText || ''; }
 function inferAgentFromHtml(html) {
@@ -2035,6 +2160,34 @@ function updateRecentListRelativeTimes() {
     el.textContent = formatRelativeTime(row.getAttribute('data-timestamp'));
   });
 }
+function enrichRecentEntriesFromServer() {
+  fetch(API + '/deals')
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .catch(function () { return null; })
+    .then(function (dealList) {
+      if (!dealList || !dealList.length) return;
+      var byId = {};
+      dealList.forEach(function (d) { if (d && d.id) byId[d.id] = d; });
+      var chats = loadChatsFromStorage();
+      var changed = false;
+      chats.forEach(function (c) {
+        if (!c.dealId) return;
+        var d = byId[c.dealId];
+        if (!d) return;
+        var ms = d.memo_summary || {};
+        var score = ms.deal_score;
+        if (typeof score === 'string') score = parseInt(score, 10);
+        if (typeof score !== 'number' || isNaN(score)) return;
+        c.dealScore = score;
+        c.dealVerdict = ms.deal_verdict || verdictFromScore(score);
+        changed = true;
+      });
+      if (changed) {
+        saveChatsToStorage(chats);
+        renderRecentList();
+      }
+    });
+}
 function renderRecentList() {
   var recentList = document.getElementById('recentList');
   var recentSection = document.getElementById('recentSection');
@@ -2044,11 +2197,15 @@ function renderRecentList() {
   var chats = loadChatsFromStorage();
   var recentCount = 0;
   function appendChatRow(entry, container) {
+    var verdict = entryVerdict(entry);
+    var badgeHtml = verdict
+      ? '<span class="recent-row__badge ' + verdictBadgeClass(verdict) + '">' + escapeHtml(verdict) + '</span>'
+      : '';
     var row = document.createElement('div');
     row.className = 'recent-row';
     row.setAttribute('data-chat-id', entry.id);
     row.setAttribute('data-timestamp', entry.timestamp != null ? String(entry.timestamp) : '');
-    row.innerHTML = '<span class="recent-row__icon">💬</span><div class="recent-row__meta"><span class="recent-row__name">' + escapeHtml(displayCompanyName(entry.company)) + '</span><span class="recent-row__date">' + formatRelativeTime(entry.timestamp) + '</span></div><button type="button" class="recent-row__delete" aria-label="Delete chat" title="Delete">×</button>';
+    row.innerHTML = '<span class="recent-row__icon">💬</span><div class="recent-row__meta"><div class="recent-row__title-row"><span class="recent-row__name">' + escapeHtml(displayCompanyName(entry.company)) + '</span>' + badgeHtml + '</div><span class="recent-row__date">' + formatRelativeTime(entry.timestamp) + '</span></div><button type="button" class="recent-row__delete" aria-label="Delete chat" title="Delete">×</button>';
     container.appendChild(row);
   }
   chats.forEach(function (entry) {
@@ -2085,6 +2242,7 @@ function appendHistoryMessage(m) {
   addFeedItem(null, safe, aid, null);
 }
 function restoreChatFromHistory(entry) {
+  clearDealPoll();
   hideArenaMemoViewer();
   var arena = document.getElementById('arena');
   arena.classList.remove('arena--home-blobs');
@@ -2108,6 +2266,91 @@ function restoreChatFromHistory(entry) {
   feed.scrollTop = 0;
   if (document.getElementById('companyName')) document.getElementById('companyName').value = entry.company || '';
   if (document.getElementById('industry')) document.getElementById('industry').value = entry.industry || '';
+}
+function restoreCompletedDeal(deal, entry, summary) {
+  clearDealPoll();
+  currentDealId = deal.id;
+  fillFormFromEntry(entry, deal);
+  document.getElementById('resultsOverlay').classList.remove('visible');
+  var company = ((entry && entry.company) || (deal && deal.company_name) || '').trim() || 'Unknown company';
+  var industry = ((entry && entry.industry) || '').trim() || 'your industry';
+  var nFiles = (deal.file_paths && deal.file_paths.length) || 0;
+  if (summary) {
+    var bundle = scoreBundleFromSummary(summary);
+    if (bundle) {
+      lastDealScore = bundle;
+      updateStoredEntryVerdict(deal.id, bundle.verdict, bundle.score);
+    }
+  } else if (entry.dealScore != null) {
+    lastDealScore = {
+      score: entry.dealScore,
+      verdict: entry.dealVerdict || verdictFromScore(entry.dealScore),
+      risksFlagged: 0
+    };
+  }
+  populateMemoView(company, industry, null, nFiles, 0, summary);
+  replayChatFromEntry(entry, 'Restored analysis results');
+  var bandLink = document.getElementById('bandRoomLink');
+  if (bandLink) bandLink.href = deal.band_room_id ? 'https://band.ai' : 'https://band.ai';
+  showMemoViewPanel();
+}
+function restoreLiveDeal(deal, entry) {
+  clearDealPoll();
+  hideArenaMemoViewer();
+  currentDealId = deal.id;
+  fillFormFromEntry(entry, deal);
+  document.getElementById('resultsOverlay').classList.remove('visible');
+  var arena = document.getElementById('arena');
+  if (arena) {
+    arena.classList.remove('arena--home-blobs', 'arena--memo-view');
+    arena.classList.add('arena--running');
+    arena.classList.remove('arena--viewing-history');
+  }
+  document.body.classList.remove('app-running');
+  ['orchestrator', 'webresearch', 'documentparser', 'financialanalyst', 'legalrisk', 'synthesis'].forEach(function (a) {
+    var w = document.getElementById('blob-' + a);
+    if (w) w.classList.remove('blob-wrap--active', 'blob-wrap--done', 'speech-on');
+    setAgentStatus(a, 'idle');
+  });
+  replayChatFromEntry(entry, 'Analysis in progress…');
+  dealPollTimer = setInterval(function () {
+    fetch(API + '/deals/' + encodeURIComponent(deal.id))
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .catch(function () { return null; })
+      .then(function (d) {
+        if (!d || d.status !== 'complete' || !d.completed_at) return;
+        clearDealPoll();
+        fetch(API + '/deals/' + encodeURIComponent(deal.id) + '/summary')
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .catch(function () { return null; })
+          .then(function (summary) {
+            restoreCompletedDeal(d, entry, summary);
+          });
+      });
+  }, 5000);
+}
+async function openRecentDeal(entry) {
+  if (!entry || !entry.dealId) {
+    restoreChatFromHistory(entry);
+    return;
+  }
+  try {
+    var dealResp = await fetch(API + '/deals/' + encodeURIComponent(entry.dealId));
+    if (!dealResp.ok) throw new Error('Deal not found');
+    var deal = await dealResp.json();
+    if (deal.status === 'complete' && deal.completed_at) {
+      var sumResp = await fetch(API + '/deals/' + encodeURIComponent(entry.dealId) + '/summary');
+      var summary = sumResp.ok ? await sumResp.json() : null;
+      restoreCompletedDeal(deal, entry, summary);
+    } else if (deal.status === 'in_progress' || deal.status === 'triggered') {
+      restoreLiveDeal(deal, entry);
+    } else {
+      restoreChatFromHistory(entry);
+      addSystemChat('No completed results for this deal yet.');
+    }
+  } catch (err) {
+    restoreChatFromHistory(entry);
+  }
 }
 document.getElementById('sidebar').addEventListener('click', function (e) {
   if (e.target.closest('#recentToggleMore')) {
@@ -2137,7 +2380,10 @@ document.getElementById('sidebar').addEventListener('click', function (e) {
   var chats = loadChatsFromStorage();
   var entry = null;
   for (var ri = 0; ri < chats.length; ri++) { if (chats[ri].id === id) { entry = chats[ri]; break; } }
-  if (entry) restoreChatFromHistory(entry);
+  if (entry) {
+    if (entry.dealId) openRecentDeal(entry);
+    else restoreChatFromHistory(entry);
+  }
 });
 const STEPS = [
   function () { setAgentStatus('orchestrator', 'active'); showSpeechBubble('orchestrator', 'Kicking off pipeline…'); addFeedItem(null, 'Deal request received. Kicking off your diligence pipeline.', 'orchestrator'); },
@@ -2169,18 +2415,32 @@ function showResults() {
   }
   var webPart = nFiles > 0 ? 'Web + documents' : 'Web-only';
   document.getElementById('resultsMetaLine').textContent = 'Medium confidence · ' + webPart + ' · ' + formatAnalysisSecondsBrief(lastAnalysisDurationSec);
-  document.getElementById('downloadBtn').href = API + '/memo/latest';
+  setDownloadLinks(currentDealId, false);
   var bandLink = document.getElementById('bandRoomLink');
   if (bandLink) bandLink.href = 'https://band.ai';
   document.getElementById('resultsOverlay').classList.add('visible');
   var messages = serializeChatFeed();
-  var entry = { id: String(Date.now()), company: company, industry: industry, timestamp: new Date().toISOString(), messages: messages, starred: false };
+  var entry = {
+    id: String(Date.now()),
+    company: company,
+    industry: industry,
+    timestamp: new Date().toISOString(),
+    messages: messages,
+    starred: false,
+    dealId: currentDealId,
+    dealVerdict: lastDealScore.verdict,
+    dealScore: lastDealScore.score
+  };
+  var entryId = entry.id;
   var chats = loadChatsFromStorage();
   chats.unshift(entry);
   if (chats.length > 20) chats = chats.slice(0, 20);
   saveChatsToStorage(chats);
   renderRecentList();
-  fetch(API + '/memo/latest/summary')
+  var summaryUrl = currentDealId
+    ? (API + '/deals/' + encodeURIComponent(currentDealId) + '/summary')
+    : (API + '/memo/latest/summary');
+  fetch(summaryUrl)
     .then(function (r) { return r.ok ? r.json() : null; })
     .catch(function () { return null; })
     .then(function (j) {
@@ -2197,7 +2457,19 @@ function showResults() {
         risksFlagged: rc
       };
       applyDealScoreUI(lastDealScore);
-      populateMemoView(company, industry, null, nFiles, lastAnalysisDurationSec);
+      populateMemoView(company, industry, null, nFiles, lastAnalysisDurationSec, j);
+      setDownloadLinks(j.deal_id || currentDealId, !!j.has_memo_pdf);
+      var stored = loadChatsFromStorage();
+      for (var si = 0; si < stored.length; si++) {
+        if (stored[si].id === entryId) {
+          stored[si].dealId = j.deal_id || currentDealId || stored[si].dealId;
+          stored[si].dealVerdict = lastDealScore.verdict;
+          stored[si].dealScore = lastDealScore.score;
+          break;
+        }
+      }
+      saveChatsToStorage(stored);
+      renderRecentList();
     });
 }
 document.getElementById('resultsCloseBtn').addEventListener('click', function () {
@@ -2250,6 +2522,7 @@ function resetToInputCard(opts) {
     if (status) status.textContent = 'Waiting…';
   });
   clearRunTimer();
+  clearDealPoll();
   var btn = document.getElementById('analyzeBtn');
   if (btn) { btn.disabled = false; btn.textContent = 'Run Analysis →'; }
   var cn = document.getElementById('companyName');
@@ -2294,6 +2567,7 @@ async function startAnalysis() {
   var company = document.getElementById('companyName').value.trim();
   if (!company) { alert('Please enter a company name.'); return; }
   hideArenaMemoViewer();
+  clearDealPoll();
   window.analysisAborted = false;
   if (stepTimeoutId) { clearTimeout(stepTimeoutId); stepTimeoutId = null; }
   var arenaRun = document.getElementById('arena');
@@ -2378,6 +2652,7 @@ async function startAnalysis() {
   nextStep();
 }
 renderRecentList();
+enrichRecentEntriesFromServer();
 updateChatEmpty();
 updateDocUploadBadge();
 initAgentShowcase();
