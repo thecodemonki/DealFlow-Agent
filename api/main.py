@@ -115,7 +115,7 @@ def _build_deal_memo_response(deal_id: str) -> Response:
         content=pdf_bytes,
         media_type="application/pdf",
         headers={
-            "Content-Disposition": f'attachment; filename="agentmax-memo-{deal_id}.pdf"'
+            "Content-Disposition": 'attachment; filename="agentmax-memo.pdf"'
         },
     )
 
