@@ -1269,20 +1269,31 @@
 <body>
 <div id="landingPage">
   <nav class="landing-nav" aria-label="Top">
-    <div style="display:flex;align-items:center;gap:10px;">
-      <svg viewBox="0 0 200 160" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:52px;height:auto;">
-        <line x1="50"  y1="20"  x2="130" y2="20"  stroke="#a855f7" stroke-width="8" stroke-linecap="round"/>
-        <line x1="35"  y1="45"  x2="140" y2="45"  stroke="#3b82f6" stroke-width="8" stroke-linecap="round"/>
-        <line x1="18"  y1="70"  x2="100" y2="70"  stroke="#f59e0b" stroke-width="8" stroke-linecap="round"/>
-        <line x1="88"  y1="95"  x2="142" y2="95"  stroke="#10b981" stroke-width="8" stroke-linecap="round"/>
-        <line x1="23"  y1="120" x2="65"  y2="120" stroke="#f97316" stroke-width="8" stroke-linecap="round"/>
-        <line x1="120" y1="120" x2="180" y2="120" stroke="#f97316" stroke-width="8" stroke-linecap="round"/>
-        <line x1="3"   y1="145" x2="54"  y2="145" stroke="#ef4444" stroke-width="8" stroke-linecap="round"/>
-        <line x1="126" y1="145" x2="184" y2="145" stroke="#ef4444" stroke-width="8" stroke-linecap="round"/>
-        <path d="M94 2 L4 157 L186 157" stroke="#1e1b4b" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        <line x1="40" y1="95" x2="150" y2="95" stroke="#1e1b4b" stroke-width="10" stroke-linecap="round"/>
+    <div style="display: flex; align-items: center; gap: 16px; font-family: sans-serif;">
+      <!-- Corrected Pixel-Perfect 6-Bar A SVG -->
+      <svg width="42" height="36" viewBox="0 0 46 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
+        <!-- Right side dark navy structure -->
+        <path d="M22.5 4 L37.5 35.5" stroke="#1e1b4b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- 6 Color Bars staggered perfectly to build the "A" silhouette -->
+        <!-- Bar 1: Purple -->
+        <path d="M14 8 H24" stroke="#a855f7" stroke-width="2.2" stroke-linecap="round"/>
+        <!-- Bar 2: Blue -->
+        <path d="M11 13.5 H21" stroke="#3b82f6" stroke-width="2.2" stroke-linecap="round"/>
+        <!-- Bar 3: Amber -->
+        <path d="M7.5 19 H17.5" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round"/>
+        <!-- Bar 4: Green -->
+        <path d="M19.5 24.5 H31" stroke="#10b981" stroke-width="2.2" stroke-linecap="round"/>
+        <!-- Bar 5: Orange (Staggered Split) -->
+        <path d="M9.5 30 H14.5" stroke="#f97316" stroke-width="2.2" stroke-linecap="round"/>
+        <path d="M25.5 30 H34.5" stroke="#f97316" stroke-width="2.2" stroke-linecap="round"/>
+        <!-- Bar 6: Red (Staggered Split) -->
+        <path d="M5.5 35.5 H11.5" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round"/>
+        <path d="M28.5 35.5 H36.5" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round"/>
       </svg>
-      <span style="font-size:17px;font-weight:700;letter-spacing:-0.3px;color:#1e1b4b;">Agent<span style="color:#4f46e5;">Max</span></span>
+      <!-- Wordmark -->
+      <span style="font-size: 24px; font-weight: 300; letter-spacing: -0.03em; line-height: 1;">
+        <span style="color: #1e1b4b;">Agent</span><span style="color: #4f46e5;">Max</span>
+      </span>
     </div>
   </nav>
   <div class="landing-main">
