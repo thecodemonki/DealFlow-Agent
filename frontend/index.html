@@ -937,11 +937,11 @@
     .blob-wrap.speech-on .speech-bubble { opacity: 1; animation: speech-pop 0.35s ease-out; }
     @keyframes speech-pop { from { opacity: 0; transform: translateY(6px) scale(0.92); } to { opacity: 1; transform: translateY(0) scale(1); } }
     #blob-orchestrator { left: 50%; top: 45%; }
-    #blob-webresearch { left: 22%; top: 22%; }
-    #blob-documentparser { left: 78%; top: 22%; }
-    #blob-financialanalyst { left: 18%; top: 72%; }
-    #blob-legalrisk { left: 82%; top: 72%; }
-    #blob-synthesis { left: 50%; top: 78%; }
+    #blob-webresearch { left: 30%; top: 15%; }
+    #blob-documentparser { left: 70%; top: 15%; }
+    #blob-financialanalyst { left: 30%; top: 72%; }
+    #blob-legalrisk { left: 70%; top: 72%; }
+    #blob-synthesis { left: 50%; top: 92%; }
     .signal-stub { display: none; }
     .results-overlay {
       position: absolute;
@@ -1436,11 +1436,12 @@
       <span id="analyzeTimer" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0" aria-hidden="true"></span>
     </div>
     <svg class="arena-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-      <line x1="50" y1="45" x2="22" y2="22" stroke="#c7d2fe" stroke-width="1.5" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>
-      <line x1="50" y1="45" x2="78" y2="22" stroke="#c7d2fe" stroke-width="1.5" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>
-      <line x1="50" y1="45" x2="18" y2="72" stroke="#c7d2fe" stroke-width="1.5" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>
-      <line x1="50" y1="45" x2="82" y2="72" stroke="#c7d2fe" stroke-width="1.5" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>
-      <line x1="50" y1="45" x2="50" y2="78" stroke="#c7d2fe" stroke-width="1.5" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>
+      <line x1="50" y1="45" x2="30" y2="15" stroke="#c7d2fe" stroke-width="1.5" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>
+      <line x1="50" y1="45" x2="70" y2="15" stroke="#c7d2fe" stroke-width="1.5" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>
+      <line x1="50" y1="45" x2="30" y2="72" stroke="#c7d2fe" stroke-width="1.5" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>
+      <line x1="50" y1="45" x2="70" y2="72" stroke="#c7d2fe" stroke-width="1.5" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>
+      <line x1="30" y1="72" x2="50" y2="92" stroke="#c7d2fe" stroke-width="1.5" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>
+      <line x1="70" y1="72" x2="50" y2="92" stroke="#c7d2fe" stroke-width="1.5" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>
     </svg>
     <div class="blob-layer">
       <div class="blob-wrap blob-wrap--orchestrator" id="blob-orchestrator" data-agent="orchestrator">
