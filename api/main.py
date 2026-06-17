@@ -135,12 +135,41 @@ def _scores_from_memo_summary(raw: Optional[dict[str, Any]]) -> dict[str, Any]:
     return {"deal_score": score, "deal_verdict": str(verdict).upper(), "risks_flagged_count": risks}
 
 
+def _parse_iso_timestamp(value: str) -> Optional[datetime]:
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+
+
+def _duration_seconds_between(created: Optional[str], completed: Optional[str]) -> Optional[int]:
+    start = _parse_iso_timestamp(created or "")
+    end = _parse_iso_timestamp(completed or "")
+    if not start or not end:
+        return None
+    return max(0, round((end - start).total_seconds()))
+
+
+def _analysis_duration_seconds(d: dict[str, Any]) -> Optional[int]:
+    stored = d.get("analysis_duration_seconds")
+    if stored is not None:
+        try:
+            return max(0, int(stored))
+        except (TypeError, ValueError):
+            pass
+    return _duration_seconds_between(d.get("created_at"), d.get("completed_at"))
+
+
 def _apply_memo_summary_to_deal(deal: dict[str, Any], memo_summary: Optional[dict[str, Any]]) -> None:
     if memo_summary is None:
         return
     deal["memo_summary"] = memo_summary
     scores = _scores_from_memo_summary(memo_summary)
     deal.update(scores)
+    if memo_summary.get("company_name"):
+        deal["company_name"] = memo_summary["company_name"]
 
 
 def _scores_from_deal(d: dict[str, Any]) -> dict[str, Any]:
@@ -166,9 +195,14 @@ def _public_deal_row(deal_id: str, d: dict[str, Any]) -> dict[str, Any]:
     """Deal list/detail shape with top-level score fields for the sidebar."""
     scores = _scores_from_deal(d)
     row = dict(d)
+    row["id"] = deal_id
+    row["company_name"] = d.get("company_name") or ""
+    row["industry"] = d.get("industry")
     row["deal_score"] = scores["deal_score"]
     row["deal_verdict"] = scores["deal_verdict"]
     row["risks_flagged_count"] = scores["risks_flagged_count"]
+    row["completed_at"] = d.get("completed_at")
+    row["analysis_duration_seconds"] = _analysis_duration_seconds(d)
     row["has_memo_pdf"] = _deal_has_memo_pdf(d)
     return row
 
@@ -394,6 +428,7 @@ async def create_draft_deal():
         "deal_score": None,
         "deal_verdict": None,
         "risks_flagged_count": None,
+        "analysis_duration_seconds": None,
         "chat_messages": [],
         "industry": None,
     }
@@ -404,6 +439,7 @@ async def create_draft_deal():
 @app.post("/analyze")
 async def submit_deal(
     company_name: str = Form(...),
+    industry: str = Form(default=""),
     notes: str = Form(default=""),
     deal_id: str = Form(default=""),
     files: list[UploadFile] = File(default=[]),
@@ -444,6 +480,8 @@ async def submit_deal(
                 file_paths.append(rel)
             logger.info("Saved %s for deal %s (%s)", safe_name, deal_id, rel)
 
+    industry_value = industry.strip() or None
+
     deals[deal_id] = {
         "id": deal_id,
         "company_name": company_name,
@@ -457,8 +495,9 @@ async def submit_deal(
         "deal_score": None,
         "deal_verdict": None,
         "risks_flagged_count": None,
+        "analysis_duration_seconds": None,
         "chat_messages": list((prev.get("chat_messages") or []) if reuse else []),
-        "industry": None,
+        "industry": industry_value,
     }
 
     try:
@@ -577,6 +616,10 @@ async def mark_deal_complete(deal_id: str, body: DealCompleteBody):
     deals[deal_id]["status"] = "complete"
     deals[deal_id]["memo_path"] = None
     deals[deal_id]["completed_at"] = datetime.utcnow().isoformat()
+    deals[deal_id]["analysis_duration_seconds"] = _duration_seconds_between(
+        deals[deal_id].get("created_at"),
+        deals[deal_id]["completed_at"],
+    )
     _apply_memo_summary_to_deal(deals[deal_id], body.memo_summary)
     _save_deals_index()
     return {"status": "updated", "deal_id": deal_id}
