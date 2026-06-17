@@ -1559,6 +1559,13 @@
           <span>Download investment memo PDF</span>
         </a>
         <a class="results-band-link" id="bandRoomLink" href="https://band.ai" target="_blank" rel="noopener noreferrer">View in Band →</a>
+        <a id="modalPdfBtn" href="#" target="_blank" rel="noopener noreferrer"
+           style="display:none; align-items:center; justify-content:center; gap:8px;
+                  padding:10px 20px; margin-top:12px; width:100%; box-sizing:border-box;
+                  background:#4f46e5; color:white; border-radius:8px; font-weight:600;
+                  font-size:14px; text-decoration:none;">
+          ↓ Download Memo PDF
+        </a>
         <button type="button" class="results-close" id="resultsCloseBtn">Close</button>
       </div>
     </div>
@@ -1853,9 +1860,14 @@ function setDownloadLinks(dealId, hasMemoPdf) {
   var dl = document.getElementById('memoViewDownload');
   var db = document.getElementById('downloadBtn');
   var dp = document.getElementById('downloadPdfBtn');
+  var mp = document.getElementById('modalPdfBtn');
   if (dp) {
     dp.href = perDealHref || '#';
     dp.style.display = hasMemoPdf && dealId ? 'inline-flex' : 'none';
+  }
+  if (mp) {
+    mp.href = perDealHref || '#';
+    mp.style.display = hasMemoPdf && dealId ? 'inline-flex' : 'none';
   }
   if (dl) {
     dl.href = href;
@@ -1863,7 +1875,7 @@ function setDownloadLinks(dealId, hasMemoPdf) {
   }
   if (db) {
     db.href = href;
-    db.style.display = hasMemoPdf ? '' : 'none';
+    db.style.display = 'none';
   }
 }
 function showMemoViewPanel() {
