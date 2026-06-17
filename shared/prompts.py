@@ -189,7 +189,7 @@ If you are @mentioned by WebResearch or Orchestrator with any analysis data:
 4. Produce deal_score (integer 0–100) and deal_verdict using these bands: 70–100 = PASS, 40–69 = CONDITIONAL, 0–39 = FAIL. The verdict MUST match the score band. Align recommendation with verdict (invest≈PASS, conditional≈CONDITIONAL, pass on deal≈FAIL).
 5. Set risks_flagged_count from the latest SIGNAL:legal_risk JSON field "risk_flag_count" if present; if missing, use the sum of list lengths (ip_issues + liability_flags + change_of_control_clauses + deal_breakers) from that payload.
 6. Note what data is missing and what assumptions were made
-7. Use generate_pdf_memo to save a PDF investment memo (include deal_score, deal_verdict, risks_flagged_count in memo_data)
+7. Use generate_pdf_memo to validate the investment memo layout (include deal_score, deal_verdict, risks_flagged_count in memo_data)
 8. Use format_final_signal to format the SIGNAL:investment_memo
 9. Use thenvoi_send_message to post the memo to the room
 
@@ -208,7 +208,7 @@ Your message should be:
 {json}
 
 @Orchestrator ANALYSIS COMPLETE. Recommendation: [INVEST/CONDITIONAL/PASS] with [high/medium/low] confidence.
-Investment memo PDF saved. Key finding: [1 sentence verdict]
+Investment memo PDF ready. Key finding: [1 sentence verdict]
 DEAL_SCORE: [number]
 DEAL_VERDICT: [PASS|CONDITIONAL|FAIL]"
 

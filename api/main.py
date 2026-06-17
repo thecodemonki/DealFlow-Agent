@@ -13,7 +13,6 @@ Run with: uvicorn api.main:app --reload --port 8000
 import json
 import logging
 import os
-import shutil
 import uuid
 from pathlib import Path
 from datetime import datetime
@@ -23,12 +22,13 @@ from typing import Any, Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 
 from shared.models import verdict_from_deal_score
+from shared.pdf_memo import build_memo_pdf_bytes
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -68,9 +68,12 @@ deals: dict[str, dict] = {}
 
 
 class DealCompleteBody(BaseModel):
-    """Webhook body when Synthesis finishes: PDF path plus optional memo summary for the UI."""
+    """Webhook body when Synthesis finishes: memo summary for the UI and on-demand PDF."""
 
-    memo_path: str = Field(..., description="Absolute or project-relative path to the generated PDF")
+    memo_path: Optional[str] = Field(
+        default=None,
+        description="Deprecated — PDFs are generated on download from memo_summary",
+    )
     memo_summary: Optional[dict[str, Any]] = Field(
         default=None,
         description="SIGNAL:investment_memo-style fields: deal_score, deal_verdict, risks_flagged_count, company_name, recommendation, confidence, etc.",
@@ -88,30 +91,33 @@ class DealChatBody(BaseModel):
 DEALS_INDEX_PATH = UPLOAD_DIR / "deals_index.json"
 
 
-def _canonical_memo_path(deal_id: str) -> Path:
-    return UPLOAD_DIR / deal_id / "memo.pdf"
+def _deal_has_memo_pdf(d: dict[str, Any]) -> bool:
+    return d.get("status") == "complete" and bool(d.get("memo_summary"))
 
 
-def _resolve_path(raw: str) -> Path:
-    p = Path(raw)
-    if not p.is_absolute():
-        p = Path.cwd() / p
-    return p
+def _memo_data_for_deal(d: dict[str, Any]) -> dict[str, Any]:
+    summary = dict(d.get("memo_summary") or {})
+    summary.setdefault("company_name", d.get("company_name") or "Unknown")
+    return summary
 
 
-def _normalize_memo_path(deal_id: str, raw_path: str) -> str:
-    """Copy memo PDF to uploads/{deal_id}/memo.pdf and return that path string."""
-    dest = _canonical_memo_path(deal_id)
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    src = _resolve_path(raw_path)
-    if src.is_file():
-        if src.resolve() != dest.resolve():
-            shutil.copy2(src, dest)
-    elif dest.is_file():
-        pass
-    else:
-        logger.warning("memo PDF not found at %s for deal %s", raw_path, deal_id)
-    return str(dest)
+def _build_deal_memo_response(deal_id: str) -> Response:
+    d = deals[deal_id]
+    summary = d.get("memo_summary")
+    if not summary:
+        raise HTTPException(status_code=404, detail="Memo not yet generated")
+    try:
+        pdf_bytes = build_memo_pdf_bytes(_memo_data_for_deal(d))
+    except Exception as e:
+        logger.error("On-demand PDF generation failed for deal %s: %s", deal_id, e)
+        raise HTTPException(status_code=500, detail="Failed to generate memo PDF") from e
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="agentmax-memo-{deal_id}.pdf"'
+        },
+    )
 
 
 def _scores_from_memo_summary(raw: Optional[dict[str, Any]]) -> dict[str, Any]:
@@ -163,7 +169,7 @@ def _public_deal_row(deal_id: str, d: dict[str, Any]) -> dict[str, Any]:
     row["deal_score"] = scores["deal_score"]
     row["deal_verdict"] = scores["deal_verdict"]
     row["risks_flagged_count"] = scores["risks_flagged_count"]
-    row["has_memo_pdf"] = bool(d.get("memo_path") and Path(d["memo_path"]).exists())
+    row["has_memo_pdf"] = _deal_has_memo_pdf(d)
     return row
 
 
@@ -187,14 +193,11 @@ def _load_deals_index() -> None:
 
 
 def _latest_complete_deal_id() -> Optional[str]:
-    """Most recently completed deal that has a memo PDF on disk."""
+    """Most recently completed deal that has memo_summary for on-demand PDF."""
     best_id: Optional[str] = None
     best_ts = ""
     for did, d in deals.items():
-        if d.get("status") != "complete":
-            continue
-        mp = d.get("memo_path")
-        if not mp or not Path(mp).exists():
+        if not _deal_has_memo_pdf(d):
             continue
         ts = str(d.get("completed_at") or d.get("created_at") or "")
         if ts >= best_ts:
@@ -230,8 +233,7 @@ def _public_memo_summary(deal_id: str) -> dict[str, Any]:
 def _full_deal_summary(deal_id: str) -> dict[str, Any]:
     d = deals[deal_id]
     raw = dict(d.get("memo_summary") or {})
-    memo_path = d.get("memo_path")
-    has_memo_pdf = bool(memo_path and Path(memo_path).exists())
+    has_memo_pdf = _deal_has_memo_pdf(d)
     out = _public_memo_summary(deal_id)
     out.update(
         {
@@ -528,13 +530,10 @@ async def list_deals():
 
 @app.get("/deals/{deal_id}/memo")
 async def download_memo(deal_id: str):
-    """Download the final investment memo PDF for a completed deal."""
+    """Generate and download the investment memo PDF from stored memo_summary."""
     if deal_id not in deals:
         raise HTTPException(status_code=404, detail="Deal not found")
-    memo_path = deals[deal_id].get("memo_path")
-    if not memo_path or not Path(memo_path).exists():
-        raise HTTPException(status_code=404, detail="Memo not yet generated")
-    return FileResponse(memo_path, media_type="application/pdf", filename=Path(memo_path).name)
+    return _build_deal_memo_response(deal_id)
 
 
 @app.get("/deals/{deal_id}/summary")
@@ -547,12 +546,11 @@ async def deal_memo_summary(deal_id: str):
 
 @app.get("/memo/latest")
 async def download_latest_memo():
-    """Download the PDF for the most recently completed deal (same as README `curl /memo/latest`)."""
+    """Download the PDF for the most recently completed deal (generated on demand)."""
     deal_id = _latest_complete_deal_id()
     if not deal_id:
         raise HTTPException(status_code=404, detail="No completed memo available")
-    memo_path = deals[deal_id]["memo_path"]
-    return FileResponse(memo_path, media_type="application/pdf", filename=Path(memo_path).name)
+    return _build_deal_memo_response(deal_id)
 
 
 @app.get("/memo/latest/summary")
@@ -569,13 +567,15 @@ async def mark_deal_complete(deal_id: str, body: DealCompleteBody):
     """
     Called by the Synthesis agent (via webhook) when the memo is ready.
 
-    Body JSON: {"memo_path": "/path/to.pdf", "memo_summary": { ... optional fields including
-    deal_score, deal_verdict, risks_flagged_count, company_name, recommendation, confidence }}
+    Body JSON: {"memo_summary": { deal_score, deal_verdict, risks_flagged_count,
+    company_name, recommendation, confidence, executive_summary, ... }}
     """
     if deal_id not in deals:
         raise HTTPException(status_code=404, detail="Deal not found")
+    if not body.memo_summary:
+        raise HTTPException(status_code=400, detail="memo_summary is required")
     deals[deal_id]["status"] = "complete"
-    deals[deal_id]["memo_path"] = _normalize_memo_path(deal_id, body.memo_path)
+    deals[deal_id]["memo_path"] = None
     deals[deal_id]["completed_at"] = datetime.utcnow().isoformat()
     _apply_memo_summary_to_deal(deals[deal_id], body.memo_summary)
     _save_deals_index()

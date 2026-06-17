@@ -149,7 +149,7 @@ curl http://localhost:8000/memo/latest/summary
 # When synthesis finishes, register the PDF and optional memo summary (JSON body)
 curl -X POST "http://localhost:8000/deals/{deal_id}/complete" \
   -H "Content-Type: application/json" \
-  -d '{"memo_path":"/abs/path/to/memo.pdf","memo_summary":{"deal_score":72,"risks_flagged_count":3,"company_name":"Acme","recommendation":"conditional","confidence":"medium"}}'
+  -d '{"memo_summary":{"deal_score":72,"risks_flagged_count":3,"company_name":"Acme","recommendation":"conditional","confidence":"medium","executive_summary":"Summary text here."}}'
 ```
 
 ---

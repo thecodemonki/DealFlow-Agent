@@ -5,7 +5,7 @@ Run from ~/DealFlow-Agent/: uv run python generate_memo.py
 import sys
 sys.path.insert(0, ".")
 
-from agents.synthesis.agent import generate_pdf_memo
+from shared.pdf_memo import build_memo_pdf_bytes
 
 memo_data = {
     "company_name": "Stripe",
@@ -62,5 +62,8 @@ memo_data = {
     ],
 }
 
-path = generate_pdf_memo.invoke({"memo_data": memo_data})
-print(f"✅ PDF saved to: {path}")
+pdf_bytes = build_memo_pdf_bytes(memo_data)
+out_path = "stripe_memo_dev.pdf"
+with open(out_path, "wb") as f:
+    f.write(pdf_bytes)
+print(f"✅ PDF saved to: {out_path} ({len(pdf_bytes)} bytes)")

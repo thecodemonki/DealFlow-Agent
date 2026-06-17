@@ -1815,7 +1815,7 @@ function dealSummaryFromRecord(deal) {
     status: deal.status,
     completed_at: deal.completed_at,
     band_room_id: deal.band_room_id,
-    has_memo_pdf: deal.has_memo_pdf || !!(deal.memo_path),
+    has_memo_pdf: deal.has_memo_pdf || (deal.status === 'complete' && !!(deal.memo_summary)),
     executive_summary: ms.executive_summary,
     financial_highlights: ms.financial_highlights,
     market_position: ms.market_position,
