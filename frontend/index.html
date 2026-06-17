@@ -2309,6 +2309,7 @@ function renderRecentList() {
     var row = document.createElement('div');
     row.className = 'recent-row';
     row.setAttribute('data-chat-id', entry.id);
+    row.setAttribute('data-deal-id', entry.dealId || '');
     row.setAttribute('data-timestamp', entry.timestamp != null ? String(entry.timestamp) : '');
     row.innerHTML = '<span class="recent-row__icon">💬</span><div class="recent-row__meta"><div class="recent-row__title-row"><span class="recent-row__name">' + escapeHtml(displayCompanyName(entry.company)) + '</span>' + badgeHtml + '</div><span class="recent-row__date">' + formatRelativeTime(entry.timestamp) + '</span></div><button type="button" class="recent-row__delete" aria-label="Delete chat" title="Delete">×</button>';
     container.appendChild(row);
@@ -2377,10 +2378,19 @@ function restoreCompletedDeal(deal, entry, summary) {
   currentDealId = deal.id;
   if (!summary) summary = dealSummaryFromRecord(deal);
   fillFormFromEntry(entry, deal);
-  document.getElementById('resultsOverlay').classList.remove('visible');
+  document.body.classList.remove('app-running');
   var company = ((entry && entry.company) || (deal && deal.company_name) || '').trim() || 'Unknown company';
   var industry = ((entry && entry.industry) || (deal && deal.industry) || '').trim() || 'your industry';
   var nFiles = (deal.file_paths && deal.file_paths.length) || 0;
+  var durationSec = 0;
+  if (deal.completed_at && deal.created_at) {
+    var endMs = Date.parse(deal.completed_at);
+    var startMs = Date.parse(deal.created_at);
+    if (!isNaN(endMs) && !isNaN(startMs) && endMs > startMs) {
+      durationSec = Math.round((endMs - startMs) / 1000);
+    }
+  }
+  lastAnalysisDurationSec = durationSec;
   if (summary) {
     var bundle = scoreBundleFromSummary(summary);
     if (bundle) {
@@ -2394,7 +2404,8 @@ function restoreCompletedDeal(deal, entry, summary) {
       risksFlagged: 0
     };
   }
-  populateMemoView(company, industry, null, nFiles, 0, summary);
+  if (lastDealScore) applyDealScoreUI(lastDealScore);
+  populateMemoView(company, industry, null, nFiles, durationSec, summary);
   var msgs = (entry && entry.messages && entry.messages.length)
     ? entry.messages
     : (deal.chat_messages || []);
@@ -2408,7 +2419,21 @@ function restoreCompletedDeal(deal, entry, summary) {
   }
   var bandLink = document.getElementById('bandRoomLink');
   if (bandLink) bandLink.href = deal.band_room_id ? 'https://band.ai' : 'https://band.ai';
-  showMemoViewPanel();
+  var webPart = nFiles > 0 ? 'Web + documents' : 'Web-only';
+  var metaLine = document.getElementById('resultsMetaLine');
+  if (metaLine) metaLine.textContent = 'Medium confidence · ' + webPart + ' · ' + formatAnalysisSecondsBrief(durationSec);
+  setDownloadLinks(deal.id, !!(summary && summary.has_memo_pdf));
+  var mv = document.getElementById('memoView');
+  if (mv) {
+    mv.classList.remove('memo-view--visible');
+    mv.setAttribute('hidden', '');
+  }
+  var arena = document.getElementById('arena');
+  if (arena) {
+    arena.classList.remove('arena--home-blobs', 'arena--memo-view', 'arena--viewing-history');
+    arena.classList.remove('arena--running');
+  }
+  document.getElementById('resultsOverlay').classList.add('visible');
 }
 function restoreLiveDeal(deal, entry) {
   clearDealPoll();
@@ -2446,26 +2471,27 @@ function restoreLiveDeal(deal, entry) {
   }, 5000);
 }
 async function openRecentDeal(entry) {
-  if (!entry || !entry.dealId) {
-    restoreChatFromHistory(entry);
+  var dealId = entry && entry.dealId;
+  if (!dealId) {
+    if (entry) restoreChatFromHistory(entry);
     return;
   }
   try {
-    var dealResp = await fetch(API + '/deals/' + encodeURIComponent(entry.dealId));
+    var dealResp = await fetch(API + '/deals/' + encodeURIComponent(dealId));
     if (!dealResp.ok) throw new Error('Deal not found');
     var deal = await dealResp.json();
-    if (deal.status === 'complete' && deal.completed_at) {
-      var sumResp = await fetch(API + '/deals/' + encodeURIComponent(entry.dealId) + '/summary');
+    if (deal.completed_at) {
+      var sumResp = await fetch(API + '/deals/' + encodeURIComponent(dealId) + '/summary');
       var summary = sumResp.ok ? await sumResp.json() : dealSummaryFromRecord(deal);
       restoreCompletedDeal(deal, entry, summary);
     } else if (deal.status === 'in_progress' || deal.status === 'triggered') {
       restoreLiveDeal(deal, entry);
     } else {
-      restoreChatFromHistory(entry);
+      if (entry) restoreChatFromHistory(entry);
       addSystemChat('No completed results for this deal yet.');
     }
   } catch (err) {
-    restoreChatFromHistory(entry);
+    if (entry) restoreChatFromHistory(entry);
   }
 }
 document.getElementById('sidebar').addEventListener('click', function (e) {
@@ -2496,9 +2522,12 @@ document.getElementById('sidebar').addEventListener('click', function (e) {
   var chats = loadChatsFromStorage();
   var entry = null;
   for (var ri = 0; ri < chats.length; ri++) { if (chats[ri].id === id) { entry = chats[ri]; break; } }
-  if (entry) {
-    if (entry.dealId) openRecentDeal(entry);
-    else restoreChatFromHistory(entry);
+  var dealId = (row.getAttribute('data-deal-id') || '').trim();
+  if (!dealId && entry && entry.dealId) dealId = entry.dealId;
+  if (dealId) {
+    openRecentDeal(Object.assign({}, entry || {}, { dealId: dealId }));
+  } else if (entry) {
+    restoreChatFromHistory(entry);
   }
 });
 const STEPS = [
