@@ -1499,7 +1499,13 @@
           <span class="memo-view__company" id="memoViewCompany"></span>
           <div class="memo-view__header-right">
             <span class="memo-view__pill memo-view__pill--conditional" id="memoViewRec"></span>
-            <a class="memo-view__download" id="memoViewDownload" href="#" target="_blank" rel="noopener noreferrer">Download PDF</a>
+            <a id="downloadPdfBtn" href="#" target="_blank" rel="noopener noreferrer"
+               style="display:none; align-items:center; gap:8px; padding:10px 20px;
+                      background:#4f46e5; color:white; border-radius:8px; font-weight:600;
+                      font-size:14px; text-decoration:none; margin-left:auto;">
+              ↓ Download PDF
+            </a>
+            <a class="memo-view__download" id="memoViewDownload" href="#" target="_blank" rel="noopener noreferrer" hidden>Download PDF</a>
           </div>
         </div>
       </header>
@@ -1841,12 +1847,18 @@ function scoreBundleFromSummary(summary) {
   };
 }
 function setDownloadLinks(dealId, hasMemoPdf) {
-  var href = (dealId && hasMemoPdf) ? (API + '/deals/' + encodeURIComponent(dealId) + '/memo') : (dealId ? '#' : (API + '/memo/latest'));
+  var perDealHref = dealId ? (API + '/deals/' + encodeURIComponent(dealId) + '/memo') : null;
+  var href = (dealId && hasMemoPdf) ? perDealHref : (dealId ? '#' : (API + '/memo/latest'));
   var dl = document.getElementById('memoViewDownload');
   var db = document.getElementById('downloadBtn');
+  var dp = document.getElementById('downloadPdfBtn');
+  if (dp) {
+    dp.href = perDealHref || '#';
+    dp.style.display = hasMemoPdf && dealId ? 'inline-flex' : 'none';
+  }
   if (dl) {
     dl.href = href;
-    dl.style.display = hasMemoPdf ? '' : 'none';
+    dl.style.display = 'none';
   }
   if (db) {
     db.href = href;
