@@ -1764,6 +1764,9 @@
         <input type="text" id="userChatInput" placeholder="Message the agents..." autocomplete="off" />
         <button type="button" class="chat-message-bar__send" id="userChatSend" title="Send">→</button>
       </div>
+      <p id="userChatHint" hidden style="font-size:11px; color:#9ca3af; margin-top:4px; padding:0 4px;">
+        Try: "What are the top 3 risks?" · "What would change the verdict?" · "Find more on their competitors"
+      </p>
     </aside>
   </div>
 </div>
@@ -1902,6 +1905,7 @@ function showLandingFromApp() {
 }
 document.getElementById('landingGetStarted').addEventListener('click', showAppFromLanding);
 let currentDealId = null, pendingDocFile = null, dealUploadOk = false, pollTimer = null, dealPollTimer = null, activityStep = 0, runTimerInterval = null, stepTimeoutId = null, lastAnalysisDurationSec = 0;
+var followUpChatEnabled = false;
 var lastDealScore = { score: 62, verdict: 'CONDITIONAL', risksFlagged: 3 };
 const speechTimers = {};
 const AGENT_CHAT_CLASS = { orchestrator: 'chat-msg--orchestrator', webresearch: 'chat-msg--webresearch', documentparser: 'chat-msg--documentparser', financialanalyst: 'chat-msg--financialanalyst', legalrisk: 'chat-msg--legalrisk', synthesis: 'chat-msg--synthesis' };
@@ -2309,6 +2313,52 @@ function addUserMessage(text) {
   feed.scrollTop = feed.scrollHeight;
   updateChatEmpty();
 }
+function addFollowUpUserMessage(text) {
+  var feed = document.getElementById('chatFeed');
+  var row = document.createElement('div');
+  row.className = 'chat-followup-user';
+  row.style.cssText = 'background:#f3f4f6; border-radius:8px; padding:10px 14px; margin:8px 0; font-size:14px; color:#374151;';
+  row.innerHTML = '<strong style="color:#6b7280; font-size:11px;">YOU</strong><br/>' + escapeHtml(text);
+  feed.appendChild(row);
+  feed.scrollTop = feed.scrollHeight;
+  updateChatEmpty();
+}
+function enableFollowUpChat() {
+  followUpChatEnabled = true;
+  var inp = document.getElementById('userChatInput');
+  var hint = document.getElementById('userChatHint');
+  if (inp) inp.placeholder = 'Ask the team anything about this deal...';
+  if (hint) hint.hidden = false;
+}
+function disableFollowUpChat() {
+  followUpChatEnabled = false;
+  var inp = document.getElementById('userChatInput');
+  var hint = document.getElementById('userChatHint');
+  if (inp) inp.placeholder = 'Message the agents...';
+  if (hint) hint.hidden = true;
+}
+function sendUserChatMessage() {
+  var inp = document.getElementById('userChatInput');
+  if (!inp) return;
+  var t = (inp.value || '').trim();
+  if (!t) return;
+  if (followUpChatEnabled && currentDealId) {
+    addFollowUpUserMessage(t);
+    inp.value = '';
+    fetch(API + '/deals/' + encodeURIComponent(currentDealId) + '/message', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: t })
+    }).then(function (r) {
+      if (!r.ok) throw new Error('send failed');
+    }).catch(function () {
+      addSystemChat('Could not send message to agents.');
+    });
+    return;
+  }
+  addUserMessage(t);
+  inp.value = '';
+}
 function addSystemChat(text) {
   var feed = document.getElementById('chatFeed');
   var row = document.createElement('div');
@@ -2317,14 +2367,6 @@ function addSystemChat(text) {
   feed.appendChild(row);
   feed.scrollTop = feed.scrollHeight;
   updateChatEmpty();
-}
-function sendUserChatMessage() {
-  var inp = document.getElementById('userChatInput');
-  if (!inp) return;
-  var t = (inp.value || '').trim();
-  if (!t) return;
-  addUserMessage(t);
-  inp.value = '';
 }
 document.getElementById('userChatSend').addEventListener('click', sendUserChatMessage);
 document.getElementById('userChatInput').addEventListener('keydown', function (e) {
@@ -2728,6 +2770,7 @@ function restoreCompletedDeal(deal, entry, summary) {
     arena.classList.remove('arena--running');
   }
   document.getElementById('resultsOverlay').classList.add('visible');
+  enableFollowUpChat();
 }
 function restoreLiveDeal(deal, entry) {
   clearDealPoll();
@@ -2874,6 +2917,7 @@ function showResults() {
   var bandLink = document.getElementById('bandRoomLink');
   if (bandLink) bandLink.href = 'https://band.ai';
   document.getElementById('resultsOverlay').classList.add('visible');
+  enableFollowUpChat();
   var messages = serializeChatFeed();
   var entry = {
     id: String(Date.now()),
@@ -2995,6 +3039,7 @@ function resetToInputCard(opts) {
   pendingDocFile = null;
   currentDealId = null;
   dealUploadOk = false;
+  disableFollowUpChat();
   updateDocUploadBadge();
 }
 document.getElementById('newAnalysisBtn').addEventListener('click', function () {
@@ -3047,6 +3092,7 @@ async function startAnalysis() {
   document.getElementById('chatFeed').innerHTML = '';
   updateChatEmpty();
   document.getElementById('resultsOverlay').classList.remove('visible');
+  disableFollowUpChat();
   var btn = document.getElementById('analyzeBtn');
   btn.disabled = true;
   btn.textContent = '…';

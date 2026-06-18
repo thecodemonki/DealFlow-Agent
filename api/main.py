@@ -88,6 +88,12 @@ class DealChatBody(BaseModel):
     company_name: Optional[str] = None
 
 
+class DealMessageBody(BaseModel):
+    """Follow-up question from the UI after analysis completes."""
+
+    message: str
+
+
 DEALS_INDEX_PATH = UPLOAD_DIR / "deals_index.json"
 
 
@@ -394,6 +400,40 @@ async def _post_band_document_uploaded(room_id: str, file_path: str) -> bool:
         return False
 
 
+async def _post_band_user_message(room_id: str, message: str) -> bool:
+    """Publish a user follow-up question to the deal Band room for the Orchestrator."""
+    import yaml
+
+    try:
+        with open("agent_config.yaml") as f:
+            config = yaml.safe_load(f)
+        orchestrator_config = config["orchestrator"]
+        orchestrator_agent_id = orchestrator_config["agent_id"]
+        orchestrator_api_key = orchestrator_config["api_key"]
+        headers = {"X-API-Key": orchestrator_api_key, "Content-Type": "application/json"}
+        content = f"USER: {message}"
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                f"{BAND_API_BASE}/chats/{room_id}/messages",
+                headers=headers,
+                json={
+                    "content": content,
+                    "mentions": [orchestrator_agent_id],
+                },
+            )
+            if resp.status_code not in (200, 201):
+                logger.warning(
+                    "USER message post failed %s: %s",
+                    resp.status_code,
+                    resp.text[:500],
+                )
+                return False
+        return True
+    except Exception as e:
+        logger.error("Failed to post USER message to Band: %s", e)
+        return False
+
+
 # -------------------------------------------------------------------
 # Routes
 # -------------------------------------------------------------------
@@ -637,3 +677,20 @@ async def save_deal_chat(deal_id: str, body: DealChatBody):
         deals[deal_id]["company_name"] = body.company_name
     _save_deals_index()
     return {"status": "saved", "deal_id": deal_id, "message_count": len(body.messages)}
+
+
+@app.post("/deals/{deal_id}/message")
+async def post_deal_message(deal_id: str, body: DealMessageBody):
+    """Post a user follow-up question to the deal's Band room."""
+    if deal_id not in deals:
+        raise HTTPException(status_code=404, detail="Deal not found")
+    message = (body.message or "").strip()
+    if not message:
+        raise HTTPException(status_code=400, detail="Message is required")
+    room_id = deals[deal_id].get("band_room_id")
+    if not room_id:
+        raise HTTPException(status_code=400, detail="No Band room for this deal")
+    ok = await _post_band_user_message(room_id, message)
+    if not ok:
+        raise HTTPException(status_code=502, detail="Failed to send message")
+    return {"status": "sent"}
