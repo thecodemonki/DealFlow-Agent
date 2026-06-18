@@ -2721,7 +2721,7 @@ function restoreChatFromHistory(entry) {
 function restoreCompletedDeal(deal, entry, summary) {
   clearDealPoll();
   currentDealId = deal.id;
-  currentBandRoomId = deal.band_room_id || null;
+  currentBandRoomId = deal.band_room_id || deal.room_id || null;
   if (!summary) summary = dealSummaryFromRecord(deal);
   fillFormFromEntry(entry, deal);
   document.body.classList.remove('app-running');
@@ -2786,7 +2786,7 @@ function restoreLiveDeal(deal, entry) {
   clearDealPoll();
   hideArenaMemoViewer();
   currentDealId = deal.id;
-  currentBandRoomId = deal.band_room_id || null;
+  currentBandRoomId = deal.band_room_id || deal.room_id || null;
   fillFormFromEntry(entry, deal);
   document.getElementById('resultsOverlay').classList.remove('visible');
   var arena = document.getElementById('arena');
@@ -2818,6 +2818,14 @@ function restoreLiveDeal(deal, entry) {
       });
   }, 5000);
 }
+function dealLooksCompleted(deal, entry) {
+  if (!deal) return !!(entry && entry.dealStatus === 'complete');
+  if (deal.completed_at) return true;
+  if (deal.status === 'complete') return true;
+  if (deal.memo_summary) return true;
+  if (entry && entry.dealStatus === 'complete' && entry.dealScore != null) return true;
+  return false;
+}
 async function openRecentDeal(entry) {
   var dealId = entry && entry.dealId;
   if (!dealId) {
@@ -2828,18 +2836,41 @@ async function openRecentDeal(entry) {
     var dealResp = await fetch(API + '/deals/' + encodeURIComponent(dealId));
     if (!dealResp.ok) throw new Error('Deal not found');
     var deal = await dealResp.json();
-    if (deal.completed_at) {
+    if (dealLooksCompleted(deal, entry)) {
       var sumResp = await fetch(API + '/deals/' + encodeURIComponent(dealId) + '/summary');
       var summary = sumResp.ok ? await sumResp.json() : dealSummaryFromRecord(deal);
+      if (!summary && entry && entry.dealScore != null) {
+        summary = {
+          deal_id: dealId,
+          company_name: entry.company || deal.company_name,
+          deal_score: entry.dealScore,
+          deal_verdict: entry.dealVerdict || verdictFromScore(entry.dealScore),
+          risks_flagged_count: 0,
+          has_memo_pdf: false
+        };
+      }
       restoreCompletedDeal(deal, entry, summary);
     } else if (deal.status === 'in_progress' || deal.status === 'triggered') {
       restoreLiveDeal(deal, entry);
+    } else if (entry && entry.messages && entry.messages.length) {
+      restoreChatFromHistory(entry);
     } else {
-      if (entry) restoreChatFromHistory(entry);
       addSystemChat('No completed results for this deal yet.');
     }
   } catch (err) {
-    if (entry) restoreChatFromHistory(entry);
+    if (entry && dealLooksCompleted(null, entry)) {
+      var fallbackSummary = entry.dealScore != null ? {
+        deal_id: dealId,
+        company_name: entry.company,
+        deal_score: entry.dealScore,
+        deal_verdict: entry.dealVerdict || verdictFromScore(entry.dealScore),
+        risks_flagged_count: 0,
+        has_memo_pdf: false
+      } : null;
+      restoreCompletedDeal({ id: dealId, company_name: entry.company, industry: entry.industry }, entry, fallbackSummary);
+    } else if (entry) {
+      restoreChatFromHistory(entry);
+    }
   }
 }
 document.getElementById('sidebar').addEventListener('click', function (e) {

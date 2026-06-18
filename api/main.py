@@ -50,6 +50,21 @@ UPLOAD_DIR = Path(os.environ.get("UPLOAD_DIR", "./uploads"))
 UPLOAD_DIR.mkdir(exist_ok=True)
 
 
+def _default_band_room_id() -> Optional[str]:
+    return (os.environ.get("BAND_ROOM_ID") or "").strip() or None
+
+
+def _deal_room_id(d: dict[str, Any]) -> Optional[str]:
+    return d.get("band_room_id") or d.get("room_id") or _default_band_room_id()
+
+
+def _set_deal_room_id(deal: dict[str, Any], room_id: Optional[str]) -> None:
+    if not room_id:
+        return
+    deal["band_room_id"] = room_id
+    deal["room_id"] = room_id
+
+
 def _relative_upload_path(deal_id: str, safe_name: str) -> str:
     """Repo-relative path for Band messages and Librarian (matches files under UPLOAD_DIR)."""
     return f"uploads/{deal_id}/{safe_name}"
@@ -210,6 +225,9 @@ def _public_deal_row(deal_id: str, d: dict[str, Any]) -> dict[str, Any]:
     row["completed_at"] = d.get("completed_at")
     row["analysis_duration_seconds"] = _analysis_duration_seconds(d)
     row["has_memo_pdf"] = _deal_has_memo_pdf(d)
+    resolved_room = _deal_room_id(d)
+    row["band_room_id"] = resolved_room
+    row["room_id"] = resolved_room
     return row
 
 
@@ -461,6 +479,7 @@ async def create_draft_deal():
         "status": "draft",
         "file_paths": [],
         "band_room_id": None,
+        "room_id": None,
         "created_at": datetime.utcnow().isoformat(),
         "completed_at": None,
         "memo_path": None,
@@ -528,6 +547,7 @@ async def submit_deal(
         "status": "triggered",
         "file_paths": file_paths,
         "band_room_id": None,
+        "room_id": None,
         "created_at": created_at,
         "completed_at": None,
         "memo_path": None,
@@ -542,7 +562,7 @@ async def submit_deal(
 
     try:
         room_id = await trigger_orchestrator(deal_id, company_name, file_paths, notes)
-        deals[deal_id]["band_room_id"] = room_id
+        _set_deal_room_id(deals[deal_id], room_id)
         deals[deal_id]["status"] = "in_progress"
         for fp in file_paths:
             await _post_band_document_uploaded(room_id, fp)
@@ -661,6 +681,11 @@ async def mark_deal_complete(deal_id: str, body: DealCompleteBody):
         deals[deal_id]["completed_at"],
     )
     _apply_memo_summary_to_deal(deals[deal_id], body.memo_summary)
+    if not _deal_room_id(deals[deal_id]):
+        fallback = _default_band_room_id()
+        if fallback:
+            _set_deal_room_id(deals[deal_id], fallback)
+            logger.info("Backfilled room_id=%s on deal %s from BAND_ROOM_ID", fallback, deal_id)
     _save_deals_index()
     return {"status": "updated", "deal_id": deal_id}
 
@@ -684,22 +709,32 @@ async def post_deal_message(deal_id: str, body: DealMessageBody):
     """Post a user follow-up question to the deal's Band room."""
     message = (body.message or "").strip()
     deal_found = deal_id in deals
-    room_id = deals[deal_id].get("band_room_id") if deal_found else None
+    room_id = _deal_room_id(deals[deal_id]) if deal_found else None
     logger.info(
-        "POST /deals/%s/message: deal_found=%s band_room_id=%s message_len=%d",
+        "POST /deals/%s/message: deal_found=%s band_room_id=%s room_id=%s message_len=%d",
         deal_id,
         deal_found,
+        deals[deal_id].get("band_room_id") if deal_found else None,
         room_id,
         len(message),
     )
     if not deal_found:
-        logger.warning("POST /deals/%s/message: deal not found", deal_id)
+        logger.warning(
+            "POST /deals/%s/message: deal not found; stored_ids=%s",
+            deal_id,
+            list(deals.keys())[:20],
+        )
         raise HTTPException(status_code=404, detail="Deal not found")
     if not message:
         logger.warning("POST /deals/%s/message: empty message", deal_id)
         raise HTTPException(status_code=400, detail="Message is required")
     if not room_id:
-        logger.warning("POST /deals/%s/message: no band_room_id on deal", deal_id)
+        logger.warning(
+            "POST /deals/%s/message: no room_id on deal; band_room_id=%s room_id=%s",
+            deal_id,
+            deals[deal_id].get("band_room_id"),
+            deals[deal_id].get("room_id"),
+        )
         raise HTTPException(status_code=400, detail="No Band room for this deal")
     ok = await _post_band_user_message(room_id, message)
     if not ok:
