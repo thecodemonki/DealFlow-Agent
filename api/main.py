@@ -687,6 +687,12 @@ async def mark_deal_complete(deal_id: str, body: DealCompleteBody):
             _set_deal_room_id(deals[deal_id], fallback)
             logger.info("Backfilled room_id=%s on deal %s from BAND_ROOM_ID", fallback, deal_id)
     _save_deals_index()
+    logger.info(
+        "Deal %s complete: band_room_id=%s room_id=%s",
+        deal_id,
+        deals[deal_id].get("band_room_id"),
+        deals[deal_id].get("room_id"),
+    )
     return {"status": "updated", "deal_id": deal_id}
 
 
@@ -720,7 +726,8 @@ async def post_deal_message(deal_id: str, body: DealMessageBody):
     )
     if not deal_found:
         logger.warning(
-            "POST /deals/%s/message: deal not found; stored_ids=%s",
+            "POST /deals/%s/message: deal not found (detail='Deal not found'); requested_deal_id=%s stored_ids=%s",
+            deal_id,
             deal_id,
             list(deals.keys())[:20],
         )

@@ -1215,6 +1215,66 @@
     .results-rec-value--invest { color: #059669; }
     .results-rec-value--conditional { color: #d97706; }
     .results-rec-value--pass { color: #dc2626; }
+    .deal-view-tabs {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 21;
+      display: flex;
+      gap: 8px;
+      padding: 12px 24px;
+      background: rgba(255, 255, 255, 0.95);
+      border-bottom: 1px solid #e5e7eb;
+      backdrop-filter: blur(6px);
+    }
+    .deal-view-tabs[hidden] { display: none !important; }
+    .deal-view-tab {
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid #d1d5db;
+      background: transparent;
+      color: #64748b;
+      font-family: inherit;
+      line-height: 1.2;
+    }
+    .deal-view-tab:hover { border-color: #94a3b8; color: #475569; }
+    .deal-view-tab--active {
+      background: #4f46e5;
+      color: #fff;
+      border-color: #4f46e5;
+    }
+    .deal-view-tab--active:hover { color: #fff; border-color: #4f46e5; }
+    #arena.arena--deal-complete #inputCard {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    #arena.arena--deal-complete #memoView.memo-view {
+      top: 49px;
+    }
+    #arena.arena--deal-complete .blob-layer {
+      top: 49px;
+    }
+    #arena.arena--network-view .blob-layer {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+    #arena.arena--network-view .arena-lines {
+      opacity: 1;
+      visibility: visible;
+    }
+    #arena.arena--network-view .blob-agent,
+    #arena.arena--network-view .blob-label,
+    #arena.arena--network-view .blob-check,
+    #arena.arena--network-view .speech-bubble {
+      opacity: 1 !important;
+      visibility: visible;
+    }
     #arena.arena--memo-view #inputCard {
       opacity: 0;
       visibility: hidden;
@@ -1587,6 +1647,10 @@
     </div>
   </aside>
   <main id="arena">
+    <nav id="dealViewTabs" class="deal-view-tabs" hidden aria-label="Deal view">
+      <button type="button" class="deal-view-tab deal-view-tab--active" data-tab="memo">Memo</button>
+      <button type="button" class="deal-view-tab" data-tab="network">Agent Network</button>
+    </nav>
     <div id="inputCard">
       <h1>What company are you evaluating?</h1>
       <div class="input-card-fields">
@@ -1906,6 +1970,98 @@ function showLandingFromApp() {
 document.getElementById('landingGetStarted').addEventListener('click', showAppFromLanding);
 let currentDealId = null, currentBandRoomId = null, pendingDocFile = null, dealUploadOk = false, pollTimer = null, dealPollTimer = null, activityStep = 0, runTimerInterval = null, stepTimeoutId = null, lastAnalysisDurationSec = 0;
 var followUpChatEnabled = false;
+var activeDealViewTab = 'memo';
+function setActiveDealIds(dealId, roomId) {
+  currentDealId = dealId || null;
+  currentBandRoomId = roomId || null;
+  window.currentDealId = currentDealId;
+  window.bandRoomId = currentBandRoomId;
+  syncFollowUpInputState();
+}
+function syncFollowUpInputState() {
+  var inp = document.getElementById('userChatInput');
+  if (inp) inp.disabled = !currentDealId;
+  if (currentDealId && currentBandRoomId) {
+    enableFollowUpChat();
+  } else {
+    disableFollowUpChat();
+  }
+}
+function refreshActiveDealRoomId(dealId) {
+  if (!dealId) return Promise.resolve();
+  return fetch(API + '/deals/' + encodeURIComponent(dealId))
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .catch(function () { return null; })
+    .then(function (d) {
+      if (!d) return;
+      var room = d.band_room_id || d.room_id || null;
+      setActiveDealIds(d.id || dealId, room || currentBandRoomId);
+    });
+}
+function hideCompletedDealChrome() {
+  activeDealViewTab = 'memo';
+  var tabs = document.getElementById('dealViewTabs');
+  if (tabs) tabs.hidden = true;
+  var arena = document.getElementById('arena');
+  if (arena) arena.classList.remove('arena--deal-complete', 'arena--network-view');
+  Array.prototype.forEach.call(document.querySelectorAll('.deal-view-tab'), function (btn) {
+    btn.classList.toggle('deal-view-tab--active', btn.getAttribute('data-tab') === 'memo');
+  });
+}
+function setDealViewTab(tab) {
+  activeDealViewTab = tab === 'network' ? 'network' : 'memo';
+  var arena = document.getElementById('arena');
+  var mv = document.getElementById('memoView');
+  Array.prototype.forEach.call(document.querySelectorAll('.deal-view-tab'), function (btn) {
+    btn.classList.toggle('deal-view-tab--active', btn.getAttribute('data-tab') === activeDealViewTab);
+  });
+  if (!arena) return;
+  if (activeDealViewTab === 'memo') {
+    arena.classList.add('arena--memo-view');
+    arena.classList.remove('arena--network-view');
+    if (mv) {
+      mv.classList.remove('memo-view--visible');
+      mv.removeAttribute('hidden');
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          mv.classList.add('memo-view--visible');
+        });
+      });
+    }
+  } else {
+    arena.classList.remove('arena--memo-view');
+    arena.classList.add('arena--network-view');
+    if (mv) {
+      mv.classList.remove('memo-view--visible');
+      mv.setAttribute('hidden', '');
+    }
+    ['orchestrator', 'webresearch', 'documentparser', 'financialanalyst', 'legalrisk', 'synthesis'].forEach(function (a) {
+      var w = document.getElementById('blob-' + a);
+      if (w) w.classList.remove('blob-wrap--active', 'speech-on');
+      setAgentStatus(a, 'done');
+    });
+  }
+  setDownloadLinks(currentDealId);
+}
+function enterCompletedDealView(tab) {
+  document.getElementById('resultsOverlay').classList.remove('visible');
+  var tabs = document.getElementById('dealViewTabs');
+  if (tabs) tabs.hidden = false;
+  var arena = document.getElementById('arena');
+  if (arena) {
+    arena.classList.remove('arena--home-blobs', 'arena--running', 'arena--viewing-history');
+    arena.classList.add('arena--deal-complete');
+  }
+  document.body.classList.remove('app-running');
+  clearRunTimer();
+  ['orchestrator', 'webresearch', 'documentparser', 'financialanalyst', 'legalrisk', 'synthesis'].forEach(function (a) {
+    var w = document.getElementById('blob-' + a);
+    if (w) w.classList.remove('blob-wrap--active', 'speech-on');
+    setAgentStatus(a, 'done');
+  });
+  setDealViewTab(tab || 'memo');
+  syncFollowUpInputState();
+}
 var lastDealScore = { score: 62, verdict: 'CONDITIONAL', risksFlagged: 3 };
 const speechTimers = {};
 const AGENT_CHAT_CLASS = { orchestrator: 'chat-msg--orchestrator', webresearch: 'chat-msg--webresearch', documentparser: 'chat-msg--documentparser', financialanalyst: 'chat-msg--financialanalyst', legalrisk: 'chat-msg--legalrisk', synthesis: 'chat-msg--synthesis' };
@@ -2031,11 +2187,12 @@ function scoreBundleFromSummary(summary) {
 }
 function setDownloadLinks(dealId) {
   var perDealHref = dealId ? (API + '/deals/' + encodeURIComponent(dealId) + '/memo') : null;
+  var showMemoPdf = dealId && activeDealViewTab === 'memo';
   var dp = document.getElementById('downloadPdfBtn');
   var mp = document.getElementById('modalPdfBtn');
   if (dp) {
     dp.href = perDealHref || '#';
-    dp.style.display = dealId ? 'inline-flex' : 'none';
+    dp.style.display = showMemoPdf ? 'inline-flex' : 'none';
   }
   if (mp) {
     mp.href = perDealHref || '#';
@@ -2053,29 +2210,7 @@ function setDownloadLinks(dealId) {
   }
 }
 function showMemoViewPanel() {
-  document.getElementById('resultsOverlay').classList.remove('visible');
-  var arena = document.getElementById('arena');
-  if (arena) {
-    arena.classList.remove('arena--home-blobs', 'arena--running', 'arena--viewing-history');
-    arena.classList.add('arena--memo-view');
-  }
-  document.body.classList.remove('app-running');
-  clearRunTimer();
-  ['orchestrator', 'webresearch', 'documentparser', 'financialanalyst', 'legalrisk', 'synthesis'].forEach(function (a) {
-    var w = document.getElementById('blob-' + a);
-    if (w) w.classList.remove('blob-wrap--active', 'speech-on');
-    setAgentStatus(a, 'done');
-  });
-  var mv = document.getElementById('memoView');
-  if (mv) {
-    mv.classList.remove('memo-view--visible');
-    mv.removeAttribute('hidden');
-    requestAnimationFrame(function () {
-      requestAnimationFrame(function () {
-        mv.classList.add('memo-view--visible');
-      });
-    });
-  }
+  enterCompletedDealView('memo');
 }
 function replayChatFromEntry(entry, bannerText) {
   var feed = document.getElementById('chatFeed');
@@ -2113,6 +2248,7 @@ function updateStoredEntryVerdict(dealId, verdict, score) {
   }
 }
 function hideArenaMemoViewer() {
+  hideCompletedDealChrome();
   var arena = document.getElementById('arena');
   if (arena) arena.classList.remove('arena--memo-view');
   var mv = document.getElementById('memoView');
@@ -2695,6 +2831,7 @@ function appendHistoryMessage(m) {
 function restoreChatFromHistory(entry) {
   clearDealPoll();
   hideArenaMemoViewer();
+  setActiveDealIds(null, null);
   var arena = document.getElementById('arena');
   arena.classList.remove('arena--home-blobs');
   arena.classList.add('arena--running');
@@ -2720,8 +2857,7 @@ function restoreChatFromHistory(entry) {
 }
 function restoreCompletedDeal(deal, entry, summary) {
   clearDealPoll();
-  currentDealId = deal.id;
-  currentBandRoomId = deal.band_room_id || deal.room_id || null;
+  setActiveDealIds(deal.id, deal.band_room_id || deal.room_id || null);
   if (!summary) summary = dealSummaryFromRecord(deal);
   fillFormFromEntry(entry, deal);
   document.body.classList.remove('app-running');
@@ -2769,24 +2905,15 @@ function restoreCompletedDeal(deal, entry, summary) {
   var metaLine = document.getElementById('resultsMetaLine');
   if (metaLine) metaLine.textContent = 'Medium confidence · ' + webPart + ' · ' + formatAnalysisSecondsBrief(durationSec);
   setDownloadLinks(deal.id);
-  var mv = document.getElementById('memoView');
-  if (mv) {
-    mv.classList.remove('memo-view--visible');
-    mv.setAttribute('hidden', '');
-  }
-  var arena = document.getElementById('arena');
-  if (arena) {
-    arena.classList.remove('arena--home-blobs', 'arena--memo-view', 'arena--viewing-history');
-    arena.classList.remove('arena--running');
-  }
-  document.getElementById('resultsOverlay').classList.add('visible');
-  enableFollowUpChat();
+  document.getElementById('resultsOverlay').classList.remove('visible');
+  enterCompletedDealView('memo');
+  if (!currentBandRoomId && deal.id) refreshActiveDealRoomId(deal.id);
 }
 function restoreLiveDeal(deal, entry) {
   clearDealPoll();
+  hideCompletedDealChrome();
   hideArenaMemoViewer();
-  currentDealId = deal.id;
-  currentBandRoomId = deal.band_room_id || deal.room_id || null;
+  setActiveDealIds(deal.id, deal.band_room_id || deal.room_id || null);
   fillFormFromEntry(entry, deal);
   document.getElementById('resultsOverlay').classList.remove('visible');
   var arena = document.getElementById('arena');
@@ -2941,6 +3068,7 @@ const STEPS = [
 ];
 function showResults() {
   document.body.classList.remove('app-running');
+  setActiveDealIds(currentDealId, currentBandRoomId);
   var company = (document.getElementById('companyName').value || '').trim() || 'Unknown company';
   var industry = (document.getElementById('industry').value || '').trim() || 'your industry';
   var nFiles = (pendingDocFile || dealUploadOk) ? 1 : 0;
@@ -2959,7 +3087,7 @@ function showResults() {
   var bandLink = document.getElementById('bandRoomLink');
   if (bandLink) bandLink.href = 'https://band.ai';
   document.getElementById('resultsOverlay').classList.add('visible');
-  enableFollowUpChat();
+  if (currentDealId && !currentBandRoomId) refreshActiveDealRoomId(currentDealId);
   var messages = serializeChatFeed();
   var entry = {
     id: String(Date.now()),
@@ -3001,7 +3129,10 @@ function showResults() {
       };
       applyDealScoreUI(lastDealScore);
       populateMemoView(company, industry, null, nFiles, lastAnalysisDurationSec, j);
-      setDownloadLinks(j.deal_id || currentDealId);
+      var resolvedDealId = j.deal_id || currentDealId;
+      setActiveDealIds(resolvedDealId, currentBandRoomId);
+      setDownloadLinks(resolvedDealId);
+      if (resolvedDealId && !currentBandRoomId) refreshActiveDealRoomId(resolvedDealId);
       var stored = loadChatsFromStorage();
       for (var si = 0; si < stored.length; si++) {
         if (stored[si].id === entryId) {
@@ -3018,23 +3149,13 @@ function showResults() {
     });
 }
 document.getElementById('resultsCloseBtn').addEventListener('click', function () {
-  document.getElementById('resultsOverlay').classList.remove('visible');
-  var arena = document.getElementById('arena');
-  if (arena) {
-    arena.classList.remove('arena--home-blobs');
-    arena.classList.add('arena--memo-view');
-    arena.classList.remove('arena--running', 'arena--viewing-history');
-  }
-  var mv = document.getElementById('memoView');
-  if (mv) {
-    mv.classList.remove('memo-view--visible');
-    mv.removeAttribute('hidden');
-    requestAnimationFrame(function () {
-      requestAnimationFrame(function () {
-        mv.classList.add('memo-view--visible');
-      });
-    });
-  }
+  enterCompletedDealView('memo');
+});
+document.getElementById('dealViewTabs').addEventListener('click', function (e) {
+  var btn = e.target.closest('.deal-view-tab');
+  if (!btn) return;
+  var tab = btn.getAttribute('data-tab');
+  if (tab) setDealViewTab(tab);
 });
 document.getElementById('analyzeBtn').addEventListener('click', function () { startAnalysis(); });
 document.getElementById('runDemoBtn').addEventListener('click', function () {
@@ -3079,10 +3200,8 @@ function resetToInputCard(opts) {
   if (du) du.value = '';
   if (fnEl) { fnEl.textContent = ''; fnEl.style.display = 'none'; }
   pendingDocFile = null;
-  currentDealId = null;
-  currentBandRoomId = null;
+  setActiveDealIds(null, null);
   dealUploadOk = false;
-  disableFollowUpChat();
   updateDocUploadBadge();
 }
 document.getElementById('newAnalysisBtn').addEventListener('click', function () {
@@ -3135,8 +3254,8 @@ async function startAnalysis() {
   document.getElementById('chatFeed').innerHTML = '';
   updateChatEmpty();
   document.getElementById('resultsOverlay').classList.remove('visible');
+  hideCompletedDealChrome();
   disableFollowUpChat();
-  currentBandRoomId = null;
   var btn = document.getElementById('analyzeBtn');
   btn.disabled = true;
   btn.textContent = '…';
@@ -3150,7 +3269,7 @@ async function startAnalysis() {
         if (!rd.ok) throw new Error('Could not create draft deal');
         var dj = await rd.json();
         if (!dj.deal_id) throw new Error('Invalid response from server');
-        currentDealId = dj.deal_id;
+        setActiveDealIds(dj.deal_id, null);
       }
       var ufd = new FormData();
       ufd.append('file', pendingDocFile);
@@ -3181,8 +3300,8 @@ async function startAnalysis() {
       var errDetail = (dealJson && dealJson.detail) ? dealJson.detail : ('Analysis failed (' + resp.status + ')');
       throw new Error(typeof errDetail === 'string' ? errDetail : JSON.stringify(errDetail));
     }
-    currentDealId = dealJson && dealJson.deal_id ? dealJson.deal_id : null;
-    currentBandRoomId = dealJson && dealJson.band_room_id ? dealJson.band_room_id : null;
+    setActiveDealIds(dealJson && dealJson.deal_id ? dealJson.deal_id : null, dealJson && dealJson.band_room_id ? dealJson.band_room_id : null);
+    if (currentDealId && !currentBandRoomId) refreshActiveDealRoomId(currentDealId);
   } catch (e) {
     alert(e && e.message ? e.message : 'Something went wrong');
     clearRunTimer();
@@ -3211,6 +3330,7 @@ enrichRecentEntriesFromServer();
 initDealLogCollapse();
 updateChatEmpty();
 updateDocUploadBadge();
+syncFollowUpInputState();
 initAgentShowcase();
 if (recentListRelativeInterval == null) {
   recentListRelativeInterval = setInterval(updateRecentListRelativeTimes, 60000);
