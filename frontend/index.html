@@ -1904,7 +1904,7 @@ function showLandingFromApp() {
   }, 300);
 }
 document.getElementById('landingGetStarted').addEventListener('click', showAppFromLanding);
-let currentDealId = null, pendingDocFile = null, dealUploadOk = false, pollTimer = null, dealPollTimer = null, activityStep = 0, runTimerInterval = null, stepTimeoutId = null, lastAnalysisDurationSec = 0;
+let currentDealId = null, currentBandRoomId = null, pendingDocFile = null, dealUploadOk = false, pollTimer = null, dealPollTimer = null, activityStep = 0, runTimerInterval = null, stepTimeoutId = null, lastAnalysisDurationSec = 0;
 var followUpChatEnabled = false;
 var lastDealScore = { score: 62, verdict: 'CONDITIONAL', risksFlagged: 3 };
 const speechTimers = {};
@@ -2324,6 +2324,10 @@ function addFollowUpUserMessage(text) {
   updateChatEmpty();
 }
 function enableFollowUpChat() {
+  if (!currentDealId || !currentBandRoomId) {
+    disableFollowUpChat();
+    return;
+  }
   followUpChatEnabled = true;
   var inp = document.getElementById('userChatInput');
   var hint = document.getElementById('userChatHint');
@@ -2342,7 +2346,8 @@ function sendUserChatMessage() {
   if (!inp) return;
   var t = (inp.value || '').trim();
   if (!t) return;
-  if (followUpChatEnabled && currentDealId) {
+  console.log('sendUserChatMessage currentDealId=', currentDealId, 'bandRoomId=', currentBandRoomId);
+  if (followUpChatEnabled && currentDealId && currentBandRoomId) {
     addFollowUpUserMessage(t);
     inp.value = '';
     fetch(API + '/deals/' + encodeURIComponent(currentDealId) + '/message', {
@@ -2350,9 +2355,13 @@ function sendUserChatMessage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: t })
     }).then(function (r) {
-      if (!r.ok) throw new Error('send failed');
-    }).catch(function () {
-      addSystemChat('Could not send message to agents.');
+      if (!r.ok) {
+        return r.json().catch(function () { return {}; }).then(function (j) {
+          throw new Error(j.detail || 'send failed');
+        });
+      }
+    }).catch(function (err) {
+      addSystemChat('Could not send message to agents.' + (err.message ? ' (' + err.message + ')' : ''));
     });
     return;
   }
@@ -2712,6 +2721,7 @@ function restoreChatFromHistory(entry) {
 function restoreCompletedDeal(deal, entry, summary) {
   clearDealPoll();
   currentDealId = deal.id;
+  currentBandRoomId = deal.band_room_id || null;
   if (!summary) summary = dealSummaryFromRecord(deal);
   fillFormFromEntry(entry, deal);
   document.body.classList.remove('app-running');
@@ -2776,6 +2786,7 @@ function restoreLiveDeal(deal, entry) {
   clearDealPoll();
   hideArenaMemoViewer();
   currentDealId = deal.id;
+  currentBandRoomId = deal.band_room_id || null;
   fillFormFromEntry(entry, deal);
   document.getElementById('resultsOverlay').classList.remove('visible');
   var arena = document.getElementById('arena');
@@ -3038,6 +3049,7 @@ function resetToInputCard(opts) {
   if (fnEl) { fnEl.textContent = ''; fnEl.style.display = 'none'; }
   pendingDocFile = null;
   currentDealId = null;
+  currentBandRoomId = null;
   dealUploadOk = false;
   disableFollowUpChat();
   updateDocUploadBadge();
@@ -3093,6 +3105,7 @@ async function startAnalysis() {
   updateChatEmpty();
   document.getElementById('resultsOverlay').classList.remove('visible');
   disableFollowUpChat();
+  currentBandRoomId = null;
   var btn = document.getElementById('analyzeBtn');
   btn.disabled = true;
   btn.textContent = '…';
@@ -3133,7 +3146,12 @@ async function startAnalysis() {
     var resp = await fetch(API + '/analyze', { method: 'POST', body: fd });
     var dealJson = null;
     try { dealJson = await resp.json(); } catch (e2) {}
+    if (!resp.ok) {
+      var errDetail = (dealJson && dealJson.detail) ? dealJson.detail : ('Analysis failed (' + resp.status + ')');
+      throw new Error(typeof errDetail === 'string' ? errDetail : JSON.stringify(errDetail));
+    }
     currentDealId = dealJson && dealJson.deal_id ? dealJson.deal_id : null;
+    currentBandRoomId = dealJson && dealJson.band_room_id ? dealJson.band_room_id : null;
   } catch (e) {
     alert(e && e.message ? e.message : 'Something went wrong');
     clearRunTimer();

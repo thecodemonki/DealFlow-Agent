@@ -682,15 +682,27 @@ async def save_deal_chat(deal_id: str, body: DealChatBody):
 @app.post("/deals/{deal_id}/message")
 async def post_deal_message(deal_id: str, body: DealMessageBody):
     """Post a user follow-up question to the deal's Band room."""
-    if deal_id not in deals:
-        raise HTTPException(status_code=404, detail="Deal not found")
     message = (body.message or "").strip()
+    deal_found = deal_id in deals
+    room_id = deals[deal_id].get("band_room_id") if deal_found else None
+    logger.info(
+        "POST /deals/%s/message: deal_found=%s band_room_id=%s message_len=%d",
+        deal_id,
+        deal_found,
+        room_id,
+        len(message),
+    )
+    if not deal_found:
+        logger.warning("POST /deals/%s/message: deal not found", deal_id)
+        raise HTTPException(status_code=404, detail="Deal not found")
     if not message:
+        logger.warning("POST /deals/%s/message: empty message", deal_id)
         raise HTTPException(status_code=400, detail="Message is required")
-    room_id = deals[deal_id].get("band_room_id")
     if not room_id:
+        logger.warning("POST /deals/%s/message: no band_room_id on deal", deal_id)
         raise HTTPException(status_code=400, detail="No Band room for this deal")
     ok = await _post_band_user_message(room_id, message)
     if not ok:
+        logger.warning("POST /deals/%s/message: Band post failed for room %s", deal_id, room_id)
         raise HTTPException(status_code=502, detail="Failed to send message")
     return {"status": "sent"}
