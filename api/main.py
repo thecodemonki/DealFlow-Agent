@@ -18,6 +18,7 @@ from pathlib import Path
 from datetime import datetime
 
 import httpx
+from contextlib import asynccontextmanager
 from typing import Any, Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
@@ -33,10 +34,26 @@ from shared.pdf_memo import build_memo_pdf_bytes
 load_dotenv()
 logger = logging.getLogger(__name__)
 
+_band_client: Optional[httpx.AsyncClient] = None
+
+
+@asynccontextmanager
+async def _app_lifespan(app: FastAPI):
+    global _band_client
+    _band_client = httpx.AsyncClient(timeout=15.0)
+    try:
+        yield
+    finally:
+        if _band_client is not None:
+            await _band_client.aclose()
+            _band_client = None
+
+
 app = FastAPI(
     title="DealFlow AI",
     description="Multi-agent M&A due diligence platform powered by Band",
     version="0.1.0",
+    lifespan=_app_lifespan,
 )
 
 app.add_middleware(
@@ -320,9 +337,95 @@ _load_deals_index()
 # -------------------------------------------------------------------
 # Band API helper — sends a message to the Orchestrator's inbox room.
 # The Orchestrator agent is always running and listening for incoming messages.
+# Payload shape matches agents/web_research/agent.py _post_to_band().
 # -------------------------------------------------------------------
 
-BAND_API_BASE = "https://api.band.ai/api/v1/agent"
+BAND_API_BASE = (os.environ.get("BAND_API_BASE") or "https://app.thenvoi.com/api/v1").rstrip("/")
+_orch_config: Optional[dict[str, str]] = None
+_orchestrator_mention_cache: dict[str, str] = {}
+
+
+def _load_orchestrator_config() -> dict[str, str]:
+    """Load orchestrator agent_id + api_key once from agent_config.yaml."""
+    global _orch_config
+    if _orch_config is not None:
+        return _orch_config
+    import yaml
+
+    config_path = Path(__file__).resolve().parent.parent / "agent_config.yaml"
+    with open(config_path) as f:
+        config = yaml.safe_load(f)
+    orch = config["orchestrator"]
+    _orch_config = {
+        "agent_id": str(orch["agent_id"]),
+        "api_key": str(orch["api_key"]),
+    }
+    return _orch_config
+
+
+async def _band_http_client() -> httpx.AsyncClient:
+    global _band_client
+    if _band_client is None:
+        _band_client = httpx.AsyncClient(timeout=15.0)
+    return _band_client
+
+
+async def _get_orchestrator_mention_id(room_id: str) -> str:
+    """Resolve Orchestrator participant id for @mentions (cached per room)."""
+    if room_id in _orchestrator_mention_cache:
+        return _orchestrator_mention_cache[room_id]
+
+    orch = _load_orchestrator_config()
+    mention_id = orch["agent_id"]
+    client = await _band_http_client()
+    url = f"{BAND_API_BASE}/agent/chats/{room_id}/participants"
+    headers = {"X-API-Key": orch["api_key"]}
+    resp = await client.get(url, headers=headers)
+    if resp.status_code == 200:
+        data = resp.json()
+        participants = data.get("data", data) if isinstance(data, dict) else data
+        if isinstance(participants, list):
+            for p in participants:
+                pname = (p.get("name") or p.get("handle") or "").lower()
+                if "orchestrator" in pname:
+                    mention_id = str(p.get("participant_id") or p.get("id") or mention_id)
+                    break
+    else:
+        logger.warning(
+            "Failed to fetch participants for room %s: %s %s",
+            room_id,
+            resp.status_code,
+            resp.text[:200],
+        )
+
+    _orchestrator_mention_cache[room_id] = mention_id
+    return mention_id
+
+
+async def _post_band_room_message(room_id: str, content: str, mention_ids: list[str]) -> None:
+    """Post a message to a Band room using the same API contract as the agents."""
+    orch = _load_orchestrator_config()
+    client = await _band_http_client()
+    url = f"{BAND_API_BASE}/agent/chats/{room_id}/messages"
+    headers = {"X-API-Key": orch["api_key"], "Content-Type": "application/json"}
+    body = {
+        "message": {
+            "content": content,
+            "mentions": [{"id": mid} for mid in mention_ids if mid],
+        }
+    }
+    resp = await client.post(url, json=body, headers=headers)
+    if resp.status_code != 201:
+        logger.warning(
+            "Band message post failed %s: %s",
+            resp.status_code,
+            resp.text[:500],
+        )
+        raise HTTPException(
+            status_code=502,
+            detail=resp.text[:500] or f"Band API returned {resp.status_code}",
+        )
+
 
 async def trigger_orchestrator(deal_id: str, company_name: str, file_paths: list[str], notes: str) -> str:
     """
@@ -330,126 +433,75 @@ async def trigger_orchestrator(deal_id: str, company_name: str, file_paths: list
     The Orchestrator's Band agent_id is used to create a direct room.
     Returns the Band room ID for tracking.
     """
-    import yaml
-    with open("agent_config.yaml") as f:
-        config = yaml.safe_load(f)
+    orch = _load_orchestrator_config()
+    client = await _band_http_client()
+    headers = {"X-API-Key": orch["api_key"], "Content-Type": "application/json"}
 
-    orchestrator_config = config["orchestrator"]
-    orchestrator_agent_id = orchestrator_config["agent_id"]
-    orchestrator_api_key = orchestrator_config["api_key"]
+    room_name = f"Deal: {company_name} [{deal_id[:8]}]"
+    create_room_resp = await client.post(
+        f"{BAND_API_BASE}/agent/chats",
+        headers=headers,
+        json={"name": room_name},
+    )
+    if create_room_resp.status_code not in (200, 201):
+        raise HTTPException(status_code=500, detail=f"Failed to create Band room: {create_room_resp.text}")
 
-    headers = {"X-API-Key": orchestrator_api_key, "Content-Type": "application/json"}
+    room_data = create_room_resp.json()
+    room_id = room_data.get("id") or room_data.get("chat_id")
 
-    async with httpx.AsyncClient() as client:
-        # Create a new Band chat room for this deal
-        room_name = f"Deal: {company_name} [{deal_id[:8]}]"
-        create_room_resp = await client.post(
-            f"{BAND_API_BASE}/chats",
-            headers=headers,
-            json={"name": room_name},
-        )
-        if create_room_resp.status_code not in (200, 201):
-            raise HTTPException(status_code=500, detail=f"Failed to create Band room: {create_room_resp.text}")
+    message_body = {
+        "deal_id": deal_id,
+        "company_name": company_name,
+        "file_paths": file_paths,
+        "notes": notes,
+        "instructions": (
+            f"New deal request received. Please begin analysis for {company_name}. "
+            f"Files are available at: {', '.join(file_paths)}. "
+            f"Create a deal room, recruit all specialist agents, and kick off the pipeline."
+        ),
+    }
 
-        room_data = create_room_resp.json()
-        room_id = room_data.get("id") or room_data.get("chat_id")
+    mention_id = await _get_orchestrator_mention_id(room_id)
+    await _post_band_room_message(
+        room_id,
+        f"@Orchestrator {json.dumps(message_body)}",
+        [mention_id],
+    )
 
-        # Send the deal request as the first message in the room
-        message_body = {
-            "deal_id": deal_id,
-            "company_name": company_name,
-            "file_paths": file_paths,
-            "notes": notes,
-            "instructions": (
-                f"New deal request received. Please begin analysis for {company_name}. "
-                f"Files are available at: {', '.join(file_paths)}. "
-                f"Create a deal room, recruit all specialist agents, and kick off the pipeline."
-            ),
-        }
-
-        send_resp = await client.post(
-            f"{BAND_API_BASE}/chats/{room_id}/messages",
-            headers=headers,
-            json={
-                "content": f"@Orchestrator {json.dumps(message_body)}",
-                "mentions": [orchestrator_agent_id],
-            },
-        )
-
-        if send_resp.status_code not in (200, 201):
-            logger.warning(f"Message send returned {send_resp.status_code}: {send_resp.text}")
-
-        return room_id
+    return room_id
 
 
 async def _post_band_document_uploaded(room_id: str, file_path: str) -> bool:
     """
     Publish DOCUMENT_UPLOADED to the deal Band room so the Orchestrator / Librarian pipeline can pick it up.
     """
-    import yaml
-
     try:
-        with open("agent_config.yaml") as f:
-            config = yaml.safe_load(f)
-        orchestrator_config = config["orchestrator"]
-        orchestrator_agent_id = orchestrator_config["agent_id"]
-        orchestrator_api_key = orchestrator_config["api_key"]
-        headers = {"X-API-Key": orchestrator_api_key, "Content-Type": "application/json"}
-        content = f"DOCUMENT_UPLOADED: {file_path}"
-        async with httpx.AsyncClient() as client:
-            resp = await client.post(
-                f"{BAND_API_BASE}/chats/{room_id}/messages",
-                headers=headers,
-                json={
-                    "content": content,
-                    "mentions": [orchestrator_agent_id],
-                },
-            )
-            if resp.status_code not in (200, 201):
-                logger.warning(
-                    "DOCUMENT_UPLOADED post failed %s: %s",
-                    resp.status_code,
-                    resp.text[:500],
-                )
-                return False
+        mention_id = await _get_orchestrator_mention_id(room_id)
+        await _post_band_room_message(
+            room_id,
+            f"DOCUMENT_UPLOADED: {file_path}",
+            [mention_id],
+        )
         return True
+    except HTTPException:
+        return False
     except Exception as e:
         logger.error("Failed to post DOCUMENT_UPLOADED to Band: %s", e)
         return False
 
 
-async def _post_band_user_message(room_id: str, message: str) -> bool:
+async def _post_band_user_message(room_id: str, message: str) -> None:
     """Publish a user follow-up question to the deal Band room for the Orchestrator."""
-    import yaml
-
     try:
-        with open("agent_config.yaml") as f:
-            config = yaml.safe_load(f)
-        orchestrator_config = config["orchestrator"]
-        orchestrator_agent_id = orchestrator_config["agent_id"]
-        orchestrator_api_key = orchestrator_config["api_key"]
-        headers = {"X-API-Key": orchestrator_api_key, "Content-Type": "application/json"}
-        content = f"USER: {message}"
-        async with httpx.AsyncClient() as client:
-            resp = await client.post(
-                f"{BAND_API_BASE}/chats/{room_id}/messages",
-                headers=headers,
-                json={
-                    "content": content,
-                    "mentions": [orchestrator_agent_id],
-                },
-            )
-            if resp.status_code not in (200, 201):
-                logger.warning(
-                    "USER message post failed %s: %s",
-                    resp.status_code,
-                    resp.text[:500],
-                )
-                return False
-        return True
+        mention_id = await _get_orchestrator_mention_id(room_id)
+        content = f"@Orchestrator {message}"
+        await _post_band_room_message(room_id, content, [mention_id])
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error("Failed to post USER message to Band: %s", e)
-        return False
+        print(f"Band message error: {e}", flush=True)
+        logger.exception("Band message error for room %s", room_id)
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # -------------------------------------------------------------------
@@ -743,8 +795,5 @@ async def post_deal_message(deal_id: str, body: DealMessageBody):
             deals[deal_id].get("room_id"),
         )
         raise HTTPException(status_code=400, detail="No Band room for this deal")
-    ok = await _post_band_user_message(room_id, message)
-    if not ok:
-        logger.warning("POST /deals/%s/message: Band post failed for room %s", deal_id, room_id)
-        raise HTTPException(status_code=502, detail="Failed to send message")
+    await _post_band_user_message(room_id, message)
     return {"status": "sent"}
