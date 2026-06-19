@@ -18,7 +18,7 @@ from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import InMemorySaver
 from thenvoi import Agent
 from thenvoi.adapters import LangGraphAdapter
-from thenvoi.config import load_agent_config
+from shared.agent_config import load_agent_config
 
 from shared.prompts import ORCHESTRATOR_PROMPT
 

@@ -19,7 +19,7 @@ from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import InMemorySaver
 from thenvoi import Agent
 from thenvoi.adapters import LangGraphAdapter
-from thenvoi.config import load_agent_config
+from shared.agent_config import load_agent_config
 
 from shared.models import ParsedDocuments, FinancialAnalysis
 from shared.prompts import FINANCIAL_ANALYST_PROMPT
