@@ -1000,6 +1000,7 @@
       flex-direction: column;
       gap: 14px;
       transition: box-shadow 0.2s ease, transform 0.2s ease;
+      cursor: pointer;
     }
     .deal-card:hover {
       box-shadow: 0 6px 24px rgba(79, 110, 247, 0.12);
@@ -1842,6 +1843,46 @@
       border-color: #a5b4fc;
       color: #4338ca;
     }
+    .results-dashboard-link--saved,
+    .results-dashboard-link--added {
+      color: #059669;
+      background: #ecfdf5;
+      border-color: #a7f3d0;
+    }
+    .results-dashboard-link--saved:hover,
+    .results-dashboard-link--added:hover {
+      color: #059669;
+      background: #ecfdf5;
+      border-color: #a7f3d0;
+    }
+    .results-dashboard-link:disabled {
+      cursor: default;
+      opacity: 1;
+    }
+    .deal-bookmark-btn {
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border: none;
+      background: transparent;
+      font-size: 20px;
+      line-height: 1;
+      color: #9ca3af;
+      cursor: pointer;
+      border-radius: 8px;
+    }
+    .deal-bookmark-btn:hover {
+      background: #f3f4f6;
+      color: #6b7280;
+    }
+    .deal-bookmark-btn--saved {
+      color: #d97706;
+    }
+    .deal-bookmark-btn--saved:hover {
+      color: #b45309;
+      background: #fffbeb;
+    }
     .results-close {
       margin-top: 18px;
       width: 100%;
@@ -2078,6 +2119,7 @@
         <div class="memo-view__header-main">
           <span class="memo-view__company" id="memoViewCompany"></span>
           <div class="memo-view__header-right">
+            <button type="button" class="deal-bookmark-btn" id="memoBookmarkBtn" hidden aria-label="Bookmark deal" title="Add to dashboard">☆</button>
             <span class="memo-view__pill memo-view__pill--conditional" id="memoViewRec"></span>
             <a id="downloadPdfBtn" href="#" target="_blank" rel="noopener noreferrer"
                style="display:inline-flex; align-items:center; gap:6px; padding:9px 18px;
@@ -2145,7 +2187,7 @@
           <span>Download investment memo PDF</span>
         </a>
         <a class="results-band-link" id="bandRoomLink" href="https://band.ai" target="_blank" rel="noopener noreferrer">View in Band →</a>
-        <button type="button" class="results-dashboard-link" id="resultsDashboardBtn">→ View in Dashboard</button>
+        <button type="button" class="results-dashboard-link" id="resultsDashboardBtn">Add to Dashboard ★</button>
         <a id="modalPdfBtn" href="#" target="_blank" rel="noopener noreferrer"
            style="display:none; align-items:center; justify-content:center; gap:8px;
                   padding:10px 20px; margin-top:12px; width:100%; box-sizing:border-box;
@@ -2169,6 +2211,7 @@
         <div class="chat-header-meta">
           <div class="chat-live-wrap"><span class="chat-live-dot" aria-hidden="true"></span><span>Live</span></div>
           <span class="chat-timer" id="analyzeTimerChat" aria-live="polite"></span>
+          <button type="button" class="deal-bookmark-btn" id="chatBookmarkBtn" hidden aria-label="Bookmark deal" title="Add to dashboard">☆</button>
           <button type="button" id="stopBtn" title="Stop analysis" aria-label="Stop analysis">⏹</button>
         </div>
       </div>
@@ -2334,6 +2377,7 @@ function setActiveDealIds(dealId, roomId) {
   window.currentDealId = currentDealId;
   window.bandRoomId = currentBandRoomId || DEFAULT_BAND_ROOM_ID;
   syncFollowUpInputState();
+  refreshDealSavedState(currentDealId);
 }
 function syncFollowUpInputState() {
   var inp = document.getElementById('userChatInput');
@@ -2361,9 +2405,108 @@ var dashboardRecFilter = null;
 var currentAppView = 'submit';
 var historyPushing = false;
 var dealCompletePosted = {};
+var currentDealSaved = false;
+var saveButtonConfirmTimer = null;
 
 function visibleDashboardDeals(deals) {
-  return (deals || []).filter(function (d) { return (d.company_name || '').trim(); });
+  return (deals || []).filter(function (d) {
+    return d.saved && (d.completed_at || d.status === 'complete') && (d.company_name || '').trim();
+  });
+}
+
+function postDealSave(dealId, saved) {
+  return fetch(API + '/deals/' + encodeURIComponent(dealId) + '/save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ saved: !!saved })
+  }).then(function (r) {
+    if (!r.ok) throw new Error('save failed');
+    return r.json();
+  });
+}
+
+function syncBookmarkButtons(saved) {
+  currentDealSaved = !!saved;
+  var memoBtn = document.getElementById('memoBookmarkBtn');
+  var chatBtn = document.getElementById('chatBookmarkBtn');
+  [memoBtn, chatBtn].forEach(function (btn) {
+    if (!btn) return;
+    btn.hidden = !currentDealId;
+    btn.textContent = saved ? '★' : '☆';
+    btn.classList.toggle('deal-bookmark-btn--saved', saved);
+    btn.setAttribute('aria-pressed', saved ? 'true' : 'false');
+    btn.title = saved ? 'Remove from dashboard' : 'Add to dashboard';
+  });
+}
+
+function updateSaveButtonState(saved) {
+  var btn = document.getElementById('resultsDashboardBtn');
+  if (!btn) return;
+  if (saveButtonConfirmTimer) {
+    clearTimeout(saveButtonConfirmTimer);
+    saveButtonConfirmTimer = null;
+  }
+  btn.disabled = false;
+  btn.classList.remove('results-dashboard-link--saved', 'results-dashboard-link--added');
+  if (saved) {
+    btn.textContent = '★ Saved';
+    btn.classList.add('results-dashboard-link--saved');
+    btn.disabled = true;
+  } else {
+    btn.textContent = 'Add to Dashboard ★';
+  }
+}
+
+function refreshDealSavedState(dealId) {
+  if (!dealId) {
+    syncBookmarkButtons(false);
+    updateSaveButtonState(false);
+    return Promise.resolve(false);
+  }
+  return fetch(API + '/deals/' + encodeURIComponent(dealId))
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .catch(function () { return null; })
+    .then(function (d) {
+      var saved = !!(d && d.saved);
+      syncBookmarkButtons(saved);
+      updateSaveButtonState(saved);
+      return saved;
+    });
+}
+
+function toggleDealSaved() {
+  if (!currentDealId) return;
+  var next = !currentDealSaved;
+  postDealSave(currentDealId, next)
+    .then(function () {
+      syncBookmarkButtons(next);
+      updateSaveButtonState(next);
+      refreshDashboard();
+    })
+    .catch(function () {});
+}
+
+function addDealToDashboard() {
+  if (!currentDealId || currentDealSaved) return;
+  var btn = document.getElementById('resultsDashboardBtn');
+  if (btn) btn.disabled = true;
+  postDealSave(currentDealId, true)
+    .then(function () {
+      syncBookmarkButtons(true);
+      if (btn) {
+        btn.textContent = '✓ Added';
+        btn.classList.add('results-dashboard-link--added');
+        if (saveButtonConfirmTimer) clearTimeout(saveButtonConfirmTimer);
+        saveButtonConfirmTimer = setTimeout(function () {
+          saveButtonConfirmTimer = null;
+          updateSaveButtonState(true);
+        }, 2000);
+      }
+      refreshDashboard();
+    })
+    .catch(function () {
+      if (btn) btn.disabled = false;
+    });
 }
 
 function fetchDeals() {
@@ -2475,7 +2618,7 @@ function renderDashboardEmptyState(isFiltered) {
   }
   return '<div class="deal-dashboard-empty">' +
     '<span class="deal-dashboard-empty__icon" aria-hidden="true">' + DASHBOARD_EMPTY_BLOB_SVG + '</span>' +
-    '<p>No analyses yet — run your first deal above</p>' +
+    '<p>No analyses yet</p>' +
     '</div>';
 }
 
@@ -4093,9 +4236,13 @@ document.getElementById('resultsCloseBtn').addEventListener('click', function ()
   enterCompletedDealView('memo');
 });
 document.getElementById('resultsDashboardBtn').addEventListener('click', function () {
-  fetchDeals().then(function (deals) {
-    showDealDashboard(visibleDashboardDeals(deals));
-  });
+  addDealToDashboard();
+});
+document.getElementById('memoBookmarkBtn').addEventListener('click', function () {
+  toggleDealSaved();
+});
+document.getElementById('chatBookmarkBtn').addEventListener('click', function () {
+  toggleDealSaved();
 });
 document.getElementById('dealViewTabs').addEventListener('click', function (e) {
   var btn = e.target.closest('.deal-view-tab');
@@ -4290,8 +4437,9 @@ syncFollowUpInputState();
 initAgentShowcase();
 document.getElementById('dealCardGrid').addEventListener('click', function (e) {
   var btn = e.target.closest('.deal-card__view-btn');
-  if (!btn) return;
-  var dealId = btn.getAttribute('data-deal-id');
+  var card = e.target.closest('.deal-card');
+  if (!btn && !card) return;
+  var dealId = (btn || card).getAttribute('data-deal-id');
   if (dealId) openDealFromDashboard(dealId);
 });
 var dashboardSearchEl = document.getElementById('dashboardSearch');

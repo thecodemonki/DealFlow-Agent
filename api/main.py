@@ -140,6 +140,12 @@ class DealMessageBody(BaseModel):
     message: str
 
 
+class DealSaveBody(BaseModel):
+    """Bookmark / add-to-dashboard toggle from the UI."""
+
+    saved: bool = True
+
+
 DATA_DIR = Path("./data")
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 DEALS_INDEX_PATH = DATA_DIR / "deals.json"
@@ -482,6 +488,7 @@ def _public_deal_row(deal_id: str, d: dict[str, Any]) -> dict[str, Any]:
         d.get("recommendation") or _recommendation_from_verdict(scores.get("deal_verdict", ""))
     )
     row["axis_scores"] = _axis_scores_for_deal(d)
+    row["saved"] = bool(d.get("saved", False))
     return row
 
 
@@ -506,6 +513,7 @@ def _load_deals_index() -> None:
                 if isinstance(d, dict):
                     d.setdefault("score", DEFAULT_SCORE)
                     d.setdefault("recommendation", DEFAULT_RECOMMENDATION)
+                    d.setdefault("saved", False)
             deals.update(loaded)
             logger.info("Loaded %d deals from %s", len(loaded), path)
             if path != DEALS_INDEX_PATH:
@@ -776,6 +784,7 @@ async def create_draft_deal():
         "industry": None,
         "score": DEFAULT_SCORE,
         "recommendation": DEFAULT_RECOMMENDATION,
+        "saved": False,
     }
     _save_deals_index()
     return JSONResponse({"deal_id": deal_id, "status": "draft"})
@@ -828,6 +837,7 @@ async def submit_deal(
     industry_value = industry.strip() or None
     prev_score = prev.get("score", DEFAULT_SCORE) if reuse else DEFAULT_SCORE
     prev_rec = prev.get("recommendation", DEFAULT_RECOMMENDATION) if reuse else DEFAULT_RECOMMENDATION
+    prev_saved = prev.get("saved", False) if reuse else False
 
     deals[deal_id] = {
         "id": deal_id,
@@ -848,6 +858,7 @@ async def submit_deal(
         "industry": industry_value,
         "score": prev_score,
         "recommendation": prev_rec,
+        "saved": prev_saved,
     }
 
     try:
@@ -993,6 +1004,16 @@ async def mark_deal_complete(deal_id: str, body: DealCompleteBody):
 async def get_deal_log():
     """Return in-memory list of completed deals (survives until process restart)."""
     return deal_log
+
+
+@app.post("/deals/{deal_id}/save")
+async def save_deal(deal_id: str, body: DealSaveBody):
+    """Bookmark or unbookmark a deal for the dashboard."""
+    if deal_id not in deals:
+        raise HTTPException(status_code=404, detail="Deal not found")
+    deals[deal_id]["saved"] = bool(body.saved)
+    _save_deals_index()
+    return {"deal_id": deal_id, "saved": deals[deal_id]["saved"]}
 
 
 @app.post("/deals/{deal_id}/chat")
