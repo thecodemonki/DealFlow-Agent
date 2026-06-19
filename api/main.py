@@ -504,6 +504,7 @@ async def _post_band_user_message(room_id: str, message: str) -> None:
             "mentions": [{"id": "1771a605-be42-431c-8003-dbddd3a25b35"}],
         }
     }
+    print(f"DEBUG mention payload: {payload}", flush=True)
     async with httpx.AsyncClient() as client:
         resp = await client.post(url, headers=headers, json=payload, timeout=10.0)
     if resp.status_code not in (200, 201):
