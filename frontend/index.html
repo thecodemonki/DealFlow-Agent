@@ -203,6 +203,15 @@
       transition: grid-template-columns 0.35s ease;
     }
     .app-grid.chat-collapsed { --chat-w: 44px; }
+    .app-grid.chat-hidden {
+      grid-template-columns: 240px 1fr;
+    }
+    .app-grid.chat-hidden .chat-shell {
+      display: none;
+    }
+    .app-grid.chat-hidden #dealDashboard {
+      max-width: 1200px;
+    }
     #sidebar {
       width: 240px;
       background: #f7f8fa;
@@ -235,6 +244,41 @@
     }
     .btn-new:hover { background: #3d5bd9; }
     .btn-new__icon { font-size: 15px; font-weight: 400; opacity: 0.95; line-height: 1; }
+    .sidebar-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 10px 8px;
+      width: calc(100% - 20px);
+      padding: 10px 12px;
+      border: none;
+      border-radius: 10px;
+      background: transparent;
+      color: #374151;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      text-align: left;
+      line-height: 1.4;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .sidebar-nav-item:hover {
+      background: #eef2ff;
+      color: #1e1b4b;
+    }
+    .sidebar-nav-item--active {
+      background: #eef2ff;
+      color: #4f46e5;
+    }
+    .sidebar-nav-item__icon {
+      flex-shrink: 0;
+      width: 18px;
+      text-align: center;
+      font-size: 15px;
+      line-height: 1;
+      opacity: 0.9;
+    }
     .sidebar-recent-stack {
       margin-top: 24px;
       padding-top: 16px;
@@ -675,6 +719,7 @@
       border-bottom: none;
     }
     .app-grid.chat-collapsed .chat-header-title > span:last-of-type { display: none; }
+    .app-grid.chat-collapsed .chat-header-title .deal-bookmark-btn { display: none; }
     .app-grid.chat-collapsed .chat-header-meta { display: none; }
     .app-grid.chat-collapsed .chat-toggle { margin-right: 0; }
     .chat-header {
@@ -693,8 +738,9 @@
       color: #111827;
       background: #ffffff;
     }
-    .chat-header-title { display: flex; align-items: center; min-width: 0; flex: 1; }
+    .chat-header-title { display: flex; align-items: center; min-width: 0; flex: 1; gap: 8px; }
     .chat-header-title > span:last-of-type { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .chat-header-title .deal-bookmark-btn { margin-left: auto; }
     .chat-header-meta { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 500; color: #6b7280; }
     .chat-live-wrap { display: none; align-items: center; gap: 6px; }
     .app-running .chat-live-wrap { display: flex; }
@@ -1129,21 +1175,6 @@
       padding: 40px 16px;
       font-size: 14px;
     }
-    .memo-view__back-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 16px;
-      padding: 8px 14px;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      background: #fff;
-      color: #374151;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .memo-view__back-btn:hover { background: #f9fafb; border-color: #d1d5db; }
     #inputCard h1 { font-size: 24px; font-weight: 700; color: #111827; margin-bottom: 22px; }
     #inputCard .input-card-fields input[type="text"] {
       width: 100%;
@@ -1983,6 +2014,10 @@
         <span style="color: #1e1b4b;">Agent</span><span style="color: #4f46e5;">Max</span>
       </span>
     </div>
+    <button type="button" class="sidebar-nav-item" id="sidebarDashboardBtn">
+      <span class="sidebar-nav-item__icon" aria-hidden="true">⊞</span>
+      <span>Dashboard</span>
+    </button>
     <button type="button" class="btn-new" id="newAnalysisBtn"><span class="btn-new__icon">+</span> New Analysis</button>
     <div class="sidebar-stats-bar" id="dealLogStats" hidden></div>
     <div class="sidebar-recent-stack">
@@ -2101,7 +2136,6 @@
       </div>
     </div>
     <div id="memoView" class="memo-view" hidden>
-      <button type="button" id="memoBackBtn" class="memo-view__back-btn" hidden>← Dashboard</button>
       <header class="memo-view__header">
         <div class="memo-view__score-cluster memo-score-band--conditional" id="memoScoreCluster">
           <div class="memo-view__ring-wrap">
@@ -2119,7 +2153,6 @@
         <div class="memo-view__header-main">
           <span class="memo-view__company" id="memoViewCompany"></span>
           <div class="memo-view__header-right">
-            <button type="button" class="deal-bookmark-btn" id="memoBookmarkBtn" hidden aria-label="Bookmark deal" title="Add to dashboard">☆</button>
             <span class="memo-view__pill memo-view__pill--conditional" id="memoViewRec"></span>
             <a id="downloadPdfBtn" href="#" target="_blank" rel="noopener noreferrer"
                style="display:inline-flex; align-items:center; gap:6px; padding:9px 18px;
@@ -2207,11 +2240,11 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline class="chev" points="15 6 9 12 15 18"/></svg>
           </button>
           <span>Agent Chat</span>
+          <button type="button" class="deal-bookmark-btn" id="chatBookmarkBtn" hidden aria-label="Bookmark deal" title="Add to dashboard">☆</button>
         </div>
         <div class="chat-header-meta">
           <div class="chat-live-wrap"><span class="chat-live-dot" aria-hidden="true"></span><span>Live</span></div>
           <span class="chat-timer" id="analyzeTimerChat" aria-live="polite"></span>
-          <button type="button" class="deal-bookmark-btn" id="chatBookmarkBtn" hidden aria-label="Bookmark deal" title="Add to dashboard">☆</button>
           <button type="button" id="stopBtn" title="Stop analysis" aria-label="Stop analysis">⏹</button>
         </div>
       </div>
@@ -2427,16 +2460,18 @@ function postDealSave(dealId, saved) {
 
 function syncBookmarkButtons(saved) {
   currentDealSaved = !!saved;
-  var memoBtn = document.getElementById('memoBookmarkBtn');
   var chatBtn = document.getElementById('chatBookmarkBtn');
-  [memoBtn, chatBtn].forEach(function (btn) {
-    if (!btn) return;
-    btn.hidden = !currentDealId;
-    btn.textContent = saved ? '★' : '☆';
-    btn.classList.toggle('deal-bookmark-btn--saved', saved);
-    btn.setAttribute('aria-pressed', saved ? 'true' : 'false');
-    btn.title = saved ? 'Remove from dashboard' : 'Add to dashboard';
-  });
+  if (!chatBtn) return;
+  chatBtn.hidden = !currentDealId;
+  chatBtn.textContent = saved ? '★' : '☆';
+  chatBtn.classList.toggle('deal-bookmark-btn--saved', saved);
+  chatBtn.setAttribute('aria-pressed', saved ? 'true' : 'false');
+  chatBtn.title = saved ? 'Remove from dashboard' : 'Add to dashboard';
+}
+
+function syncSidebarNavActive() {
+  var dashBtn = document.getElementById('sidebarDashboardBtn');
+  if (dashBtn) dashBtn.classList.toggle('sidebar-nav-item--active', currentAppView === 'dashboard');
 }
 
 function updateSaveButtonState(saved) {
@@ -2665,18 +2700,31 @@ function dealCardScore(deal) {
   return 6.5;
 }
 
+function syncChatPanelForView() {
+  var g = document.getElementById('appGrid');
+  if (!g) return;
+  var hide = currentAppView === 'dashboard';
+  g.classList.toggle('chat-hidden', hide);
+  if (hide) {
+    g.classList.remove('chat-collapsed');
+    var toggle = document.getElementById('chatToggle');
+    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+  }
+  syncSidebarNavActive();
+}
+
 function showSubmitForm() {
   currentAppView = 'submit';
+  syncChatPanelForView();
   var arena = document.getElementById('arena');
   if (arena) arena.classList.remove('arena--dashboard');
   var dash = document.getElementById('dealDashboard');
   if (dash) dash.hidden = true;
-  var backBtn = document.getElementById('memoBackBtn');
-  if (backBtn) backBtn.hidden = true;
 }
 
 function showDealDashboard(deals, skipHistory) {
   currentAppView = 'dashboard';
+  syncChatPanelForView();
   dashboardDeals = visibleDashboardDeals(deals || dashboardDeals);
   var arena = document.getElementById('arena');
   if (arena) {
@@ -2749,6 +2797,7 @@ function refreshDashboard() {
 function openDealFromDashboard(dealId) {
   if (!dealId) return;
   currentAppView = 'deal-detail';
+  syncChatPanelForView();
   var arena = document.getElementById('arena');
   if (arena) arena.classList.remove('arena--dashboard');
   var dash = document.getElementById('dealDashboard');
@@ -2882,6 +2931,7 @@ function setDealViewTab(tab) {
 }
 function enterCompletedDealView(tab) {
   currentAppView = 'deal-detail';
+  syncChatPanelForView();
   document.getElementById('resultsOverlay').classList.remove('visible');
   var tabs = document.getElementById('dealViewTabs');
   if (tabs) tabs.hidden = false;
@@ -2892,8 +2942,6 @@ function enterCompletedDealView(tab) {
   }
   var dash = document.getElementById('dealDashboard');
   if (dash) dash.hidden = true;
-  var backBtn = document.getElementById('memoBackBtn');
-  if (backBtn) backBtn.hidden = false;
   document.body.classList.remove('app-running');
   clearRunTimer();
   ['orchestrator', 'webresearch', 'documentparser', 'financialanalyst', 'legalrisk', 'synthesis'].forEach(function (a) {
@@ -2919,6 +2967,7 @@ function nameToAgentId(name) {
 }
 function toggleChat() {
   var g = document.getElementById('appGrid');
+  if (!g || g.classList.contains('chat-hidden')) return;
   var collapsed = g.classList.toggle('chat-collapsed');
   document.getElementById('chatToggle').setAttribute('aria-expanded', collapsed ? 'false' : 'true');
 }
@@ -3896,6 +3945,8 @@ function appendHistoryMessage(m) {
   addFeedItem(null, safe, aid, null);
 }
 function restoreChatFromHistory(entry) {
+  currentAppView = 'deal-detail';
+  syncChatPanelForView();
   clearDealPoll();
   hideArenaMemoViewer();
   setActiveDealIds(null, null);
@@ -3979,6 +4030,8 @@ function restoreCompletedDeal(deal, entry, summary) {
   if (!currentBandRoomId && deal.id) refreshActiveDealRoomId(deal.id);
 }
 function restoreLiveDeal(deal, entry) {
+  currentAppView = 'deal-detail';
+  syncChatPanelForView();
   clearDealPoll();
   hideCompletedDealChrome();
   hideArenaMemoViewer();
@@ -4238,11 +4291,13 @@ document.getElementById('resultsCloseBtn').addEventListener('click', function ()
 document.getElementById('resultsDashboardBtn').addEventListener('click', function () {
   addDealToDashboard();
 });
-document.getElementById('memoBookmarkBtn').addEventListener('click', function () {
-  toggleDealSaved();
-});
 document.getElementById('chatBookmarkBtn').addEventListener('click', function () {
   toggleDealSaved();
+});
+document.getElementById('sidebarDashboardBtn').addEventListener('click', function () {
+  fetchDeals().then(function (deals) {
+    showDealDashboard(visibleDashboardDeals(deals));
+  });
 });
 document.getElementById('dealViewTabs').addEventListener('click', function (e) {
   var btn = e.target.closest('.deal-view-tab');
@@ -4328,6 +4383,8 @@ document.getElementById('stopBtn').addEventListener('click', function () {
 async function startAnalysis() {
   var company = document.getElementById('companyName').value.trim();
   if (!company) { alert('Please enter a company name.'); return; }
+  currentAppView = 'deal-detail';
+  syncChatPanelForView();
   hideArenaMemoViewer();
   clearDealPoll();
   closeDealStream();
@@ -4460,9 +4517,6 @@ if (dashboardFiltersEl) {
     if (currentAppView === 'dashboard') renderDashboard();
   });
 }
-document.getElementById('memoBackBtn').addEventListener('click', function () {
-  history.back();
-});
 window.addEventListener('popstate', function (e) {
   historyPushing = true;
   var state = e.state || {};
