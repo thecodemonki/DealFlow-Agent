@@ -437,28 +437,29 @@ async def _band_http_client() -> httpx.AsyncClient:
     return _band_client
 
 
-async def _post_band_room_message(room_id: str, content: str) -> None:
-    """Post a message to a Band room as Librarian, mentioning the Orchestrator."""
-    client = await _band_http_client()
+async def _post_band_librarian_mention(room_id: str, content: str) -> None:
+    """Post to Band as Librarian with Orchestrator in mentions (same pattern as follow-ups)."""
+    headers = {
+        "X-API-Key": _librarian_band_api_key(),
+        "Content-Type": "application/json",
+    }
     url = f"{BAND_API_BASE}/agent/chats/{room_id}/messages"
-    headers = {"X-API-Key": _librarian_band_api_key(), "Content-Type": "application/json"}
-    body = {
+    payload = {
         "message": {
             "content": content,
             "mentions": [{"id": ORCHESTRATOR_AGENT_ID}],
         }
     }
-    resp = await client.post(url, json=body, headers=headers)
-    if resp.status_code != 201:
-        logger.warning(
-            "Band message post failed %s: %s",
-            resp.status_code,
-            resp.text[:500],
-        )
-        raise HTTPException(
-            status_code=502,
-            detail=resp.text[:500] or f"Band API returned {resp.status_code}",
-        )
+    print(f"DEBUG mention payload: {payload}", flush=True)
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(url, headers=headers, json=payload, timeout=10.0)
+    if resp.status_code not in (200, 201):
+        raise HTTPException(status_code=502, detail=resp.text)
+
+
+async def _post_band_room_message(room_id: str, content: str) -> None:
+    """Post a message to a Band room as Librarian, mentioning the Orchestrator."""
+    await _post_band_librarian_mention(room_id, content)
 
 
 async def trigger_orchestrator(deal_id: str, company_name: str, file_paths: list[str], notes: str) -> str:
@@ -480,9 +481,9 @@ async def trigger_orchestrator(deal_id: str, company_name: str, file_paths: list
         ),
     }
 
-    await _post_band_room_message(
+    await _post_band_librarian_mention(
         room_id,
-        f"@Orchestrator {json.dumps(message_body)}",
+        f"NEW DEAL REQUEST: {json.dumps(message_body)}",
     )
 
     return room_id
@@ -506,22 +507,7 @@ async def _post_band_document_uploaded(room_id: str, file_path: str) -> bool:
 
 
 async def _post_band_user_message(room_id: str, message: str) -> None:
-    headers = {
-        "X-API-Key": _librarian_band_api_key(),
-        "Content-Type": "application/json",
-    }
-    url = f"https://app.thenvoi.com/api/v1/agent/chats/{room_id}/messages"
-    payload = {
-        "message": {
-            "content": f"USER FOLLOW-UP: {message}",
-            "mentions": [{"id": "1771a605-be42-431c-8003-dbddd3a25b35"}],
-        }
-    }
-    print(f"DEBUG mention payload: {payload}", flush=True)
-    async with httpx.AsyncClient() as client:
-        resp = await client.post(url, headers=headers, json=payload, timeout=10.0)
-    if resp.status_code not in (200, 201):
-        raise HTTPException(status_code=502, detail=resp.text)
+    await _post_band_librarian_mention(room_id, f"USER FOLLOW-UP: {message}")
 
 
 async def _ensure_agents_running():
@@ -901,7 +887,7 @@ async def deal_stream(deal_id: str):
                         )
                         msg_ts = _band_message_unix_ts(msg)
                         sender_name = msg.get("sender_name") or "Agent"
-                        passes_ts = msg_ts is None or msg_ts > start_time - 30
+                        passes_ts = msg_ts is None or msg_ts > start_time - 600
                         if passes_ts:
                             passed_ts_count += 1
                         print(
@@ -929,7 +915,7 @@ async def deal_stream(deal_id: str):
                         if not msg_id or msg_id in seen_ids:
                             continue
                         msg_ts = _band_message_unix_ts(msg)
-                        if msg_ts is not None and msg_ts <= start_time - 30:
+                        if msg_ts is not None and msg_ts <= start_time - 600:
                             continue
                         content = msg.get("content") or ""
                         sender_name = msg.get("sender_name") or "Agent"
