@@ -406,6 +406,30 @@ def _load_orchestrator_config() -> dict[str, str]:
     return _orch_config
 
 
+LIBRARIAN_BAND_API_KEY_FALLBACK = "band_a_1781367928_k2iCRHCt18tKbpoYFPLAkMbvOtPIPxLf"
+_librarian_key_cache: Optional[str] = None
+
+
+def _librarian_band_api_key() -> str:
+    """Librarian (Document Parser) key for posting to Band without self-mention errors."""
+    global _librarian_key_cache
+    if _librarian_key_cache is not None:
+        return _librarian_key_cache
+
+    key = (os.environ.get("DOCUMENT_PARSER_API_KEY") or "").strip()
+    if not key:
+        try:
+            from shared.agent_config import load_agent_config
+
+            _, key = load_agent_config("document_parser")
+        except ValueError as e:
+            logger.warning("Document parser API key not configured: %s", e)
+            key = LIBRARIAN_BAND_API_KEY_FALLBACK
+
+    _librarian_key_cache = key
+    return key
+
+
 async def _band_http_client() -> httpx.AsyncClient:
     global _band_client
     if _band_client is None:
@@ -414,11 +438,10 @@ async def _band_http_client() -> httpx.AsyncClient:
 
 
 async def _post_band_room_message(room_id: str, content: str) -> None:
-    """Post a message to a Band room using the same API contract as the agents."""
-    orch = _load_orchestrator_config()
+    """Post a message to a Band room as Librarian, mentioning the Orchestrator."""
     client = await _band_http_client()
     url = f"{BAND_API_BASE}/agent/chats/{room_id}/messages"
-    headers = {"X-API-Key": orch["api_key"], "Content-Type": "application/json"}
+    headers = {"X-API-Key": _librarian_band_api_key(), "Content-Type": "application/json"}
     body = {
         "message": {
             "content": content,
@@ -484,7 +507,7 @@ async def _post_band_document_uploaded(room_id: str, file_path: str) -> bool:
 
 async def _post_band_user_message(room_id: str, message: str) -> None:
     headers = {
-        "X-API-Key": "band_a_1781367928_k2iCRHCt18tKbpoYFPLAkMbvOtPIPxLf",
+        "X-API-Key": _librarian_band_api_key(),
         "Content-Type": "application/json",
     }
     url = f"https://app.thenvoi.com/api/v1/agent/chats/{room_id}/messages"
@@ -799,9 +822,6 @@ async def post_deal_message(deal_id: str, body: DealMessageBody):
     return {"status": "sent"}
 
 
-LIBRARIAN_BAND_API_KEY = "band_a_1781367928_k2iCRHCt18tKbpoYFPLAkMbvOtPIPxLf"
-
-
 def _band_message_unix_ts(msg: dict[str, Any]) -> Optional[float]:
     raw = msg.get("inserted_at") or msg.get("created_at") or msg.get("timestamp")
     if not raw or not isinstance(raw, str):
@@ -825,7 +845,7 @@ async def deal_stream(deal_id: str):
             f"https://app.thenvoi.com/api/v1/agent/chats/{room_id}/messages"
             f"?status=all&page_size=100"
         )
-        headers = {"X-API-Key": LIBRARIAN_BAND_API_KEY}
+        headers = {"X-API-Key": _librarian_band_api_key()}
 
         async def fetch_page(client: httpx.AsyncClient, page: int) -> tuple[list, dict]:
             url = f"{base_url}&page={page}"
