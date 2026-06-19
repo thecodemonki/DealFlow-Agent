@@ -374,60 +374,39 @@ ORCHESTRATOR_AGENT_ID = os.getenv(
     "ORCHESTRATOR_AGENT_ID",
     "1771a605-be42-431c-8003-dbddd3a25b35",
 )
-_orch_config: Optional[dict[str, str]] = None
-
-
-def _load_orchestrator_config() -> dict[str, str]:
-    """Load orchestrator agent_id + api_key from env (Railway) or agent_config.yaml (local)."""
-    global _orch_config
-    if _orch_config is not None:
-        return _orch_config
-
-    agent_id = (os.environ.get("ORCHESTRATOR_AGENT_ID") or "").strip()
-    api_key = (os.environ.get("ORCHESTRATOR_API_KEY") or "").strip()
-
-    if agent_id and api_key:
-        _orch_config = {"agent_id": agent_id, "api_key": api_key}
-        return _orch_config
-
-    try:
-        import yaml
-
-        if AGENT_CONFIG_PATH.is_file():
-            with open(AGENT_CONFIG_PATH) as f:
-                config = yaml.safe_load(f) or {}
-            orch = config.get("orchestrator") or {}
-            agent_id = agent_id or str(orch.get("agent_id") or "").strip()
-            api_key = api_key or str(orch.get("api_key") or "").strip()
-    except Exception as e:
-        logger.warning("Could not load agent_config.yaml: %s", e)
-
-    _orch_config = {"agent_id": agent_id, "api_key": api_key}
-    return _orch_config
-
+SSE_LOOKBACK_SECONDS = 86400  # 24 hours
 
 LIBRARIAN_BAND_API_KEY_FALLBACK = "band_a_1781367928_k2iCRHCt18tKbpoYFPLAkMbvOtPIPxLf"
-_librarian_key_cache: Optional[str] = None
+_librarian_key_cache: Optional[tuple[str, str]] = None
 
 
 def _librarian_band_api_key() -> str:
     """Librarian (Document Parser) key for posting to Band without self-mention errors."""
+    key, _ = _librarian_band_api_key_with_source()
+    return key
+
+
+def _librarian_band_api_key_with_source() -> tuple[str, str]:
     global _librarian_key_cache
     if _librarian_key_cache is not None:
         return _librarian_key_cache
 
-    key = (os.environ.get("DOCUMENT_PARSER_API_KEY") or "").strip()
-    if not key:
-        try:
-            from shared.agent_config import load_agent_config
+    env_key = (os.environ.get("DOCUMENT_PARSER_API_KEY") or "").strip()
+    if env_key:
+        _librarian_key_cache = (env_key, "env")
+        return _librarian_key_cache
 
-            _, key = load_agent_config("document_parser")
-        except ValueError as e:
-            logger.warning("Document parser API key not configured: %s", e)
-            key = LIBRARIAN_BAND_API_KEY_FALLBACK
+    try:
+        from shared.agent_config import load_agent_config
 
-    _librarian_key_cache = key
-    return key
+        _, key = load_agent_config("document_parser")
+        _librarian_key_cache = (key, "yaml")
+        return _librarian_key_cache
+    except ValueError as e:
+        logger.warning("Document parser API key not configured: %s", e)
+
+    _librarian_key_cache = (LIBRARIAN_BAND_API_KEY_FALLBACK, "fallback")
+    return _librarian_key_cache
 
 
 async def _band_http_client() -> httpx.AsyncClient:
@@ -439,8 +418,9 @@ async def _band_http_client() -> httpx.AsyncClient:
 
 async def _post_band_librarian_mention(room_id: str, content: str) -> None:
     """Post to Band as Librarian with Orchestrator in mentions (same pattern as follow-ups)."""
+    api_key, key_source = _librarian_band_api_key_with_source()
     headers = {
-        "X-API-Key": _librarian_band_api_key(),
+        "X-API-Key": api_key,
         "Content-Type": "application/json",
     }
     url = f"{BAND_API_BASE}/agent/chats/{room_id}/messages"
@@ -450,7 +430,12 @@ async def _post_band_librarian_mention(room_id: str, content: str) -> None:
             "mentions": [{"id": ORCHESTRATOR_AGENT_ID}],
         }
     }
-    print(f"DEBUG mention payload: {payload}", flush=True)
+    key_suffix = api_key[-4:] if len(api_key) >= 4 else "????"
+    print(
+        f"DEBUG mention payload key_source={key_source} key_suffix=...{key_suffix} "
+        f"orchestrator_id={ORCHESTRATOR_AGENT_ID} payload={payload}",
+        flush=True,
+    )
     async with httpx.AsyncClient() as client:
         resp = await client.post(url, headers=headers, json=payload, timeout=10.0)
     if resp.status_code not in (200, 201):
@@ -778,7 +763,7 @@ async def get_deal_log():
 async def save_deal_chat(deal_id: str, body: DealChatBody):
     """Persist agent chat replay from the UI for restoring past deal views."""
     if deal_id not in deals:
-        raise HTTPException(status_code=404, detail="Deal not found")
+        return {"status": "skipped", "deal_id": deal_id, "message_count": len(body.messages)}
     deals[deal_id]["chat_messages"] = body.messages
     if body.industry:
         deals[deal_id]["industry"] = body.industry
@@ -792,11 +777,9 @@ async def save_deal_chat(deal_id: str, body: DealChatBody):
 async def post_deal_message(deal_id: str, body: DealMessageBody):
     """Post a user follow-up question to the shared Band room."""
     message = (body.message or "").strip()
-    deal_found = deal_id in deals
     logger.info(
-        "POST /deals/%s/message: deal_found=%s room_id=%s message_len=%d",
+        "POST /deals/%s/message: room_id=%s message_len=%d",
         deal_id,
-        deal_found,
         BAND_ROOM_ID,
         len(message),
     )
@@ -887,7 +870,7 @@ async def deal_stream(deal_id: str):
                         )
                         msg_ts = _band_message_unix_ts(msg)
                         sender_name = msg.get("sender_name") or "Agent"
-                        passes_ts = msg_ts is None or msg_ts > start_time - 600
+                        passes_ts = msg_ts is None or msg_ts > start_time - SSE_LOOKBACK_SECONDS
                         if passes_ts:
                             passed_ts_count += 1
                         print(
@@ -915,7 +898,7 @@ async def deal_stream(deal_id: str):
                         if not msg_id or msg_id in seen_ids:
                             continue
                         msg_ts = _band_message_unix_ts(msg)
-                        if msg_ts is not None and msg_ts <= start_time - 600:
+                        if msg_ts is not None and msg_ts <= start_time - SSE_LOOKBACK_SECONDS:
                             continue
                         content = msg.get("content") or ""
                         sender_name = msg.get("sender_name") or "Agent"
