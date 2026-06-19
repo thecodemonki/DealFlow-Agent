@@ -1825,6 +1825,8 @@
       background: linear-gradient(135deg, #10b981 0%, #059669 45%, #047857 100%);
       box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35);
       border: none;
+      font-family: inherit;
+      cursor: pointer;
       transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
     .btn-download:hover {
@@ -2173,7 +2175,7 @@
           <div class="memo-view__header-right">
             <span class="memo-view__pill memo-view__pill--conditional" id="memoViewRec"></span>
             <div class="memo-pdf-download-wrap">
-              <a id="downloadPdfBtn" class="memo-pdf-download-btn" href="#" target="_blank" rel="noopener noreferrer" style="display:none">↓ Download PDF</a>
+              <button type="button" id="downloadPdfBtn" class="memo-pdf-download-btn" style="display:none">Download Memo</button>
             </div>
             <a class="memo-view__download" id="memoViewDownload" href="#" target="_blank" rel="noopener noreferrer" hidden>Download PDF</a>
           </div>
@@ -2230,12 +2232,12 @@
         <div class="results-kicker">Analysis Complete</div>
         <div class="rec-value results-rec-value results-rec-value--conditional" id="recValue" aria-hidden="true"></div>
         <p class="results-meta-line" id="resultsMetaLine"></p>
-        <a class="btn-download" id="downloadBtn" href="#" target="_blank" rel="noopener noreferrer" style="display:none">
+        <button type="button" class="btn-download" id="downloadBtn" style="display:none">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          <span>Download investment memo PDF</span>
-        </a>
+          <span>Download Memo</span>
+        </button>
         <button type="button" class="results-dashboard-link" id="resultsDashboardBtn">Add to Dashboard ★</button>
-        <a id="modalPdfBtn" class="memo-pdf-download-btn memo-pdf-download-btn--modal" href="#" target="_blank" rel="noopener noreferrer">↓ Download Memo PDF</a>
+        <button type="button" id="modalPdfBtn" class="memo-pdf-download-btn memo-pdf-download-btn--modal">Download Memo</button>
         <button type="button" class="results-close" id="resultsCloseBtn">Close</button>
       </div>
     </div>
@@ -3224,30 +3226,192 @@ function scoreBundleFromSummary(summary) {
     risksFlagged: rc
   };
 }
-function memoLatestPdfUrl() {
-  return API + '/memo/latest';
+function memoTextFrom(id) {
+  var el = document.getElementById(id);
+  return el ? el.textContent.trim() : '';
+}
+
+function memoFlagsFromList() {
+  var ul = document.getElementById('memoViewFlags');
+  if (!ul) return [];
+  return Array.prototype.map.call(ul.querySelectorAll('li'), function (li) {
+    return li.textContent.trim();
+  }).filter(Boolean);
+}
+
+function memoRisksFromLine() {
+  var line = memoTextFrom('memoRisksLine');
+  var m = line.match(/(\d+)/);
+  if (m) return parseInt(m[1], 10);
+  if (lastDealScore && lastDealScore.risksFlagged != null) return lastDealScore.risksFlagged;
+  return 0;
+}
+
+function gatherAgentSummariesForMemo() {
+  var messages = serializeChatFeed();
+  var out = [];
+  messages.forEach(function (m) {
+    if (!m || m.role !== 'agent') return;
+    var text = truncateAgentRoutingMessage(String(m.text || '').trim());
+    if (!text) return;
+    out.push({
+      name: m.name || (m.agentId && AGENT_LABEL[m.agentId]) || 'Agent',
+      agentId: m.agentId || null,
+      text: text
+    });
+  });
+  return out;
+}
+
+function gatherMemoPrintData() {
+  var companyEl = document.getElementById('companyName');
+  var industryEl = document.getElementById('industry');
+  var company = memoTextFrom('memoViewCompany')
+    || (companyEl && companyEl.value ? companyEl.value.trim() : '')
+    || 'Unknown company';
+  var industry = industryEl && industryEl.value ? industryEl.value.trim() : '';
+  var bundle = lastDealScore || {};
+  var score = formatDealScore1To10(bundle.score != null ? bundle.score : 6.5);
+  var recommendation = memoTextFrom('memoVerdict')
+    || (bundle.verdict ? String(bundle.verdict).toUpperCase() : 'CONDITIONAL');
+  var data = {
+    company: company,
+    industry: industry,
+    score: score,
+    recommendation: recommendation,
+    risksFlagged: memoRisksFromLine(),
+    dateAnalyzed: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+    executiveSummary: memoTextFrom('memoViewExec'),
+    marketPosition: memoTextFrom('memoViewMarket'),
+    financialHighlights: memoTextFrom('memoViewFinancial'),
+    legalRisks: memoTextFrom('memoViewLegal'),
+    investmentThesis: memoTextFrom('memoViewThesis'),
+    redFlags: memoFlagsFromList(),
+    agentSummaries: gatherAgentSummariesForMemo()
+  };
+  if (currentDealId && (!data.executiveSummary || !data.marketPosition)) {
+    var deal = typeof getDashboardDealById === 'function' ? getDashboardDealById(currentDealId) : null;
+    var summary = deal ? dealSummaryFromRecord(deal) : null;
+    if (summary) {
+      if (!data.executiveSummary && summary.executive_summary) data.executiveSummary = summary.executive_summary;
+      if (!data.marketPosition && summary.market_position) data.marketPosition = summary.market_position;
+      if (!data.financialHighlights && summary.financial_highlights) data.financialHighlights = summary.financial_highlights;
+      if (!data.legalRisks && summary.legal_risks) data.legalRisks = summary.legal_risks;
+      if (!data.investmentThesis && summary.investment_thesis) data.investmentThesis = String(summary.investment_thesis);
+      if (!data.redFlags.length && summary.red_flags && summary.red_flags.length) data.redFlags = summary.red_flags.slice();
+      if (summary.deal_score != null) data.score = formatDealScore1To10(summary.deal_score);
+      if (summary.deal_verdict) data.recommendation = String(summary.deal_verdict).toUpperCase();
+    }
+  }
+  return data;
+}
+
+function memoPrintRecClass(rec) {
+  var r = String(rec || 'CONDITIONAL').toUpperCase();
+  if (r === 'INVEST' || r === 'PASS') return 'memo-print-rec--' + r.toLowerCase();
+  if (r === 'FAIL') return 'memo-print-rec--pass';
+  return 'memo-print-rec--conditional';
+}
+
+function buildInvestmentMemoHtml(data) {
+  data = data || {};
+  var recClass = memoPrintRecClass(data.recommendation);
+  var recLabel = escapeHtml(String(data.recommendation || 'CONDITIONAL').toUpperCase());
+  var flagsHtml = (data.redFlags || []).map(function (f) {
+    return '<li>' + escapeHtml(String(f)) + '</li>';
+  }).join('');
+  if (!flagsHtml) flagsHtml = '<li>No material red flags identified in this preview.</li>';
+  var agents = data.agentSummaries || [];
+  var agentsHtml = agents.length
+    ? agents.map(function (a) {
+      return '<div class="memo-print-agent"><h3>' + escapeHtml(a.name || 'Agent') + '</h3><p>' +
+        escapeHtml(a.text || '').replace(/\n/g, '<br>') + '</p></div>';
+    }).join('')
+    : '<p class="memo-print-muted">No agent messages recorded.</p>';
+  var industryLine = data.industry
+    ? '<p class="memo-print-meta">Industry: ' + escapeHtml(data.industry) + '</p>'
+    : '';
+  var risksLine = data.risksFlagged === 1
+    ? '1 risk flagged'
+    : (data.risksFlagged || 0) + ' risks flagged';
+  return '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">' +
+    '<title>Investment Memo — ' + escapeHtml(data.company || 'Deal') + '</title>' +
+    '<style>' +
+    '* { box-sizing: border-box; }' +
+    'body { margin: 0; padding: 32px 24px 48px; font-family: Georgia, "Times New Roman", serif; color: #111827; background: #f9fafb; line-height: 1.6; }' +
+    '.memo-print-wrap { max-width: 720px; margin: 0 auto; background: #fff; padding: 40px 48px; border-radius: 12px; box-shadow: 0 2px 16px rgba(0,0,0,0.06); }' +
+    '.memo-print-toolbar { margin-bottom: 24px; text-align: right; }' +
+    '.memo-print-toolbar button { padding: 10px 18px; font-size: 14px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #4f46e5; color: #fff; border: none; border-radius: 8px; cursor: pointer; }' +
+    '.memo-print-toolbar button:hover { background: #4338ca; }' +
+    '.memo-print-header { border-bottom: 2px solid #e5e7eb; padding-bottom: 24px; margin-bottom: 28px; }' +
+    '.memo-print-kicker { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #6b7280; margin: 0 0 8px; }' +
+    '.memo-print-title { font-size: 32px; font-weight: 700; margin: 0 0 8px; letter-spacing: -0.02em; }' +
+    '.memo-print-meta { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 14px; color: #6b7280; margin: 0 0 4px; }' +
+    '.memo-print-score-row { display: flex; align-items: center; gap: 16px; margin-top: 16px; flex-wrap: wrap; }' +
+    '.memo-print-score { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 28px; font-weight: 800; color: #111827; }' +
+    '.memo-print-rec { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; padding: 6px 12px; border-radius: 999px; text-transform: uppercase; }' +
+    '.memo-print-rec--invest { background: #d1fae5; color: #065f46; }' +
+    '.memo-print-rec--conditional { background: #fef3c7; color: #92400e; }' +
+    '.memo-print-rec--pass { background: #fee2e2; color: #991b1b; }' +
+    '.memo-print-section { margin-bottom: 28px; page-break-inside: avoid; }' +
+    '.memo-print-section h2 { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #6b7280; margin: 0 0 10px; }' +
+    '.memo-print-section p { margin: 0; font-size: 15px; color: #374151; }' +
+    '.memo-print-section ul { margin: 0; padding-left: 1.25em; color: #374151; font-size: 15px; }' +
+    '.memo-print-agent { margin-bottom: 20px; page-break-inside: avoid; }' +
+    '.memo-print-agent h3 { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 14px; font-weight: 700; color: #4f46e5; margin: 0 0 6px; }' +
+    '.memo-print-agent p { margin: 0; font-size: 14px; color: #4b5563; }' +
+    '.memo-print-muted { color: #9ca3af; font-style: italic; margin: 0; }' +
+    '.memo-print-footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 12px; color: #9ca3af; text-align: center; }' +
+    '@media print {' +
+    '  body { background: #fff; padding: 0; }' +
+    '  .memo-print-wrap { box-shadow: none; border-radius: 0; padding: 0; max-width: none; }' +
+    '  .memo-print-toolbar { display: none !important; }' +
+    '  .memo-print-section { page-break-inside: avoid; }' +
+    '}' +
+    '</style></head><body><div class="memo-print-wrap">' +
+    '<div class="memo-print-toolbar"><button type="button" onclick="window.print()">Print / Save as PDF</button></div>' +
+    '<header class="memo-print-header">' +
+      '<p class="memo-print-kicker">Investment Memo</p>' +
+      '<h1 class="memo-print-title">' + escapeHtml(data.company || 'Unknown company') + '</h1>' +
+      '<p class="memo-print-meta">' + escapeHtml(data.dateAnalyzed || '') + '</p>' +
+      industryLine +
+      '<div class="memo-print-score-row">' +
+        '<span class="memo-print-score">' + escapeHtml(String(data.score || '6.5')) + ' / 10</span>' +
+        '<span class="memo-print-rec ' + recClass + '">' + recLabel + '</span>' +
+        '<span class="memo-print-meta">' + escapeHtml(risksLine) + '</span>' +
+      '</div>' +
+    '</header>' +
+    '<section class="memo-print-section"><h2>Executive Summary</h2><p>' + escapeHtml(data.executiveSummary || '—') + '</p></section>' +
+    '<section class="memo-print-section"><h2>Market Position</h2><p>' + escapeHtml(data.marketPosition || '—') + '</p></section>' +
+    '<section class="memo-print-section"><h2>Financial Highlights</h2><p>' + escapeHtml(data.financialHighlights || '—') + '</p></section>' +
+    '<section class="memo-print-section"><h2>Legal Risk</h2><p>' + escapeHtml(data.legalRisks || '—') + '</p></section>' +
+    '<section class="memo-print-section"><h2>Red Flags</h2><ul>' + flagsHtml + '</ul></section>' +
+    '<section class="memo-print-section"><h2>Investment Thesis</h2><p>' + escapeHtml(data.investmentThesis || '—') + '</p></section>' +
+    '<section class="memo-print-section"><h2>Agent Analysis</h2>' + agentsHtml + '</section>' +
+    '<footer class="memo-print-footer">Generated by DealFlow Agent</footer>' +
+    '</div></body></html>';
+}
+
+function openInvestmentMemoWindow() {
+  var data = gatherMemoPrintData();
+  var html = buildInvestmentMemoHtml(data);
+  var w = window.open('', '_blank');
+  if (!w) return;
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
 }
 
 function setDownloadLinks(dealId) {
-  var url = memoLatestPdfUrl();
-  var showMemoPdf = dealId && activeDealViewTab === 'memo';
-  var showResultsPdf = !!dealId;
+  var showMemoBtn = dealId && activeDealViewTab === 'memo';
+  var showResultsBtn = !!dealId;
 
   var dp = document.getElementById('downloadPdfBtn');
-  if (dp) {
-    dp.href = url;
-    dp.style.display = showMemoPdf ? 'inline-flex' : 'none';
-  }
+  if (dp) dp.style.display = showMemoBtn ? 'inline-flex' : 'none';
   var db = document.getElementById('downloadBtn');
-  if (db) {
-    db.href = url;
-    db.style.display = showResultsPdf ? 'inline-flex' : 'none';
-  }
+  if (db) db.style.display = showResultsBtn ? 'inline-flex' : 'none';
   var mp = document.getElementById('modalPdfBtn');
-  if (mp) {
-    mp.href = url;
-    mp.style.display = showResultsPdf ? 'inline-flex' : 'none';
-  }
+  if (mp) mp.style.display = showResultsBtn ? 'inline-flex' : 'none';
   var dl = document.getElementById('memoViewDownload');
   if (dl) dl.style.display = 'none';
 }
@@ -4575,6 +4739,10 @@ document.getElementById('dealCardGrid').addEventListener('click', function (e) {
     return;
   }
   openDealFromDashboard(dealId);
+});
+['downloadPdfBtn', 'downloadBtn', 'modalPdfBtn'].forEach(function (id) {
+  var el = document.getElementById(id);
+  if (el) el.addEventListener('click', openInvestmentMemoWindow);
 });
 var dashboardCompareToggleEl = document.getElementById('dashboardCompareToggle');
 if (dashboardCompareToggleEl) {
