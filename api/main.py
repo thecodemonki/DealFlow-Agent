@@ -263,9 +263,20 @@ def _normalize_recommendation(value: Any) -> str:
     return DEFAULT_RECOMMENDATION
 
 
+def _normalize_score_1_to_10(value: Any) -> float:
+    """Convert to 1–10 scale; divide by 10 when value is on the 0–100 scale."""
+    try:
+        v = float(value)
+    except (TypeError, ValueError):
+        return DEFAULT_SCORE
+    if v > 10.0:
+        v = v / 10.0
+    return round(max(1.0, min(10.0, v)), 1)
+
+
 def _score_1_to_10(deal_score_100: int) -> float:
     """Convert 0–100 deal_score to 1–10 scale."""
-    return round(max(1.0, min(10.0, deal_score_100 / 10.0)), 1)
+    return _normalize_score_1_to_10(deal_score_100)
 
 
 def _recommendation_from_verdict(verdict: str) -> str:
@@ -404,7 +415,10 @@ def _apply_memo_summary_to_deal(deal: dict[str, Any], memo_summary: Optional[dic
     text = _memo_text_blob(memo_summary)
     parsed_score = _parse_score_from_memo_text(text)
     parsed_rec = _parse_recommendation_from_memo_text(text)
-    deal["score"] = parsed_score if parsed_score is not None else DEFAULT_SCORE
+    if parsed_score is not None:
+        deal["score"] = _normalize_score_1_to_10(parsed_score)
+    else:
+        deal["score"] = _normalize_score_1_to_10(scores.get("deal_score", DEFAULT_SCORE))
     deal["recommendation"] = parsed_rec if parsed_rec is not None else DEFAULT_RECOMMENDATION
     deal["axis_scores"] = _parse_axis_scores_from_memo_text(text, deal["score"])
 
@@ -459,12 +473,9 @@ def _public_deal_row(deal_id: str, d: dict[str, Any]) -> dict[str, Any]:
     row["band_room_id"] = resolved_room
     row["room_id"] = resolved_room
     if d.get("score") is not None:
-        try:
-            row["score"] = round(max(1.0, min(10.0, float(d["score"]))), 1)
-        except (TypeError, ValueError):
-            row["score"] = DEFAULT_SCORE
+        row["score"] = _normalize_score_1_to_10(d["score"])
     elif scores["deal_score"] is not None:
-        row["score"] = _score_1_to_10(scores["deal_score"])
+        row["score"] = _normalize_score_1_to_10(scores["deal_score"])
     else:
         row["score"] = DEFAULT_SCORE
     row["recommendation"] = _normalize_recommendation(
@@ -562,7 +573,7 @@ def _full_deal_summary(deal_id: str) -> dict[str, Any]:
             or raw.get("recommendation"),
             "recommendation": raw.get("recommendation"),
             "confidence": raw.get("confidence"),
-            "score": d.get("score") if d.get("score") is not None else DEFAULT_SCORE,
+            "score": _normalize_score_1_to_10(d.get("score", DEFAULT_SCORE)),
             "axis_scores": _axis_scores_for_deal(d),
         }
     )

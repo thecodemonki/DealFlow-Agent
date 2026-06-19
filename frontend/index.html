@@ -2478,15 +2478,25 @@ function recommendationBadgeClass(rec) {
   return 'deal-card__badge--conditional';
 }
 
+function normalizeDealScore1To10(value) {
+  var s = typeof value === 'string' ? parseFloat(value) : value;
+  if (typeof s !== 'number' || isNaN(s)) return 6.5;
+  if (s > 10) s = s / 10;
+  return Math.round(Math.max(1, Math.min(10, s)) * 10) / 10;
+}
+
+function formatDealScore1To10(value) {
+  return normalizeDealScore1To10(value).toFixed(1);
+}
+
 function dealCardScore(deal) {
-  var s = deal.score;
-  if (typeof s === 'string') s = parseFloat(s);
-  if (typeof s !== 'number' || isNaN(s)) {
-    var ds = deal.deal_score;
-    if (typeof ds === 'number' && !isNaN(ds)) s = Math.round((ds / 10) * 10) / 10;
-    else s = 6.5;
+  if (deal && deal.score != null && deal.score !== '') {
+    return normalizeDealScore1To10(deal.score);
   }
-  return Math.max(1, Math.min(10, s));
+  if (deal && deal.deal_score != null && deal.deal_score !== '') {
+    return normalizeDealScore1To10(deal.deal_score);
+  }
+  return 6.5;
 }
 
 function showSubmitForm() {
@@ -2552,7 +2562,7 @@ function renderDealCards(deals, isFilteredView) {
       '</div>' +
       '<div class="deal-card__score">' +
         '<div class="deal-card__score-row">' +
-          '<span class="deal-card__score-num">' + score.toFixed(1) + '</span>' +
+          '<span class="deal-card__score-num">' + formatDealScore1To10(score) + '</span>' +
           '<span class="deal-card__score-denom">/ 10</span>' +
         '</div>' +
         '<div class="deal-card__score-bar"><div class="deal-card__score-fill" style="width:' + scorePct + '%"></div></div>' +
@@ -3012,10 +3022,10 @@ function axisScoresFromSummary(apiSummary, dealRecord) {
     if (ok) return out;
   }
   var overall = 6.5;
-  if (apiSummary && apiSummary.score != null) overall = apiSummary.score;
-  else if (dealRecord && dealRecord.score != null) overall = dealRecord.score;
-  else if (apiSummary && apiSummary.deal_score != null) overall = apiSummary.deal_score / 10;
-  else if (dealRecord && dealRecord.deal_score != null) overall = dealRecord.deal_score / 10;
+  if (apiSummary && apiSummary.score != null) overall = normalizeDealScore1To10(apiSummary.score);
+  else if (dealRecord && dealRecord.score != null) overall = normalizeDealScore1To10(dealRecord.score);
+  else if (apiSummary && apiSummary.deal_score != null) overall = normalizeDealScore1To10(apiSummary.deal_score);
+  else if (dealRecord && dealRecord.deal_score != null) overall = normalizeDealScore1To10(dealRecord.deal_score);
   return defaultAxisScores(overall);
 }
 function renderMemoRadarChart(axisScores) {
