@@ -506,9 +506,30 @@ async def _post_band_document_uploaded(room_id: str, file_path: str) -> bool:
 async def _post_band_user_message(room_id: str, message: str) -> None:
     """Publish a user follow-up question to the deal Band room for the Orchestrator."""
     try:
-        mention_id = await _get_orchestrator_mention_id(room_id)
-        content = f"@Orchestrator {message}"
-        await _post_band_room_message(room_id, content, [mention_id])
+        orch = _load_orchestrator_config()
+        client = await _band_http_client()
+        url = f"{BAND_API_BASE}/agent/chats/{room_id}/messages"
+        headers = {"X-API-Key": orch["api_key"], "Content-Type": "application/json"}
+        body = {
+            "message": {
+                "content": (
+                    f"USER FOLLOW-UP: {message}\n\n"
+                    "Please route this to the appropriate specialist agent."
+                ),
+                "mentions": [],
+            }
+        }
+        resp = await client.post(url, json=body, headers=headers)
+        if resp.status_code != 201:
+            logger.warning(
+                "USER message post failed %s: %s",
+                resp.status_code,
+                resp.text[:500],
+            )
+            raise HTTPException(
+                status_code=502,
+                detail=resp.text[:500] or f"Band API returned {resp.status_code}",
+            )
     except HTTPException:
         raise
     except Exception as e:

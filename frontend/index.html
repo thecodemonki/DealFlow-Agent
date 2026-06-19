@@ -1971,11 +1971,12 @@ document.getElementById('landingGetStarted').addEventListener('click', showAppFr
 let currentDealId = null, currentBandRoomId = null, pendingDocFile = null, dealUploadOk = false, pollTimer = null, dealPollTimer = null, activityStep = 0, runTimerInterval = null, stepTimeoutId = null, lastAnalysisDurationSec = 0;
 var followUpChatEnabled = false;
 var activeDealViewTab = 'memo';
+var DEFAULT_BAND_ROOM_ID = '8f4ebded-2988-4a75-915c-bcb80ad8a815';
 function setActiveDealIds(dealId, roomId) {
   currentDealId = dealId || null;
-  currentBandRoomId = roomId || null;
+  currentBandRoomId = dealId ? (roomId || DEFAULT_BAND_ROOM_ID) : (roomId || null);
   window.currentDealId = currentDealId;
-  window.bandRoomId = currentBandRoomId;
+  window.bandRoomId = currentBandRoomId || DEFAULT_BAND_ROOM_ID;
   syncFollowUpInputState();
 }
 function syncFollowUpInputState() {
@@ -2858,6 +2859,8 @@ function restoreChatFromHistory(entry) {
 function restoreCompletedDeal(deal, entry, summary) {
   clearDealPoll();
   setActiveDealIds(deal.id, deal.band_room_id || deal.room_id || null);
+  window.bandRoomId = window.bandRoomId || DEFAULT_BAND_ROOM_ID;
+  currentBandRoomId = currentBandRoomId || DEFAULT_BAND_ROOM_ID;
   if (!summary) summary = dealSummaryFromRecord(deal);
   fillFormFromEntry(entry, deal);
   document.body.classList.remove('app-running');
@@ -3069,6 +3072,8 @@ const STEPS = [
 function showResults() {
   document.body.classList.remove('app-running');
   setActiveDealIds(currentDealId, currentBandRoomId);
+  window.bandRoomId = window.bandRoomId || DEFAULT_BAND_ROOM_ID;
+  currentBandRoomId = currentBandRoomId || DEFAULT_BAND_ROOM_ID;
   var company = (document.getElementById('companyName').value || '').trim() || 'Unknown company';
   var industry = (document.getElementById('industry').value || '').trim() || 'your industry';
   var nFiles = (pendingDocFile || dealUploadOk) ? 1 : 0;
@@ -3330,6 +3335,8 @@ enrichRecentEntriesFromServer();
 initDealLogCollapse();
 updateChatEmpty();
 updateDocUploadBadge();
+window.bandRoomId = window.bandRoomId || DEFAULT_BAND_ROOM_ID;
+currentBandRoomId = currentBandRoomId || DEFAULT_BAND_ROOM_ID;
 syncFollowUpInputState();
 initAgentShowcase();
 if (recentListRelativeInterval == null) {
