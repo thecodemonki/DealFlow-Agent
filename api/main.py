@@ -810,13 +810,24 @@ async def deal_stream(deal_id: str):
         seen_ids: set[str] = set()
         start_time = time.time()
         debug_logged = False
+        sse_key_logged = False
         base_url = (
             f"https://app.thenvoi.com/api/v1/agent/chats/{room_id}/messages"
             f"?status=all&page_size=100"
         )
-        headers = {"X-API-Key": _librarian_band_api_key()}
 
         async def fetch_page(client: httpx.AsyncClient, page: int) -> tuple[list, dict]:
+            nonlocal sse_key_logged
+            api_key, key_source = _librarian_band_api_key_with_source()
+            headers = {"X-API-Key": api_key}
+            if not sse_key_logged:
+                key_suffix = api_key[-4:] if len(api_key) >= 4 else "????"
+                print(
+                    f"DEBUG band GET using key_source={key_source} key_suffix=...{key_suffix} "
+                    f"(DOCUMENT_PARSER / Librarian, not Orchestrator)",
+                    flush=True,
+                )
+                sse_key_logged = True
             url = f"{base_url}&page={page}"
             resp = await client.get(url, headers=headers, timeout=10.0)
             raw_preview = (resp.text or "")[:500]
