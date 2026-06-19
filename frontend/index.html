@@ -1971,6 +1971,9 @@ document.getElementById('landingGetStarted').addEventListener('click', showAppFr
 let currentDealId = null, currentBandRoomId = null, pendingDocFile = null, dealUploadOk = false, pollTimer = null, dealPollTimer = null, activityStep = 0, runTimerInterval = null, stepTimeoutId = null, lastAnalysisDurationSec = 0;
 var followUpChatEnabled = false;
 var activeDealViewTab = 'memo';
+var eventSource = null;
+var dealStreamDealId = null;
+var dealStreamSeenIds = {};
 var DEFAULT_BAND_ROOM_ID = '8f4ebded-2988-4a75-915c-bcb80ad8a815';
 function setActiveDealIds(dealId, roomId) {
   currentDealId = dealId || null;
@@ -2460,10 +2463,74 @@ function addFollowUpUserMessage(text) {
   feed.scrollTop = feed.scrollHeight;
   updateChatEmpty();
 }
+function closeDealStream() {
+  if (eventSource) {
+    eventSource.close();
+    eventSource = null;
+  }
+  dealStreamDealId = null;
+}
+function streamSenderToAgentId(sender) {
+  var s = String(sender || '').toLowerCase();
+  if (s.indexOf('orchestrator') !== -1 || s.indexOf('conductor') !== -1) return 'orchestrator';
+  if (s.indexOf('detective') !== -1 || s.indexOf('webresearch') !== -1) return 'webresearch';
+  if (s.indexOf('banker') !== -1 || s.indexOf('financialanalyst') !== -1) return 'financialanalyst';
+  if (s.indexOf('judge') !== -1 || s.indexOf('legalrisk') !== -1) return 'legalrisk';
+  if (s.indexOf('wizard') !== -1 || s.indexOf('synthesis') !== -1) return 'synthesis';
+  if (s.indexOf('librarian') !== -1 || s.indexOf('documentparser') !== -1) return 'documentparser';
+  return nameToAgentId(sender) || null;
+}
+function onDealStreamPayload(data, eventName) {
+  if (!data) return;
+  if (data.type === 'heartbeat') return;
+  var sender = data.sender || data.sender_name || '';
+  var content = data.content || data.text || data.message || '';
+  if (!content || typeof content !== 'string') return;
+  if (data.type === 'agent_message') {
+    if (sender.toLowerCase().indexOf('librarian') !== -1 && content.indexOf('USER FOLLOW-UP:') === 0) return;
+  }
+  if (content.indexOf('USER FOLLOW-UP:') === 0) return;
+  var msgId = data.id || data.message_id || data.event_id;
+  if (msgId) {
+    var key = String(msgId);
+    if (dealStreamSeenIds[key]) return;
+    dealStreamSeenIds[key] = true;
+  }
+  if (eventName === 'investment_memo' || content.indexOf('SIGNAL:investment_memo') === 0) {
+    return;
+  }
+  if (content.indexOf('SIGNAL:') === 0) return;
+  var agentId = data.agent_id || data.agentId || streamSenderToAgentId(sender);
+  if (!agentId) agentId = inferAgentFromHtml(content);
+  var html = escapeHtml(content).replace(/\n/g, '<br>');
+  addFeedItem(null, html, agentId, null);
+}
+function attachDealStreamHandlers(es) {
+  es.onmessage = function (ev) {
+    try { onDealStreamPayload(JSON.parse(ev.data), 'message'); } catch (e) {}
+  };
+  ['agent_message', 'chat_message', 'investment_memo'].forEach(function (name) {
+    es.addEventListener(name, function (ev) {
+      try { onDealStreamPayload(JSON.parse(ev.data), name); } catch (e) {}
+    });
+  });
+}
+function connectDealStream(dealId) {
+  if (!dealId) return;
+  if (eventSource && dealStreamDealId === dealId && eventSource.readyState !== EventSource.CLOSED) return;
+  closeDealStream();
+  dealStreamDealId = dealId;
+  dealStreamSeenIds = {};
+  eventSource = new EventSource(API + '/deals/' + encodeURIComponent(dealId) + '/stream');
+  attachDealStreamHandlers(eventSource);
+}
 function enableFollowUpChat() {
   if (!currentDealId || !currentBandRoomId) {
     disableFollowUpChat();
     return;
+  }
+  if (!eventSource || eventSource.readyState === EventSource.CLOSED) {
+    connectDealStream(currentDealId);
   }
   followUpChatEnabled = true;
   var inp = document.getElementById('userChatInput');
@@ -3200,6 +3267,7 @@ function resetToInputCard(opts) {
   });
   clearRunTimer();
   clearDealPoll();
+  closeDealStream();
   var btn = document.getElementById('analyzeBtn');
   if (btn) { btn.disabled = false; btn.textContent = 'Run Analysis →'; }
   var cn = document.getElementById('companyName');
@@ -3245,6 +3313,7 @@ async function startAnalysis() {
   if (!company) { alert('Please enter a company name.'); return; }
   hideArenaMemoViewer();
   clearDealPoll();
+  closeDealStream();
   window.analysisAborted = false;
   if (stepTimeoutId) { clearTimeout(stepTimeoutId); stepTimeoutId = null; }
   var arenaRun = document.getElementById('arena');
@@ -3313,6 +3382,7 @@ async function startAnalysis() {
     }
     setActiveDealIds(dealJson && dealJson.deal_id ? dealJson.deal_id : null, dealJson && dealJson.band_room_id ? dealJson.band_room_id : null);
     if (currentDealId && !currentBandRoomId) refreshActiveDealRoomId(currentDealId);
+    if (currentDealId) connectDealStream(currentDealId);
   } catch (e) {
     alert(e && e.message ? e.message : 'Something went wrong');
     clearRunTimer();

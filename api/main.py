@@ -10,6 +10,7 @@ Thin REST layer that:
 Run with: uvicorn api.main:app --reload --port 8000
 """
 
+import asyncio
 import json
 import logging
 import os
@@ -23,7 +24,7 @@ from typing import Any, Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, FileResponse, Response
+from fastapi.responses import JSONResponse, FileResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
@@ -793,3 +794,70 @@ async def post_deal_message(deal_id: str, body: DealMessageBody):
         raise HTTPException(status_code=400, detail="Message is required")
     await _post_band_user_message(BAND_ROOM_ID, body.message)
     return {"status": "sent"}
+
+
+LIBRARIAN_BAND_API_KEY = "band_a_1781367928_k2iCRHCt18tKbpoYFPLAkMbvOtPIPxLf"
+
+
+@app.get("/deals/{deal_id}/stream")
+async def deal_stream(deal_id: str):
+    """SSE stream: poll Band room for new messages and push to the browser."""
+    room_id = BAND_ROOM_ID
+
+    async def event_generator():
+        seen_ids: set[str] = set()
+        warmed_up = False
+        url = (
+            f"https://app.thenvoi.com/api/v1/agent/chats/{room_id}/messages"
+            f"?status=all&page_size=100"
+        )
+        headers = {"X-API-Key": LIBRARIAN_BAND_API_KEY}
+
+        while True:
+            try:
+                async with httpx.AsyncClient() as client:
+                    resp = await client.get(url, headers=headers, timeout=10.0)
+                if resp.status_code == 200:
+                    body = resp.json()
+                    messages = body.get("data", []) if isinstance(body, dict) else []
+                    if not isinstance(messages, list):
+                        messages = []
+                    for msg in messages:
+                        msg_id = msg.get("id")
+                        if not msg_id or msg_id in seen_ids:
+                            continue
+                        seen_ids.add(msg_id)
+                        if not warmed_up:
+                            continue
+                        content = msg.get("content") or ""
+                        sender_name = msg.get("sender_name") or "Agent"
+                        if not content:
+                            continue
+                        if content.startswith("NEW DEAL REQUEST"):
+                            continue
+                        if content.startswith("USER FOLLOW-UP"):
+                            continue
+                        if content.startswith("SIGNAL:"):
+                            continue
+                        payload = json.dumps({
+                            "type": "agent_message",
+                            "sender": sender_name,
+                            "content": content,
+                            "id": msg_id,
+                        })
+                        yield f"data: {payload}\n\n"
+                    warmed_up = True
+            except Exception as e:
+                logger.warning("deal_stream poll error for deal %s: %s", deal_id, e)
+
+            yield f"data: {json.dumps({'type': 'heartbeat'})}\n\n"
+            await asyncio.sleep(3)
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
