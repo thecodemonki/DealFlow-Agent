@@ -14,6 +14,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import subprocess
 import sys
 import time
@@ -254,6 +255,61 @@ def _recommendation_from_verdict(verdict: str) -> str:
     return "CONDITIONAL"
 
 
+def _memo_text_blob(memo_summary: dict[str, Any]) -> str:
+    """Concatenate human-readable memo fields for keyword/regex parsing."""
+    parts: list[str] = []
+    for key in (
+        "executive_summary",
+        "financial_highlights",
+        "legal_risks",
+        "market_position",
+        "deal_terms_suggested",
+        "investment_thesis",
+        "recommendation",
+    ):
+        val = memo_summary.get(key)
+        if isinstance(val, str) and val.strip():
+            parts.append(val.strip())
+    red_flags = memo_summary.get("red_flags")
+    if isinstance(red_flags, list):
+        for flag in red_flags:
+            if isinstance(flag, str) and flag.strip():
+                parts.append(flag.strip())
+    return " ".join(parts)
+
+
+def _parse_recommendation_from_memo_text(text: str) -> Optional[str]:
+    """Extract INVEST / CONDITIONAL / PASS from memo text; None if no keyword found."""
+    upper = (text or "").upper()
+    if "CONDITIONAL INVEST" in upper:
+        return "CONDITIONAL"
+    if re.search(r"\bPASS\b", upper):
+        return "PASS"
+    if re.search(r"\bINVEST\b", upper):
+        return "INVEST"
+    return None
+
+
+def _parse_score_from_memo_text(text: str) -> Optional[float]:
+    """Extract 1–10 score from patterns like 7.2/10 or Score: 8."""
+    if not text:
+        return None
+    match = re.search(r"(\d+(?:\.\d+)?)\s*/\s*10", text)
+    if not match:
+        match = re.search(
+            r"(?:score|deal\s*score)\s*:\s*(\d+(?:\.\d+)?)",
+            text,
+            re.IGNORECASE,
+        )
+    if not match:
+        return None
+    try:
+        value = float(match.group(1))
+    except (TypeError, ValueError):
+        return None
+    return round(max(1.0, min(10.0, value)), 1)
+
+
 def _apply_memo_summary_to_deal(deal: dict[str, Any], memo_summary: Optional[dict[str, Any]]) -> None:
     if memo_summary is None:
         return
@@ -262,12 +318,11 @@ def _apply_memo_summary_to_deal(deal: dict[str, Any], memo_summary: Optional[dic
     deal.update(scores)
     if memo_summary.get("company_name"):
         deal["company_name"] = memo_summary["company_name"]
-    rec = memo_summary.get("recommendation")
-    if rec:
-        deal["recommendation"] = _normalize_recommendation(rec)
-    else:
-        deal["recommendation"] = _recommendation_from_verdict(scores["deal_verdict"])
-    deal["score"] = _score_1_to_10(scores["deal_score"])
+    text = _memo_text_blob(memo_summary)
+    parsed_score = _parse_score_from_memo_text(text)
+    parsed_rec = _parse_recommendation_from_memo_text(text)
+    deal["score"] = parsed_score if parsed_score is not None else DEFAULT_SCORE
+    deal["recommendation"] = parsed_rec if parsed_rec is not None else DEFAULT_RECOMMENDATION
 
 
 def _append_deal_log(deal_id: str, deal: dict[str, Any]) -> None:
