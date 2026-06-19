@@ -2053,18 +2053,6 @@
     }
     .memo-pdf-download-btn:hover { background: #4338ca; }
     .memo-pdf-download-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .memo-pdf-download-btn--modal {
-      display: none;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 10px 20px;
-      margin-top: 12px;
-      width: 100%;
-      box-sizing: border-box;
-      margin-left: 0;
-      font-size: 14px;
-    }
     .memo-pdf-download-wrap {
       display: flex;
       flex-direction: column;
@@ -2499,7 +2487,6 @@
           <span>Download Memo</span>
         </button>
         <button type="button" class="results-dashboard-link" id="resultsDashboardBtn">Add to Dashboard ★</button>
-        <button type="button" id="modalPdfBtn" class="memo-pdf-download-btn memo-pdf-download-btn--modal">Download Memo</button>
         <button type="button" class="results-close" id="resultsCloseBtn">Close</button>
       </div>
     </div>
@@ -3803,8 +3790,6 @@ function setDownloadLinks(dealId) {
   if (dp) dp.style.display = showMemoBtn ? 'inline-flex' : 'none';
   var db = document.getElementById('downloadBtn');
   if (db) db.style.display = showResultsBtn ? 'inline-flex' : 'none';
-  var mp = document.getElementById('modalPdfBtn');
-  if (mp) mp.style.display = showResultsBtn ? 'inline-flex' : 'none';
   var dl = document.getElementById('memoViewDownload');
   if (dl) dl.style.display = 'none';
 }
@@ -5257,7 +5242,7 @@ if (dealTableWrapEl) {
     openDealFromDashboard(dealId);
   });
 }
-['downloadPdfBtn', 'downloadBtn', 'modalPdfBtn'].forEach(function (id) {
+['downloadPdfBtn', 'downloadBtn'].forEach(function (id) {
   var el = document.getElementById(id);
   if (el) el.addEventListener('click', openInvestmentMemoWindow);
 });
