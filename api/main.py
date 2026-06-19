@@ -14,6 +14,7 @@ import asyncio
 import json
 import logging
 import os
+import time
 import uuid
 from pathlib import Path
 from datetime import datetime
@@ -799,6 +800,16 @@ async def post_deal_message(deal_id: str, body: DealMessageBody):
 LIBRARIAN_BAND_API_KEY = "band_a_1781367928_k2iCRHCt18tKbpoYFPLAkMbvOtPIPxLf"
 
 
+def _band_message_unix_ts(msg: dict[str, Any]) -> Optional[float]:
+    raw = msg.get("inserted_at") or msg.get("created_at") or msg.get("timestamp")
+    if not raw or not isinstance(raw, str):
+        return None
+    try:
+        return datetime.fromisoformat(raw.replace("Z", "+00:00")).timestamp()
+    except ValueError:
+        return None
+
+
 @app.get("/deals/{deal_id}/stream")
 async def deal_stream(deal_id: str):
     """SSE stream: poll Band room for new messages and push to the browser."""
@@ -806,7 +817,7 @@ async def deal_stream(deal_id: str):
 
     async def event_generator():
         seen_ids: set[str] = set()
-        warmed_up = False
+        start_time = time.time()
         url = (
             f"https://app.thenvoi.com/api/v1/agent/chats/{room_id}/messages"
             f"?status=all&page_size=100"
@@ -826,8 +837,8 @@ async def deal_stream(deal_id: str):
                         msg_id = msg.get("id")
                         if not msg_id or msg_id in seen_ids:
                             continue
-                        seen_ids.add(msg_id)
-                        if not warmed_up:
+                        msg_ts = _band_message_unix_ts(msg)
+                        if msg_ts is not None and msg_ts <= start_time:
                             continue
                         content = msg.get("content") or ""
                         sender_name = msg.get("sender_name") or "Agent"
@@ -839,6 +850,7 @@ async def deal_stream(deal_id: str):
                             continue
                         if content.startswith("SIGNAL:"):
                             continue
+                        seen_ids.add(msg_id)
                         payload = json.dumps({
                             "type": "agent_message",
                             "sender": sender_name,
@@ -846,12 +858,11 @@ async def deal_stream(deal_id: str):
                             "id": msg_id,
                         })
                         yield f"data: {payload}\n\n"
-                    warmed_up = True
             except Exception as e:
                 logger.warning("deal_stream poll error for deal %s: %s", deal_id, e)
 
             yield f"data: {json.dumps({'type': 'heartbeat'})}\n\n"
-            await asyncio.sleep(3)
+            await asyncio.sleep(1.5)
 
     return StreamingResponse(
         event_generator(),
