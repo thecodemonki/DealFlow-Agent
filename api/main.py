@@ -857,6 +857,34 @@ async def deal_stream(deal_id: str):
                         reverse=True,
                     )
 
+                    print(
+                        f"DEBUG poll: fetched={len(messages)} start_time={start_time}",
+                        flush=True,
+                    )
+                    passed_ts_count = 0
+                    for msg in messages:
+                        msg_id = msg.get("id")
+                        raw_inserted_at = (
+                            msg.get("inserted_at")
+                            or msg.get("created_at")
+                            or msg.get("timestamp")
+                        )
+                        msg_ts = _band_message_unix_ts(msg)
+                        sender_name = msg.get("sender_name") or "Agent"
+                        passes_ts = msg_ts is None or msg_ts > start_time - 30
+                        if passes_ts:
+                            passed_ts_count += 1
+                        print(
+                            f"DEBUG msg: id={msg_id} raw_inserted_at={raw_inserted_at} "
+                            f"ts={msg_ts} sender={sender_name} passes={passes_ts}",
+                            flush=True,
+                        )
+
+                    print(
+                        f"DEBUG poll: passed_ts_filter={passed_ts_count}",
+                        flush=True,
+                    )
+
                     if not debug_logged and messages:
                         inserted_at = messages[0].get("inserted_at")
                         msg_time = _band_message_unix_ts(messages[0])
@@ -871,7 +899,7 @@ async def deal_stream(deal_id: str):
                         if not msg_id or msg_id in seen_ids:
                             continue
                         msg_ts = _band_message_unix_ts(msg)
-                        if msg_ts is not None and msg_ts <= start_time - 2:
+                        if msg_ts is not None and msg_ts <= start_time - 30:
                             continue
                         content = msg.get("content") or ""
                         sender_name = msg.get("sender_name") or "Agent"
