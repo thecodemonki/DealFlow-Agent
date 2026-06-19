@@ -139,7 +139,13 @@ class DealMessageBody(BaseModel):
     message: str
 
 
-DEALS_INDEX_PATH = UPLOAD_DIR / "deals_index.json"
+DATA_DIR = Path("./data")
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+DEALS_INDEX_PATH = DATA_DIR / "deals.json"
+LEGACY_DEALS_INDEX_PATH = UPLOAD_DIR / "deals_index.json"
+
+DEFAULT_SCORE = 6.5
+DEFAULT_RECOMMENDATION = "CONDITIONAL"
 
 
 def _deal_has_memo_pdf(d: dict[str, Any]) -> bool:
@@ -213,6 +219,41 @@ def _analysis_duration_seconds(d: dict[str, Any]) -> Optional[int]:
     return _duration_seconds_between(d.get("created_at"), d.get("completed_at"))
 
 
+def _normalize_recommendation(value: Any) -> str:
+    """Map memo recommendation / verdict to INVEST | CONDITIONAL | PASS."""
+    raw = str(value or "").strip().upper()
+    if raw in ("INVEST", "BUY"):
+        return "INVEST"
+    if raw in ("PASS", "FAIL", "REJECT", "NO"):
+        return "PASS"
+    if raw in ("CONDITIONAL", "HOLD", "MAYBE"):
+        return "CONDITIONAL"
+    if raw == "INVEST":
+        return "INVEST"
+    lower = str(value or "").strip().lower()
+    if lower in ("invest", "buy"):
+        return "INVEST"
+    if lower in ("pass", "fail", "reject"):
+        return "PASS"
+    if lower in ("conditional", "hold", "maybe"):
+        return "CONDITIONAL"
+    return DEFAULT_RECOMMENDATION
+
+
+def _score_1_to_10(deal_score_100: int) -> float:
+    """Convert 0–100 deal_score to 1–10 scale."""
+    return round(max(1.0, min(10.0, deal_score_100 / 10.0)), 1)
+
+
+def _recommendation_from_verdict(verdict: str) -> str:
+    v = str(verdict or "").upper()
+    if v == "PASS":
+        return "INVEST"
+    if v == "FAIL":
+        return "PASS"
+    return "CONDITIONAL"
+
+
 def _apply_memo_summary_to_deal(deal: dict[str, Any], memo_summary: Optional[dict[str, Any]]) -> None:
     if memo_summary is None:
         return
@@ -221,6 +262,12 @@ def _apply_memo_summary_to_deal(deal: dict[str, Any], memo_summary: Optional[dic
     deal.update(scores)
     if memo_summary.get("company_name"):
         deal["company_name"] = memo_summary["company_name"]
+    rec = memo_summary.get("recommendation")
+    if rec:
+        deal["recommendation"] = _normalize_recommendation(rec)
+    else:
+        deal["recommendation"] = _recommendation_from_verdict(scores["deal_verdict"])
+    deal["score"] = _score_1_to_10(scores["deal_score"])
 
 
 def _append_deal_log(deal_id: str, deal: dict[str, Any]) -> None:
@@ -272,6 +319,18 @@ def _public_deal_row(deal_id: str, d: dict[str, Any]) -> dict[str, Any]:
     resolved_room = _deal_room_id(d)
     row["band_room_id"] = resolved_room
     row["room_id"] = resolved_room
+    if d.get("score") is not None:
+        try:
+            row["score"] = round(max(1.0, min(10.0, float(d["score"]))), 1)
+        except (TypeError, ValueError):
+            row["score"] = DEFAULT_SCORE
+    elif scores["deal_score"] is not None:
+        row["score"] = _score_1_to_10(scores["deal_score"])
+    else:
+        row["score"] = DEFAULT_SCORE
+    row["recommendation"] = _normalize_recommendation(
+        d.get("recommendation") or _recommendation_from_verdict(scores.get("deal_verdict", ""))
+    )
     return row
 
 
@@ -283,13 +342,23 @@ def _save_deals_index() -> None:
 
 
 def _load_deals_index() -> None:
-    if not DEALS_INDEX_PATH.is_file():
+    path = DEALS_INDEX_PATH
+    if not path.is_file() and LEGACY_DEALS_INDEX_PATH.is_file():
+        path = LEGACY_DEALS_INDEX_PATH
+        logger.info("Migrating deals from %s to %s", LEGACY_DEALS_INDEX_PATH, DEALS_INDEX_PATH)
+    if not path.is_file():
         return
     try:
-        loaded = json.loads(DEALS_INDEX_PATH.read_text())
+        loaded = json.loads(path.read_text())
         if isinstance(loaded, dict):
+            for did, d in loaded.items():
+                if isinstance(d, dict):
+                    d.setdefault("score", DEFAULT_SCORE)
+                    d.setdefault("recommendation", DEFAULT_RECOMMENDATION)
             deals.update(loaded)
-            logger.info("Loaded %d deals from %s", len(loaded), DEALS_INDEX_PATH)
+            logger.info("Loaded %d deals from %s", len(loaded), path)
+            if path != DEALS_INDEX_PATH:
+                _save_deals_index()
     except (OSError, json.JSONDecodeError) as e:
         logger.warning("Could not load deals index: %s", e)
 
@@ -552,6 +621,8 @@ async def create_draft_deal():
         "analysis_duration_seconds": None,
         "chat_messages": [],
         "industry": None,
+        "score": DEFAULT_SCORE,
+        "recommendation": DEFAULT_RECOMMENDATION,
     }
     _save_deals_index()
     return JSONResponse({"deal_id": deal_id, "status": "draft"})
@@ -602,6 +673,8 @@ async def submit_deal(
             logger.info("Saved %s for deal %s (%s)", safe_name, deal_id, rel)
 
     industry_value = industry.strip() or None
+    prev_score = prev.get("score", DEFAULT_SCORE) if reuse else DEFAULT_SCORE
+    prev_rec = prev.get("recommendation", DEFAULT_RECOMMENDATION) if reuse else DEFAULT_RECOMMENDATION
 
     deals[deal_id] = {
         "id": deal_id,
@@ -620,6 +693,8 @@ async def submit_deal(
         "analysis_duration_seconds": None,
         "chat_messages": list((prev.get("chat_messages") or []) if reuse else []),
         "industry": industry_value,
+        "score": prev_score,
+        "recommendation": prev_rec,
     }
 
     try:
@@ -685,8 +760,10 @@ async def get_deal_status(deal_id: str):
 
 @app.get("/deals")
 async def list_deals():
-    """List all deal analyses."""
-    return [_public_deal_row(did, d) for did, d in deals.items()]
+    """List all deal analyses, newest first."""
+    rows = [_public_deal_row(did, d) for did, d in deals.items()]
+    rows.sort(key=lambda r: r.get("created_at") or "", reverse=True)
+    return rows
 
 
 @app.get("/deals/{deal_id}/memo")

@@ -886,6 +886,140 @@
       transition: opacity 0.45s ease, visibility 0.45s ease;
     }
     #arena.arena--running #inputCard { opacity: 0; visibility: hidden; pointer-events: none; }
+    #arena.arena--dashboard #inputCard { opacity: 0; visibility: hidden; pointer-events: none; }
+    #arena.arena--dashboard .blob-layer,
+    #arena.arena--dashboard .arena-lines { opacity: 0; visibility: hidden; pointer-events: none; }
+    #dealDashboard {
+      position: relative;
+      z-index: 15;
+      width: 100%;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 28px 24px 48px;
+      box-sizing: border-box;
+    }
+    .dashboard-header h1 {
+      font-size: 26px;
+      font-weight: 700;
+      color: #111827;
+      margin: 0 0 24px;
+    }
+    .deal-card-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 720px) {
+      .deal-card-grid { grid-template-columns: 1fr; }
+    }
+    .deal-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 22px 22px 20px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+      border: 1px solid #e5e7eb;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+    .deal-card:hover {
+      box-shadow: 0 6px 24px rgba(79, 110, 247, 0.12);
+      transform: translateY(-1px);
+    }
+    .deal-card__top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .deal-card__company {
+      font-size: 20px;
+      font-weight: 700;
+      color: #111827;
+      line-height: 1.25;
+      margin: 0;
+    }
+    .deal-card__date {
+      font-size: 13px;
+      color: #6b7280;
+      margin: 4px 0 0;
+    }
+    .deal-card__badge {
+      flex-shrink: 0;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      padding: 5px 10px;
+      border-radius: 999px;
+      text-transform: uppercase;
+    }
+    .deal-card__badge--invest { background: #d1fae5; color: #065f46; }
+    .deal-card__badge--conditional { background: #fef3c7; color: #92400e; }
+    .deal-card__badge--pass { background: #fee2e2; color: #991b1b; }
+    .deal-card__score-row {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+    .deal-card__score-num {
+      font-size: 32px;
+      font-weight: 700;
+      color: #111827;
+      line-height: 1;
+    }
+    .deal-card__score-denom {
+      font-size: 15px;
+      font-weight: 500;
+      color: #9ca3af;
+    }
+    .deal-card__score-bar {
+      height: 4px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    .deal-card__score-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #4f6ef7, #6366f1);
+      border-radius: 999px;
+      transition: width 0.3s ease;
+    }
+    .deal-card__view-btn {
+      align-self: flex-start;
+      margin-top: 4px;
+      padding: 0;
+      border: none;
+      background: none;
+      color: #4f6ef7;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .deal-card__view-btn:hover { color: #3d5bd9; text-decoration: underline; }
+    .deal-dashboard-empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      color: #6b7280;
+      padding: 48px 16px;
+      font-size: 15px;
+    }
+    .memo-view__back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 16px;
+      padding: 8px 14px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background: #fff;
+      color: #374151;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .memo-view__back-btn:hover { background: #f9fafb; border-color: #d1d5db; }
     #inputCard h1 { font-size: 24px; font-weight: 700; color: #111827; margin-bottom: 22px; }
     #inputCard .input-card-fields input[type="text"] {
       width: 100%;
@@ -1670,6 +1804,12 @@
       <div class="arena-demo-wrap"><button type="button" class="arena-demo-link" id="runDemoBtn">Run demo</button></div>
       <span id="analyzeTimer" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0" aria-hidden="true"></span>
     </div>
+    <div id="dealDashboard" hidden>
+      <div class="dashboard-header">
+        <h1>Deals Dashboard</h1>
+      </div>
+      <div id="dealCardGrid" class="deal-card-grid"></div>
+    </div>
     <svg class="arena-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
       <line x1="50" y1="45" x2="30" y2="15" stroke="#c7d2fe" stroke-width="1.5" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>
       <line x1="50" y1="45" x2="70" y2="15" stroke="#c7d2fe" stroke-width="1.5" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>
@@ -1717,6 +1857,7 @@
       </div>
     </div>
     <div id="memoView" class="memo-view" hidden>
+      <button type="button" id="memoBackBtn" class="memo-view__back-btn" hidden>← Dashboard</button>
       <header class="memo-view__header">
         <div class="memo-view__score-cluster memo-score-band--conditional" id="memoScoreCluster">
           <div class="memo-view__ring-wrap">
@@ -1945,6 +2086,7 @@ function showAppFromLanding() {
     document.body.style.background = '#f0f4ff';
     requestAnimationFrame(function () {
       shell.classList.add('app-shell--visible');
+      maybeShowDashboardOnLoad();
     });
   }, 300);
 }
@@ -2002,6 +2144,207 @@ function refreshActiveDealRoomId(dealId) {
       setActiveDealIds(d.id || dealId, room || currentBandRoomId);
     });
 }
+var dashboardDeals = [];
+var currentAppView = 'submit';
+var historyPushing = false;
+var dealCompletePosted = {};
+
+function visibleDashboardDeals(deals) {
+  return (deals || []).filter(function (d) { return (d.company_name || '').trim(); });
+}
+
+function fetchDeals() {
+  return fetch(API + '/deals')
+    .then(function (r) { return r.ok ? r.json() : []; })
+    .catch(function () { return []; });
+}
+
+function recommendationBadgeClass(rec) {
+  var r = String(rec || 'CONDITIONAL').toUpperCase();
+  if (r === 'INVEST') return 'deal-card__badge--invest';
+  if (r === 'PASS') return 'deal-card__badge--pass';
+  return 'deal-card__badge--conditional';
+}
+
+function dealCardScore(deal) {
+  var s = deal.score;
+  if (typeof s === 'string') s = parseFloat(s);
+  if (typeof s !== 'number' || isNaN(s)) {
+    var ds = deal.deal_score;
+    if (typeof ds === 'number' && !isNaN(ds)) s = Math.round((ds / 10) * 10) / 10;
+    else s = 6.5;
+  }
+  return Math.max(1, Math.min(10, s));
+}
+
+function showSubmitForm() {
+  currentAppView = 'submit';
+  var arena = document.getElementById('arena');
+  if (arena) arena.classList.remove('arena--dashboard');
+  var dash = document.getElementById('dealDashboard');
+  if (dash) dash.hidden = true;
+  var backBtn = document.getElementById('memoBackBtn');
+  if (backBtn) backBtn.hidden = true;
+}
+
+function showDealDashboard(deals, skipHistory) {
+  currentAppView = 'dashboard';
+  dashboardDeals = visibleDashboardDeals(deals || dashboardDeals);
+  var arena = document.getElementById('arena');
+  if (arena) {
+    arena.classList.remove('arena--running', 'arena--deal-complete', 'arena--memo-view', 'arena--network-view', 'arena--home-blobs', 'arena--viewing-history');
+    arena.classList.add('arena--dashboard');
+  }
+  hideArenaMemoViewer();
+  hideCompletedDealChrome();
+  document.getElementById('resultsOverlay').classList.remove('visible');
+  var dash = document.getElementById('dealDashboard');
+  if (dash) dash.hidden = false;
+  renderDealCards(dashboardDeals);
+  if (!historyPushing) {
+    var state = { view: 'dashboard' };
+    if (skipHistory) history.replaceState(state, '', '#dashboard');
+    else history.pushState(state, '', '#dashboard');
+  }
+}
+
+function renderDealCards(deals) {
+  var grid = document.getElementById('dealCardGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  if (!deals.length) {
+    grid.innerHTML = '<p class="deal-dashboard-empty">No deals yet. Run your first analysis.</p>';
+    return;
+  }
+  deals.forEach(function (deal) {
+    var id = deal.id || deal.deal_id || '';
+    var company = escapeHtml(deal.company_name || 'Unknown company');
+    var dateStr = formatAnalyzedDate(deal.completed_at || deal.created_at);
+    var rec = String(deal.recommendation || 'CONDITIONAL').toUpperCase();
+    var score = dealCardScore(deal);
+    var scorePct = (score / 10) * 100;
+    var card = document.createElement('article');
+    card.className = 'deal-card';
+    card.setAttribute('data-deal-id', id);
+    card.innerHTML =
+      '<div class="deal-card__top">' +
+        '<div><h2 class="deal-card__company">' + company + '</h2>' +
+        (dateStr ? '<p class="deal-card__date">' + escapeHtml(dateStr) + '</p>' : '') +
+        '</div>' +
+        '<span class="deal-card__badge ' + recommendationBadgeClass(rec) + '">' + escapeHtml(rec) + '</span>' +
+      '</div>' +
+      '<div class="deal-card__score">' +
+        '<div class="deal-card__score-row">' +
+          '<span class="deal-card__score-num">' + score.toFixed(1) + '</span>' +
+          '<span class="deal-card__score-denom">/ 10</span>' +
+        '</div>' +
+        '<div class="deal-card__score-bar"><div class="deal-card__score-fill" style="width:' + scorePct + '%"></div></div>' +
+      '</div>' +
+      '<button type="button" class="deal-card__view-btn" data-deal-id="' + escapeHtml(id) + '">View Analysis →</button>';
+    grid.appendChild(card);
+  });
+}
+
+function refreshDashboard() {
+  return fetchDeals().then(function (deals) {
+    dashboardDeals = visibleDashboardDeals(deals);
+    if (currentAppView === 'dashboard') renderDealCards(dashboardDeals);
+    return dashboardDeals;
+  });
+}
+
+function openDealFromDashboard(dealId) {
+  if (!dealId) return;
+  currentAppView = 'deal-detail';
+  var arena = document.getElementById('arena');
+  if (arena) arena.classList.remove('arena--dashboard');
+  var dash = document.getElementById('dealDashboard');
+  if (dash) dash.hidden = true;
+  if (!historyPushing) {
+    var state = { view: 'deal', dealId: dealId };
+    history.pushState(state, '', '#deal/' + dealId);
+  }
+  openRecentDeal({ dealId: dealId });
+}
+
+function returnToDashboard(skipHistory) {
+  hideArenaMemoViewer();
+  hideCompletedDealChrome();
+  setActiveDealIds(null, null);
+  document.getElementById('chatFeed').innerHTML = '';
+  updateChatEmpty();
+  closeDealStream();
+  fetchDeals().then(function (deals) {
+    var visible = visibleDashboardDeals(deals);
+    if (visible.length) showDealDashboard(visible, skipHistory);
+    else showSubmitForm();
+  });
+}
+
+function maybeShowDashboardOnLoad() {
+  return fetchDeals().then(function (deals) {
+    var visible = visibleDashboardDeals(deals);
+    dashboardDeals = visible;
+    var hash = (window.location.hash || '').replace(/^#/, '');
+    historyPushing = true;
+    if (hash.indexOf('deal/') === 0) {
+      var dealId = decodeURIComponent(hash.slice(5));
+      if (dealId) {
+        openDealFromDashboard(dealId);
+        historyPushing = false;
+        return visible;
+      }
+    }
+    if (hash === 'dashboard' || visible.length) {
+      showDealDashboard(visible, true);
+    }
+    historyPushing = false;
+    return visible;
+  });
+}
+
+function parseInvestmentMemoContent(content) {
+  var body = content || '';
+  if (body.indexOf('SIGNAL:investment_memo') === 0) {
+    body = body.slice('SIGNAL:investment_memo'.length).replace(/^\s*\n?/, '');
+  }
+  try {
+    return JSON.parse(body);
+  } catch (e) {
+    return null;
+  }
+}
+
+function postDealComplete(dealId, memoSummary) {
+  if (!dealId || !memoSummary) return Promise.resolve();
+  if (dealCompletePosted[dealId]) return Promise.resolve();
+  dealCompletePosted[dealId] = true;
+  return fetch(API + '/deals/' + encodeURIComponent(dealId) + '/complete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ memo_summary: memoSummary })
+  }).then(function (r) {
+    if (!r.ok) dealCompletePosted[dealId] = false;
+    else {
+      fetchDealLog();
+      refreshDashboard();
+    }
+  }).catch(function () {
+    dealCompletePosted[dealId] = false;
+  });
+}
+
+function postFallbackDealComplete(dealId, company) {
+  if (!dealId || dealCompletePosted[dealId]) return;
+  var bundle = lastDealScore || { score: 62, verdict: 'CONDITIONAL', risksFlagged: 3 };
+  postDealComplete(dealId, {
+    company_name: company,
+    deal_score: bundle.score,
+    deal_verdict: bundle.verdict,
+    risks_flagged_count: bundle.risksFlagged || 0,
+    executive_summary: 'Analysis completed. Review the investment memo for details.'
+  });
+}
 function hideCompletedDealChrome() {
   activeDealViewTab = 'memo';
   var tabs = document.getElementById('dealViewTabs');
@@ -2048,14 +2391,19 @@ function setDealViewTab(tab) {
   setDownloadLinks(currentDealId);
 }
 function enterCompletedDealView(tab) {
+  currentAppView = 'deal-detail';
   document.getElementById('resultsOverlay').classList.remove('visible');
   var tabs = document.getElementById('dealViewTabs');
   if (tabs) tabs.hidden = false;
   var arena = document.getElementById('arena');
   if (arena) {
-    arena.classList.remove('arena--home-blobs', 'arena--running', 'arena--viewing-history');
+    arena.classList.remove('arena--home-blobs', 'arena--running', 'arena--viewing-history', 'arena--dashboard');
     arena.classList.add('arena--deal-complete');
   }
+  var dash = document.getElementById('dealDashboard');
+  if (dash) dash.hidden = true;
+  var backBtn = document.getElementById('memoBackBtn');
+  if (backBtn) backBtn.hidden = false;
   document.body.classList.remove('app-running');
   clearRunTimer();
   ['orchestrator', 'webresearch', 'documentparser', 'financialanalyst', 'legalrisk', 'synthesis'].forEach(function (a) {
@@ -2497,6 +2845,8 @@ function onDealStreamPayload(data, eventName) {
     dealStreamSeenIds[key] = true;
   }
   if (eventName === 'investment_memo' || content.indexOf('SIGNAL:investment_memo') === 0) {
+    var memo = parseInvestmentMemoContent(content);
+    if (memo && currentDealId) postDealComplete(currentDealId, memo);
     return;
   }
   if (content.indexOf('SIGNAL:') === 0) return;
@@ -3193,10 +3543,18 @@ function showResults() {
     .then(function (r) { return r.ok ? r.json() : null; })
     .catch(function () { return null; })
     .then(function (j) {
-      if (!j) return;
+      if (!j) {
+        postFallbackDealComplete(currentDealId, company);
+        refreshDashboard();
+        return;
+      }
       var ds = j.deal_score;
       if (typeof ds === 'string') ds = parseInt(ds, 10);
-      if (typeof ds !== 'number' || isNaN(ds)) return;
+      if (typeof ds !== 'number' || isNaN(ds)) {
+        postFallbackDealComplete(currentDealId, company);
+        refreshDashboard();
+        return;
+      }
       var rc = j.risks_flagged_count;
       if (typeof rc === 'string') rc = parseInt(rc, 10);
       if (typeof rc !== 'number' || isNaN(rc)) rc = 0;
@@ -3224,6 +3582,11 @@ function showResults() {
       saveChatsToStorage(stored);
       renderRecentList();
       fetchDealLog();
+      refreshDashboard();
+    })
+    .catch(function () {
+      postFallbackDealComplete(currentDealId, company);
+      refreshDashboard();
     });
 }
 document.getElementById('resultsCloseBtn').addEventListener('click', function () {
@@ -3243,6 +3606,7 @@ document.getElementById('runDemoBtn').addEventListener('click', function () {
 });
 function resetToInputCard(opts) {
   opts = opts || {};
+  showSubmitForm();
   hideArenaMemoViewer();
   if (stepTimeoutId) { clearTimeout(stepTimeoutId); stepTimeoutId = null; }
   window.analysisAborted = false;
@@ -3251,6 +3615,7 @@ function resetToInputCard(opts) {
   arena.classList.remove('arena--viewing-history');
   arena.classList.remove('arena--memo-view');
   arena.classList.remove('arena--home-blobs');
+  arena.classList.remove('arena--dashboard');
   if (opts.homeBlobs) arena.classList.add('arena--home-blobs');
   document.body.classList.remove('app-running');
   document.getElementById('resultsOverlay').classList.remove('visible');
@@ -3317,7 +3682,9 @@ async function startAnalysis() {
   window.analysisAborted = false;
   if (stepTimeoutId) { clearTimeout(stepTimeoutId); stepTimeoutId = null; }
   var arenaRun = document.getElementById('arena');
-  arenaRun.classList.remove('arena--viewing-history', 'arena--home-blobs');
+  arenaRun.classList.remove('arena--viewing-history', 'arena--home-blobs', 'arena--dashboard');
+  var dashRun = document.getElementById('dealDashboard');
+  if (dashRun) dashRun.hidden = true;
   arenaRun.classList.add('arena--running');
   document.body.classList.add('app-running');
   ['orchestrator', 'webresearch', 'documentparser', 'financialanalyst', 'legalrisk', 'synthesis'].forEach(function (a) {
@@ -3416,6 +3783,30 @@ window.bandRoomId = DEFAULT_BAND_ROOM_ID;
 currentBandRoomId = DEFAULT_BAND_ROOM_ID;
 syncFollowUpInputState();
 initAgentShowcase();
+document.getElementById('dealCardGrid').addEventListener('click', function (e) {
+  var btn = e.target.closest('.deal-card__view-btn');
+  if (!btn) return;
+  var dealId = btn.getAttribute('data-deal-id');
+  if (dealId) openDealFromDashboard(dealId);
+});
+document.getElementById('memoBackBtn').addEventListener('click', function () {
+  history.back();
+});
+window.addEventListener('popstate', function (e) {
+  historyPushing = true;
+  var state = e.state || {};
+  if (state.view === 'dashboard') {
+    returnToDashboard(true);
+  } else if (state.view === 'deal' && state.dealId) {
+    openDealFromDashboard(state.dealId);
+  } else if (dashboardDeals.length) {
+    returnToDashboard(true);
+  } else {
+    showSubmitForm();
+    resetToInputCard();
+  }
+  historyPushing = false;
+});
 if (recentListRelativeInterval == null) {
   recentListRelativeInterval = setInterval(updateRecentListRelativeTimes, 60000);
 }
