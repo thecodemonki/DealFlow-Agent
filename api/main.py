@@ -71,6 +71,7 @@ SHARED_BAND_ROOM_ID = os.getenv(
     "BAND_ROOM_ID",
     "8f4ebded-2988-4a75-915c-bcb80ad8a815",
 )
+BAND_ROOM_ID = SHARED_BAND_ROOM_ID
 
 
 def _default_band_room_id() -> Optional[str]:
@@ -492,35 +493,21 @@ async def _post_band_document_uploaded(room_id: str, file_path: str) -> bool:
 
 
 async def _post_band_user_message(room_id: str, message: str) -> None:
-    """Publish a user follow-up question to the deal Band room for the Orchestrator."""
-    try:
-        orch = _load_orchestrator_config()
-        client = await _band_http_client()
-        url = f"{BAND_API_BASE}/agent/chats/{room_id}/messages"
-        headers = {"X-API-Key": orch["api_key"], "Content-Type": "application/json"}
-        payload = {
-            "message": {
-                "content": f"USER FOLLOW-UP: {message}",
-                "mentions": [{"id": "1771a605-be42-431c-8003-dbddd3a25b35"}],
-            }
+    url = f"https://app.thenvoi.com/api/v1/agent/chats/{room_id}/messages"
+    headers = {
+        "X-API-Key": "band_a_1781367850_Bgxwnc0IosTAioUFrOGWIt-u88UOHqVS",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "message": {
+            "content": f"USER FOLLOW-UP: {message}",
+            "mentions": [{"id": "1771a605-be42-431c-8003-dbddd3a25b35"}],
         }
-        resp = await client.post(url, json=payload, headers=headers)
-        if resp.status_code != 201:
-            logger.warning(
-                "USER message post failed %s: %s",
-                resp.status_code,
-                resp.text[:500],
-            )
-            raise HTTPException(
-                status_code=502,
-                detail=resp.text[:500] or f"Band API returned {resp.status_code}",
-            )
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Band message error: {e}", flush=True)
-        logger.exception("Band message error for room %s", room_id)
-        raise HTTPException(status_code=500, detail=str(e)) from e
+    }
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(url, headers=headers, json=payload, timeout=10.0)
+    if resp.status_code not in (200, 201):
+        raise HTTPException(status_code=502, detail=resp.text)
 
 
 # -------------------------------------------------------------------
@@ -792,17 +779,16 @@ async def save_deal_chat(deal_id: str, body: DealChatBody):
 async def post_deal_message(deal_id: str, body: DealMessageBody):
     """Post a user follow-up question to the shared Band room."""
     message = (body.message or "").strip()
-    room_id = SHARED_BAND_ROOM_ID
     deal_found = deal_id in deals
     logger.info(
         "POST /deals/%s/message: deal_found=%s room_id=%s message_len=%d",
         deal_id,
         deal_found,
-        room_id,
+        BAND_ROOM_ID,
         len(message),
     )
     if not message:
         logger.warning("POST /deals/%s/message: empty message", deal_id)
         raise HTTPException(status_code=400, detail="Message is required")
-    await _post_band_user_message(room_id, message)
+    await _post_band_user_message(BAND_ROOM_ID, body.message)
     return {"status": "sent"}
