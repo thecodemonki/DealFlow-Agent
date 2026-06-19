@@ -341,25 +341,38 @@ _load_deals_index()
 # -------------------------------------------------------------------
 
 BAND_API_BASE = (os.environ.get("BAND_API_BASE") or "https://app.thenvoi.com/api/v1").rstrip("/")
+BASE_DIR = Path(__file__).resolve().parent.parent
+AGENT_CONFIG_PATH = BASE_DIR / "agent_config.yaml"
 _orch_config: Optional[dict[str, str]] = None
 _orchestrator_mention_cache: dict[str, str] = {}
 
 
 def _load_orchestrator_config() -> dict[str, str]:
-    """Load orchestrator agent_id + api_key once from agent_config.yaml."""
+    """Load orchestrator agent_id + api_key from env (Railway) or agent_config.yaml (local)."""
     global _orch_config
     if _orch_config is not None:
         return _orch_config
-    import yaml
 
-    config_path = Path(__file__).resolve().parent.parent / "agent_config.yaml"
-    with open(config_path) as f:
-        config = yaml.safe_load(f)
-    orch = config["orchestrator"]
-    _orch_config = {
-        "agent_id": str(orch["agent_id"]),
-        "api_key": str(orch["api_key"]),
-    }
+    agent_id = (os.environ.get("ORCHESTRATOR_AGENT_ID") or "").strip()
+    api_key = (os.environ.get("ORCHESTRATOR_API_KEY") or "").strip()
+
+    if agent_id and api_key:
+        _orch_config = {"agent_id": agent_id, "api_key": api_key}
+        return _orch_config
+
+    try:
+        import yaml
+
+        if AGENT_CONFIG_PATH.is_file():
+            with open(AGENT_CONFIG_PATH) as f:
+                config = yaml.safe_load(f) or {}
+            orch = config.get("orchestrator") or {}
+            agent_id = agent_id or str(orch.get("agent_id") or "").strip()
+            api_key = api_key or str(orch.get("api_key") or "").strip()
+    except Exception as e:
+        logger.warning("Could not load agent_config.yaml: %s", e)
+
+    _orch_config = {"agent_id": agent_id, "api_key": api_key}
     return _orch_config
 
 
