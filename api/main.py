@@ -499,8 +499,10 @@ async def _post_band_user_message(room_id: str, message: str) -> None:
         url = f"{BAND_API_BASE}/agent/chats/{room_id}/messages"
         headers = {"X-API-Key": orch["api_key"], "Content-Type": "application/json"}
         payload = {
-            "content": f"USER FOLLOW-UP: {message}",
-            "mentions": [{"id": "1771a605-be42-431c-8003-dbddd3a25b35"}],
+            "message": {
+                "content": f"USER FOLLOW-UP: {message}",
+                "mentions": [{"id": "1771a605-be42-431c-8003-dbddd3a25b35"}],
+            }
         }
         resp = await client.post(url, json=payload, headers=headers)
         if resp.status_code != 201:
