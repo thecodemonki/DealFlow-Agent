@@ -1117,9 +1117,12 @@
       line-height: 1.5;
     }
     .deal-dashboard-empty__icon {
-      font-size: 40px;
-      line-height: 1;
+      display: block;
       margin-bottom: 14px;
+      line-height: 0;
+    }
+    .deal-dashboard-empty__icon svg {
+      display: block;
     }
     .deal-dashboard-empty--filtered {
       padding: 40px 16px;
@@ -2419,12 +2422,36 @@ function renderDashboardStats(deals) {
     '<span class="dashboard-stats__item dashboard-stats__item--pass"><strong>' + stats.pass + '</strong> PASS</span>';
 }
 
+var DASHBOARD_EMPTY_BLOB_SVG =
+  '<svg width="120" height="140" viewBox="0 0 120 140" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+  '<ellipse cx="60" cy="118" rx="32" ry="22" fill="#1a1a2e"/>' +
+  '<polygon points="60,96 56,108 60,120 64,108" fill="#c0392b"/>' +
+  '<polygon points="52,96 60,104 68,96 64,90 56,90" fill="white"/>' +
+  '<rect x="54" y="86" width="12" height="10" rx="4" fill="#f5c5a3"/>' +
+  '<ellipse cx="60" cy="68" rx="30" ry="28" fill="#f5c5a3"/>' +
+  '<rect x="34" y="60" width="20" height="13" rx="5" fill="#111" opacity="0.95"/>' +
+  '<rect x="57" y="60" width="20" height="13" rx="5" fill="#111" opacity="0.95"/>' +
+  '<line x1="54" y1="66" x2="57" y2="66" stroke="#333" stroke-width="2"/>' +
+  '<rect x="37" y="63" width="5" height="3" rx="1.5" fill="white" opacity="0.25"/>' +
+  '<rect x="60" y="63" width="5" height="3" rx="1.5" fill="white" opacity="0.25"/>' +
+  '<path d="M52 79 Q60 85 68 79" stroke="#c0856a" stroke-width="2" fill="none" stroke-linecap="round"/>' +
+  '<ellipse cx="30" cy="68" rx="5" ry="7" fill="#f5c5a3"/>' +
+  '<circle cx="30" cy="64" r="3" fill="#333"/>' +
+  '<path d="M30 67 Q28 72 30 76" stroke="#333" stroke-width="1.5" fill="none"/>' +
+  '<path d="M88 100 Q105 88 112 78" stroke="#1a1a2e" stroke-width="10" stroke-linecap="round"/>' +
+  '<circle cx="113" cy="76" r="7" fill="#f5c5a3"/>' +
+  '<rect x="112" y="62" width="6" height="14" rx="3" fill="#f5c5a3"/>' +
+  '<path d="M32 100 Q20 110 18 118" stroke="#1a1a2e" stroke-width="10" stroke-linecap="round"/>' +
+  '<rect x="70" y="104" width="10" height="8" rx="2" fill="#f59e0b" opacity="0.9"/>' +
+  '<text x="72" y="111" font-size="5" fill="#1a1a2e" font-weight="bold">FBI</text>' +
+  '</svg>';
+
 function renderDashboardEmptyState(isFiltered) {
   if (isFiltered) {
     return '<div class="deal-dashboard-empty deal-dashboard-empty--filtered">No deals match your search.</div>';
   }
   return '<div class="deal-dashboard-empty">' +
-    '<span class="deal-dashboard-empty__icon" aria-hidden="true">✨</span>' +
+    '<span class="deal-dashboard-empty__icon" aria-hidden="true">' + DASHBOARD_EMPTY_BLOB_SVG + '</span>' +
     '<p>No analyses yet — run your first deal above</p>' +
     '</div>';
 }
