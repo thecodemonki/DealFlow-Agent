@@ -67,8 +67,14 @@ UPLOAD_DIR = Path(os.environ.get("UPLOAD_DIR", "./uploads"))
 UPLOAD_DIR.mkdir(exist_ok=True)
 
 
+SHARED_BAND_ROOM_ID = os.getenv(
+    "BAND_ROOM_ID",
+    "8f4ebded-2988-4a75-915c-bcb80ad8a815",
+)
+
+
 def _default_band_room_id() -> Optional[str]:
-    return (os.environ.get("BAND_ROOM_ID") or "").strip() or None
+    return SHARED_BAND_ROOM_ID
 
 
 def _deal_room_id(d: dict[str, Any]) -> Optional[str]:
@@ -97,6 +103,7 @@ app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
 # In-memory deal status store (replace with DB in production)
 deals: dict[str, dict] = {}
+deal_log: list[dict[str, Any]] = []
 
 
 class DealCompleteBody(BaseModel):
@@ -208,6 +215,20 @@ def _apply_memo_summary_to_deal(deal: dict[str, Any], memo_summary: Optional[dic
     deal.update(scores)
     if memo_summary.get("company_name"):
         deal["company_name"] = memo_summary["company_name"]
+
+
+def _append_deal_log(deal_id: str, deal: dict[str, Any]) -> None:
+    """Append or replace a completed deal in the in-memory deal log (newest first)."""
+    global deal_log
+    entry = {
+        "deal_id": deal_id,
+        "company_name": deal.get("company_name") or "",
+        "deal_score": deal.get("deal_score"),
+        "verdict": deal.get("deal_verdict"),
+        "analyzed_at": deal.get("completed_at"),
+    }
+    deal_log = [e for e in deal_log if e.get("deal_id") != deal_id]
+    deal_log.insert(0, entry)
 
 
 def _scores_from_deal(d: dict[str, Any]) -> dict[str, Any]:
@@ -711,6 +732,7 @@ async def mark_deal_complete(deal_id: str, body: DealCompleteBody):
         deals[deal_id]["completed_at"],
     )
     _apply_memo_summary_to_deal(deals[deal_id], body.memo_summary)
+    _append_deal_log(deal_id, deals[deal_id])
     if not _deal_room_id(deals[deal_id]):
         fallback = _default_band_room_id()
         if fallback:
@@ -724,6 +746,12 @@ async def mark_deal_complete(deal_id: str, body: DealCompleteBody):
         deals[deal_id].get("room_id"),
     )
     return {"status": "updated", "deal_id": deal_id}
+
+
+@app.get("/deal-log")
+async def get_deal_log():
+    """Return in-memory list of completed deals (survives until process restart)."""
+    return deal_log
 
 
 @app.post("/deals/{deal_id}/chat")
@@ -742,36 +770,19 @@ async def save_deal_chat(deal_id: str, body: DealChatBody):
 
 @app.post("/deals/{deal_id}/message")
 async def post_deal_message(deal_id: str, body: DealMessageBody):
-    """Post a user follow-up question to the deal's Band room."""
+    """Post a user follow-up question to the shared Band room."""
     message = (body.message or "").strip()
+    room_id = SHARED_BAND_ROOM_ID
     deal_found = deal_id in deals
-    room_id = _deal_room_id(deals[deal_id]) if deal_found else None
     logger.info(
-        "POST /deals/%s/message: deal_found=%s band_room_id=%s room_id=%s message_len=%d",
+        "POST /deals/%s/message: deal_found=%s room_id=%s message_len=%d",
         deal_id,
         deal_found,
-        deals[deal_id].get("band_room_id") if deal_found else None,
         room_id,
         len(message),
     )
-    if not deal_found:
-        logger.warning(
-            "POST /deals/%s/message: deal not found (detail='Deal not found'); requested_deal_id=%s stored_ids=%s",
-            deal_id,
-            deal_id,
-            list(deals.keys())[:20],
-        )
-        raise HTTPException(status_code=404, detail="Deal not found")
     if not message:
         logger.warning("POST /deals/%s/message: empty message", deal_id)
         raise HTTPException(status_code=400, detail="Message is required")
-    if not room_id:
-        logger.warning(
-            "POST /deals/%s/message: no room_id on deal; band_room_id=%s room_id=%s",
-            deal_id,
-            deals[deal_id].get("band_room_id"),
-            deals[deal_id].get("room_id"),
-        )
-        raise HTTPException(status_code=400, detail="No Band room for this deal")
     await _post_band_user_message(room_id, message)
     return {"status": "sent"}
