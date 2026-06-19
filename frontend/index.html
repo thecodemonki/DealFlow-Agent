@@ -289,15 +289,6 @@
       flex-direction: column;
       flex-shrink: 1;
     }
-    .sidebar-stats-bar {
-      margin: 8px 10px 0;
-      padding: 8px 6px;
-      font-size: 11px;
-      font-weight: 500;
-      color: #6b7280;
-      line-height: 1.4;
-      border-bottom: 1px solid #e5e7eb;
-    }
     .sidebar-nav-label {
       padding: 14px 16px 6px;
       font-size: 12px;
@@ -364,151 +355,6 @@
       letter-spacing: inherit;
     }
     .recent-toggle-more:hover { color: #64748b; }
-    .deal-log-section {
-      flex: 1;
-      min-height: 0;
-      display: flex;
-      flex-direction: column;
-      margin-top: 8px;
-      border-top: 1px solid #e5e7eb;
-      padding-top: 4px;
-    }
-    .deal-log-section--collapsed .deal-log-body {
-      display: none;
-    }
-    .deal-log-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      width: 100%;
-      padding: 10px 16px 8px;
-      font-size: 12px;
-      font-weight: 500;
-      color: #6b7280;
-      letter-spacing: 0.02em;
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-family: inherit;
-      text-align: left;
-    }
-    .deal-log-header:hover { color: #374151; }
-    .deal-log-header__chevron {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      border-right: 1.5px solid #9ca3af;
-      border-bottom: 1.5px solid #9ca3af;
-      transform: rotate(45deg);
-      transition: transform 0.15s ease;
-      margin-top: -2px;
-    }
-    .deal-log-section--collapsed .deal-log-header__chevron {
-      transform: rotate(-45deg);
-      margin-top: 2px;
-    }
-    .deal-log-body {
-      flex: 1;
-      min-height: 0;
-      display: flex;
-      flex-direction: column;
-    }
-    .deal-log-scroll {
-      flex: 1;
-      min-height: 0;
-      overflow-y: auto;
-      overflow-x: hidden;
-      padding: 0 8px 8px;
-    }
-    .deal-log-section--empty .deal-log-scroll {
-      display: none;
-    }
-    .deal-log-empty {
-      display: none;
-      flex: 1;
-      align-items: center;
-      justify-content: center;
-      padding: 12px 10px;
-      font-size: 13px;
-      font-weight: 400;
-      color: #9ca3af;
-      text-align: center;
-      line-height: 1.35;
-    }
-    .deal-log-section--empty .deal-log-empty {
-      display: flex;
-    }
-    .deal-log-list { padding: 0 0 4px; }
-    .deal-log-row {
-      margin: 4px 0;
-      padding: 8px 10px;
-      border-radius: 8px;
-      background: #fff;
-      border: 1px solid #e5e7eb;
-      cursor: pointer;
-      transition: background 0.12s, border-color 0.12s;
-    }
-    .deal-log-row:hover {
-      background: rgba(79, 110, 247, 0.06);
-      border-color: #c7d2fe;
-    }
-    .deal-log-row__top {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      min-width: 0;
-    }
-    .deal-log-row__name {
-      flex: 1;
-      min-width: 0;
-      font-size: 13px;
-      font-weight: 600;
-      color: #1a1a2e;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .deal-log-row__score {
-      font-size: 13px;
-      font-weight: 600;
-      color: #374151;
-      flex-shrink: 0;
-    }
-    .deal-log-row__top .recent-row__badge {
-      flex-shrink: 0;
-      font-size: 10px;
-      padding: 2px 6px;
-    }
-    .deal-log-row__meta {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-top: 4px;
-      font-size: 11px;
-      color: #9ca3af;
-      min-width: 0;
-    }
-    .deal-log-row__industry {
-      flex: 1;
-      min-width: 0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .deal-log-row__date { flex-shrink: 0; }
-    .deal-log-row__view {
-      flex-shrink: 0;
-      padding: 0;
-      margin: 0;
-      border: none;
-      background: none;
-      font-size: 11px;
-      font-weight: 600;
-      color: #4f46e5;
-      cursor: pointer;
-      font-family: inherit;
-    }
-    .deal-log-row__view:hover { color: #4338ca; text-decoration: underline; }
     .chat-restore-banner {
       text-align: center;
       font-size: 11px;
@@ -1882,35 +1728,6 @@
       margin-left: auto;
       flex-shrink: 0;
     }
-    .memo-pdf-fallback-note {
-      font-size: 12px;
-      color: #6b7280;
-      margin: 0;
-      text-align: right;
-    }
-    .memo-pdf-unavailable {
-      font-size: 13px;
-      color: #9ca3af;
-      font-style: italic;
-      margin: 0;
-      text-align: right;
-      max-width: 220px;
-      line-height: 1.4;
-    }
-    .results-pdf-status {
-      width: 100%;
-      text-align: center;
-      margin: 0;
-    }
-    .results-band-link {
-      display: inline-block;
-      margin-top: 14px;
-      font-size: 13px;
-      font-weight: 500;
-      color: #999;
-      text-decoration: none;
-    }
-    .results-band-link:hover { color: #737373; text-decoration: underline; }
     .results-dashboard-link {
       display: block;
       width: 100%;
@@ -2078,7 +1895,6 @@
       <span>Dashboard</span>
     </button>
     <button type="button" class="btn-new" id="newAnalysisBtn"><span class="btn-new__icon">+</span> New Analysis</button>
-    <div class="sidebar-stats-bar" id="dealLogStats" hidden></div>
     <div class="sidebar-recent-stack">
       <div class="sidebar-nav-label sidebar-nav-label--recent">Recent</div>
       <div class="recent-section" id="recentSection">
@@ -2087,18 +1903,6 @@
           <div class="recent-list" id="recentList"></div>
         </div>
         <button type="button" class="recent-toggle-more" id="recentToggleMore" hidden>Show more (0)</button>
-      </div>
-      <div class="deal-log-section" id="dealLogSection">
-        <button type="button" class="deal-log-header" id="dealLogToggle" aria-expanded="true">
-          <span>Deal Log</span>
-          <span class="deal-log-header__chevron" aria-hidden="true"></span>
-        </button>
-        <div class="deal-log-body" id="dealLogBody">
-          <div class="deal-log-empty" id="dealLogEmpty">No completed analyses yet</div>
-          <div class="deal-log-scroll" id="dealLogScroll">
-            <div class="deal-log-list" id="dealLogList"></div>
-          </div>
-        </div>
       </div>
     </div>
     <div class="sidebar-footer">Powered by Band</div>
@@ -2214,9 +2018,7 @@
           <div class="memo-view__header-right">
             <span class="memo-view__pill memo-view__pill--conditional" id="memoViewRec"></span>
             <div class="memo-pdf-download-wrap">
-              <button type="button" id="downloadPdfBtn" class="memo-pdf-download-btn" style="display:none">↓ Download PDF</button>
-              <p id="memoPdfFallbackNote" class="memo-pdf-fallback-note" hidden>Memo from latest analysis</p>
-              <p id="memoPdfUnavailable" class="memo-pdf-unavailable" hidden>Memo unavailable — re-run analysis to regenerate</p>
+              <a id="downloadPdfBtn" class="memo-pdf-download-btn" href="#" target="_blank" rel="noopener noreferrer" style="display:none">↓ Download PDF</a>
             </div>
             <a class="memo-view__download" id="memoViewDownload" href="#" target="_blank" rel="noopener noreferrer" hidden>Download PDF</a>
           </div>
@@ -2273,15 +2075,12 @@
         <div class="results-kicker">Analysis Complete</div>
         <div class="rec-value results-rec-value results-rec-value--conditional" id="recValue" aria-hidden="true"></div>
         <p class="results-meta-line" id="resultsMetaLine"></p>
-        <button type="button" class="btn-download" id="downloadBtn" style="display:none">
+        <a class="btn-download" id="downloadBtn" href="#" target="_blank" rel="noopener noreferrer" style="display:none">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           <span>Download investment memo PDF</span>
-        </button>
-        <p id="resultsPdfFallbackNote" class="memo-pdf-fallback-note results-pdf-status" hidden>Memo from latest analysis</p>
-        <p id="resultsPdfUnavailable" class="memo-pdf-unavailable results-pdf-status" hidden>Memo unavailable — re-run analysis to regenerate</p>
-        <a class="results-band-link" id="bandRoomLink" href="https://band.ai" target="_blank" rel="noopener noreferrer">View in Band →</a>
+        </a>
         <button type="button" class="results-dashboard-link" id="resultsDashboardBtn">Add to Dashboard ★</button>
-        <button type="button" id="modalPdfBtn" class="memo-pdf-download-btn memo-pdf-download-btn--modal">↓ Download Memo PDF</button>
+        <a id="modalPdfBtn" class="memo-pdf-download-btn memo-pdf-download-btn--modal" href="#" target="_blank" rel="noopener noreferrer">↓ Download Memo PDF</a>
         <button type="button" class="results-close" id="resultsCloseBtn">Close</button>
       </div>
     </div>
@@ -2918,10 +2717,7 @@ function postDealComplete(dealId, memoSummary) {
     body: JSON.stringify({ memo_summary: memoSummary })
   }).then(function (r) {
     if (!r.ok) dealCompletePosted[dealId] = false;
-    else {
-      fetchDealLog();
-      refreshDashboard();
-    }
+    else refreshDashboard();
   }).catch(function () {
     dealCompletePosted[dealId] = false;
   });
@@ -2981,7 +2777,7 @@ function setDealViewTab(tab) {
       setAgentStatus(a, 'done');
     });
   }
-  updateMemoDownloadUI(lastMemoPdfState);
+  setDownloadLinks(currentDealId);
 }
 function enterCompletedDealView(tab) {
   currentAppView = 'deal-detail';
@@ -3134,92 +2930,32 @@ function scoreBundleFromSummary(summary) {
     risksFlagged: rc
   };
 }
-var lastDealMetaForPdf = null;
-var lastMemoPdfState = { mode: 'unavailable', url: null, triedPerDeal: false };
-var memoPdfResolveToken = 0;
-
-function dealMetaHasMemo(dealMeta) {
-  if (!dealMeta) return false;
-  if (dealMeta.memo_path) return true;
-  if (dealMeta.has_memo_pdf) return true;
-  if (dealMeta.memo_summary && typeof dealMeta.memo_summary === 'object') return true;
-  return false;
+function memoLatestPdfUrl() {
+  return API + '/memo/latest';
 }
 
-function checkMemoPdfUrl(url) {
-  return fetch(url, { method: 'HEAD' })
-    .then(function (r) { return r.ok; })
-    .catch(function () { return false; });
-}
-
-function resolveMemoPdfState(dealId, dealMeta) {
-  var latestUrl = API + '/memo/latest';
-  var perDealUrl = dealId ? API + '/deals/' + encodeURIComponent(dealId) + '/memo' : null;
-  var tryPerDeal = !!(dealId && dealMetaHasMemo(dealMeta));
-  if (tryPerDeal && perDealUrl) {
-    return checkMemoPdfUrl(perDealUrl).then(function (ok) {
-      if (ok) return { mode: 'per-deal', url: perDealUrl, triedPerDeal: true };
-      return checkMemoPdfUrl(latestUrl).then(function (latestOk) {
-        if (latestOk) return { mode: 'latest', url: latestUrl, triedPerDeal: true };
-        return { mode: 'unavailable', url: null, triedPerDeal: true };
-      });
-    });
-  }
-  return checkMemoPdfUrl(latestUrl).then(function (latestOk) {
-    if (latestOk) return { mode: 'latest', url: latestUrl, triedPerDeal: false };
-    return { mode: 'unavailable', url: null, triedPerDeal: false };
-  });
-}
-
-function openMemoPdfDownload() {
-  if (!lastMemoPdfState || lastMemoPdfState.mode === 'unavailable' || !lastMemoPdfState.url) return;
-  window.open(lastMemoPdfState.url, '_blank');
-}
-
-function updateMemoDownloadUI(state) {
-  lastMemoPdfState = state || { mode: 'unavailable', url: null, triedPerDeal: false };
-  var canDownload = state.mode === 'per-deal' || state.mode === 'latest';
-  var isLatest = state.mode === 'latest';
-  var isUnavailable = state.mode === 'unavailable';
-  var showMemoPdf = currentDealId && activeDealViewTab === 'memo';
-  var showResultsPdf = !!currentDealId;
+function setDownloadLinks(dealId) {
+  var url = memoLatestPdfUrl();
+  var showMemoPdf = dealId && activeDealViewTab === 'memo';
+  var showResultsPdf = !!dealId;
 
   var dp = document.getElementById('downloadPdfBtn');
-  var memoFallback = document.getElementById('memoPdfFallbackNote');
-  var memoUnavail = document.getElementById('memoPdfUnavailable');
   if (dp) {
-    dp.style.display = showMemoPdf && canDownload ? 'inline-flex' : 'none';
-    dp.disabled = !canDownload;
+    dp.href = url;
+    dp.style.display = showMemoPdf ? 'inline-flex' : 'none';
   }
-  if (memoFallback) memoFallback.hidden = !(showMemoPdf && isLatest);
-  if (memoUnavail) memoUnavail.hidden = !(showMemoPdf && isUnavailable);
-
   var db = document.getElementById('downloadBtn');
-  var mp = document.getElementById('modalPdfBtn');
-  var resultsFallback = document.getElementById('resultsPdfFallbackNote');
-  var resultsUnavail = document.getElementById('resultsPdfUnavailable');
   if (db) {
-    db.style.display = showResultsPdf && canDownload ? 'inline-flex' : 'none';
-    db.disabled = !canDownload;
+    db.href = url;
+    db.style.display = showResultsPdf ? 'inline-flex' : 'none';
   }
+  var mp = document.getElementById('modalPdfBtn');
   if (mp) {
-    mp.style.display = showResultsPdf && canDownload ? 'inline-flex' : 'none';
-    mp.disabled = !canDownload;
+    mp.href = url;
+    mp.style.display = showResultsPdf ? 'inline-flex' : 'none';
   }
-  if (resultsFallback) resultsFallback.hidden = !(showResultsPdf && isLatest);
-  if (resultsUnavail) resultsUnavail.hidden = !(showResultsPdf && isUnavailable);
-
   var dl = document.getElementById('memoViewDownload');
   if (dl) dl.style.display = 'none';
-}
-
-function setDownloadLinks(dealId, dealMeta) {
-  if (dealMeta) lastDealMetaForPdf = dealMeta;
-  var token = ++memoPdfResolveToken;
-  resolveMemoPdfState(dealId, lastDealMetaForPdf || {}).then(function (state) {
-    if (token !== memoPdfResolveToken) return;
-    updateMemoDownloadUI(state);
-  });
 }
 function showMemoViewPanel() {
   enterCompletedDealView('memo');
@@ -3480,8 +3216,7 @@ function populateMemoView(company, industry, rec, nFiles, durationSec, apiSummar
         : kfText);
   }
   var dealId = (apiSummary && apiSummary.deal_id) || currentDealId;
-  var pdfMeta = Object.assign({}, dealRecord || {}, apiSummary || {});
-  setDownloadLinks(dealId, pdfMeta);
+  setDownloadLinks(dealId);
   renderMemoRadarChart(axisScoresFromSummary(apiSummary, dealRecord));
 }
 function stripHtml(html) { var d = document.createElement('div'); d.innerHTML = html; return d.textContent || d.innerText || ''; }
@@ -3845,128 +3580,6 @@ function completedDealsFromList(dealList) {
     return String(b.completed_at).localeCompare(String(a.completed_at));
   });
 }
-function computeDealLogStats(deals) {
-  var count = deals.length;
-  if (!count) return { count: 0, avgScore: 0, pass: 0, conditional: 0, fail: 0 };
-  var total = 0;
-  var pass = 0;
-  var conditional = 0;
-  var fail = 0;
-  deals.forEach(function (d) {
-    var raw = d.score != null && d.score !== '' ? d.score : d.deal_score;
-    if (typeof raw === 'string') raw = parseFloat(raw);
-    var normalized = typeof raw === 'number' && !isNaN(raw) ? normalizeDealScore1To10(raw) : null;
-    if (normalized != null) total += normalized;
-    var ringScore = normalized != null ? Math.round(normalized * 10) : 0;
-    var v = (d.deal_verdict || (normalized != null ? verdictFromScore(ringScore) : '') || '').toUpperCase();
-    if (v === 'PASS') pass++;
-    else if (v === 'FAIL') fail++;
-    else conditional++;
-  });
-  return {
-    count: count,
-    avgScore: Math.round((total / count) * 10) / 10,
-    pass: pass,
-    conditional: conditional,
-    fail: fail
-  };
-}
-function renderDealLogStats(deals) {
-  var el = document.getElementById('dealLogStats');
-  if (!el) return;
-  var stats = computeDealLogStats(deals);
-  if (!stats.count) {
-    el.hidden = true;
-    el.textContent = '';
-    return;
-  }
-  var parts = [stats.count + (stats.count === 1 ? ' deal' : ' deals'), 'Avg score ' + formatDealScore1To10(stats.avgScore)];
-  if (stats.pass) parts.push(stats.pass + ' PASS');
-  if (stats.conditional) parts.push(stats.conditional + ' CONDITIONAL');
-  if (stats.fail) parts.push(stats.fail + ' FAIL');
-  el.textContent = parts.join(' · ');
-  el.hidden = false;
-}
-function dealLogEntryFromDeal(deal) {
-  return {
-    dealId: deal.id,
-    company: deal.company_name || 'Unknown company',
-    industry: deal.industry || '',
-    dealScore: deal.deal_score,
-    dealVerdict: deal.deal_verdict
-  };
-}
-function openDealLogEntry(deal) {
-  if (!deal || !deal.id) return;
-  openRecentDeal(dealLogEntryFromDeal(deal));
-}
-function renderDealLog(deals) {
-  var section = document.getElementById('dealLogSection');
-  var list = document.getElementById('dealLogList');
-  if (!list) return;
-  list.innerHTML = '';
-  if (section) section.classList.toggle('deal-log-section--empty', !deals.length);
-  deals.forEach(function (deal) {
-    var rawScore = deal.score != null && deal.score !== '' ? deal.score : deal.deal_score;
-    if (typeof rawScore === 'string') rawScore = parseFloat(rawScore);
-    var normalized = typeof rawScore === 'number' && !isNaN(rawScore) ? normalizeDealScore1To10(rawScore) : null;
-    var ringScore = normalized != null ? Math.round(normalized * 10) : null;
-    var verdict = (deal.deal_verdict || (ringScore != null ? verdictFromScore(ringScore) : '') || '').toUpperCase();
-    var row = document.createElement('div');
-    row.className = 'deal-log-row';
-    row.setAttribute('data-deal-id', deal.id || '');
-    var industry = (deal.industry || '').trim() || '—';
-    var dateStr = formatAnalyzedDate(deal.completed_at);
-    row.innerHTML =
-      '<div class="deal-log-row__top">' +
-        '<span class="deal-log-row__name">' + escapeHtml(displayCompanyName(deal.company_name || 'Unknown company')) + '</span>' +
-        (normalized != null ? '<span class="deal-log-row__score">' + formatDealScore1To10(normalized) + ' / 10</span>' : '') +
-        (verdict ? '<span class="recent-row__badge ' + verdictBadgeClass(verdict) + '">' + escapeHtml(verdict) + '</span>' : '') +
-      '</div>' +
-      '<div class="deal-log-row__meta">' +
-        '<span class="deal-log-row__industry">' + escapeHtml(industry) + '</span>' +
-        (dateStr ? '<span class="deal-log-row__date">' + escapeHtml(dateStr) + '</span>' : '') +
-        '<button type="button" class="deal-log-row__view">View</button>' +
-      '</div>';
-    list.appendChild(row);
-  });
-}
-function dealLogRowsFromApi(entries) {
-  if (!entries || !entries.length) return [];
-  return entries.map(function (e) {
-    return {
-      id: e.deal_id,
-      company_name: e.company_name,
-      deal_score: e.deal_score,
-      deal_verdict: e.verdict,
-      completed_at: e.analyzed_at,
-      industry: e.industry || ''
-    };
-  });
-}
-function fetchDealLog() {
-  fetch(API + '/deal-log')
-    .then(function (r) { return r.ok ? r.json() : null; })
-    .catch(function () { return null; })
-    .then(function (entries) {
-      var deals = dealLogRowsFromApi(entries || []);
-      renderDealLogStats(deals);
-      renderDealLog(deals);
-    });
-}
-function initDealLogCollapse() {
-  var section = document.getElementById('dealLogSection');
-  var toggle = document.getElementById('dealLogToggle');
-  if (!section || !toggle) return;
-  var collapsed = localStorage.getItem('dealLogCollapsed') === '1';
-  section.classList.toggle('deal-log-section--collapsed', collapsed);
-  toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
-  toggle.addEventListener('click', function () {
-    var isCollapsed = section.classList.toggle('deal-log-section--collapsed');
-    toggle.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
-    localStorage.setItem('dealLogCollapsed', isCollapsed ? '1' : '0');
-  });
-}
 function enrichRecentEntriesFromServer() {
   fetch(API + '/deals')
     .then(function (r) { return r.ok ? r.json() : null; })
@@ -4137,12 +3750,10 @@ function restoreCompletedDeal(deal, entry, summary) {
   } else {
     replayChatFromEntry({ messages: [] }, 'Restored analysis results');
   }
-  var bandLink = document.getElementById('bandRoomLink');
-  if (bandLink) bandLink.href = deal.band_room_id ? 'https://band.ai' : 'https://band.ai';
   var webPart = nFiles > 0 ? 'Web + documents' : 'Web-only';
   var metaLine = document.getElementById('resultsMetaLine');
   if (metaLine) metaLine.textContent = 'Medium confidence · ' + webPart + ' · ' + formatAnalysisSecondsBrief(durationSec);
-  setDownloadLinks(deal.id, deal);
+  setDownloadLinks(deal.id);
   enterCompletedDealView('memo');
   if (!currentBandRoomId && deal.id) refreshActiveDealRoomId(deal.id);
 }
@@ -4240,22 +3851,6 @@ async function openRecentDeal(entry) {
   }
 }
 document.getElementById('sidebar').addEventListener('click', function (e) {
-  if (e.target.closest('#dealLogToggle')) return;
-  var viewBtn = e.target.closest('.deal-log-row__view');
-  if (viewBtn) {
-    e.preventDefault();
-    e.stopPropagation();
-    var viewRow = viewBtn.closest('.deal-log-row');
-    var viewDealId = viewRow && viewRow.getAttribute('data-deal-id');
-    if (viewDealId) openRecentDeal({ dealId: viewDealId });
-    return;
-  }
-  var logRow = e.target.closest('.deal-log-row');
-  if (logRow) {
-    var logDealId = logRow.getAttribute('data-deal-id');
-    if (logDealId) openRecentDeal({ dealId: logDealId });
-    return;
-  }
   if (e.target.closest('#recentToggleMore')) {
     e.preventDefault();
     recentListExpanded = !recentListExpanded;
@@ -4324,8 +3919,7 @@ function showResults() {
   }
   var webPart = nFiles > 0 ? 'Web + documents' : 'Web-only';
   document.getElementById('resultsMetaLine').textContent = 'Medium confidence · ' + webPart + ' · ' + formatAnalysisSecondsBrief(lastAnalysisDurationSec);
-  setDownloadLinks(currentDealId, { has_memo_pdf: true });
-  if (bandLink) bandLink.href = 'https://band.ai';
+  setDownloadLinks(currentDealId);
   document.getElementById('resultsOverlay').classList.add('visible');
   if (currentDealId && !currentBandRoomId) refreshActiveDealRoomId(currentDealId);
   var messages = serializeChatFeed();
@@ -4379,7 +3973,7 @@ function showResults() {
       populateMemoView(company, industry, null, nFiles, lastAnalysisDurationSec, j);
       var resolvedDealId = j.deal_id || currentDealId;
       setActiveDealIds(resolvedDealId, currentBandRoomId);
-      setDownloadLinks(resolvedDealId, j);
+      setDownloadLinks(resolvedDealId);
       if (resolvedDealId && !currentBandRoomId) refreshActiveDealRoomId(resolvedDealId);
       var stored = loadChatsFromStorage();
       for (var si = 0; si < stored.length; si++) {
@@ -4393,7 +3987,6 @@ function showResults() {
       }
       saveChatsToStorage(stored);
       renderRecentList();
-      fetchDealLog();
       refreshDashboard();
     })
     .catch(function () {
@@ -4413,13 +4006,6 @@ document.getElementById('chatBookmarkBtn').addEventListener('click', function ()
 document.getElementById('sidebarDashboardBtn').addEventListener('click', function () {
   fetchDeals().then(function (deals) {
     showDealDashboard(visibleDashboardDeals(deals));
-  });
-});
-['downloadPdfBtn', 'downloadBtn', 'modalPdfBtn'].forEach(function (id) {
-  var el = document.getElementById(id);
-  if (el) el.addEventListener('click', function (e) {
-    e.preventDefault();
-    openMemoPdfDownload();
   });
 });
 document.getElementById('dealViewTabs').addEventListener('click', function (e) {
@@ -4607,8 +4193,6 @@ async function startAnalysis() {
 }
 renderRecentList();
 enrichRecentEntriesFromServer();
-fetchDealLog();
-initDealLogCollapse();
 updateChatEmpty();
 updateDocUploadBadge();
 window.bandRoomId = DEFAULT_BAND_ROOM_ID;
