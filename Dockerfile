@@ -11,6 +11,7 @@ COPY agents ./agents
 COPY shared ./shared
 COPY frontend ./frontend
 COPY run_agents.py .
+COPY agent_config.yaml .
 
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONPATH=/app
