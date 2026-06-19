@@ -440,25 +440,10 @@ async def _post_band_room_message(room_id: str, content: str) -> None:
 
 async def trigger_orchestrator(deal_id: str, company_name: str, file_paths: list[str], notes: str) -> str:
     """
-    Sends the deal request to the Orchestrator agent via Band REST API.
-    The Orchestrator's Band agent_id is used to create a direct room.
+    Sends the deal request to the Orchestrator via the shared Band room.
     Returns the Band room ID for tracking.
     """
-    orch = _load_orchestrator_config()
-    client = await _band_http_client()
-    headers = {"X-API-Key": orch["api_key"], "Content-Type": "application/json"}
-
-    room_name = f"Deal: {company_name} [{deal_id[:8]}]"
-    create_room_resp = await client.post(
-        f"{BAND_API_BASE}/agent/chats",
-        headers=headers,
-        json={"name": room_name},
-    )
-    if create_room_resp.status_code not in (200, 201):
-        raise HTTPException(status_code=500, detail=f"Failed to create Band room: {create_room_resp.text}")
-
-    room_data = create_room_resp.json()
-    room_id = room_data.get("id") or room_data.get("chat_id")
+    room_id = BAND_ROOM_ID
 
     message_body = {
         "deal_id": deal_id,
