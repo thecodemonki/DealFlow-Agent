@@ -39,31 +39,24 @@ async def main():
     from agents.web_research.agent import run_web_research
     from agents.synthesis.agent import run_synthesis
 
-    logger.info("=" * 60)
-    logger.info("  DealFlow AI — Multi-Agent M&A Due Diligence Platform")
-    logger.info("  Powered by Band | Featherless AI | AI/ML API")
-    logger.info("=" * 60)
-    logger.info("Starting 6 agents:")
-    logger.info("  • Orchestrator      (LangGraph + GPT-4o / AI/ML API)")
-    logger.info("  • Document Parser   (LangGraph + GPT-4o-mini / AI/ML API)")
-    logger.info("  • Financial Analyst (LangGraph + GPT-4o-mini / AI/ML API)")
-    logger.info("  • Legal Risk        (LangGraph + GPT-4o-mini / AI/ML API)")
-    logger.info("  • Web Research      (LangGraph + GPT-4o / AI/ML API)")
-    logger.info("  • Synthesis         (LangGraph + GPT-4o / AI/ML API)")
-    logger.info("All agents connecting to Band...")
-    logger.info("")
-
-    try:
-        await asyncio.gather(
-            run_orchestrator(),
-            run_document_parser(),
-            run_financial_analyst(),
-            run_legal_risk(),
-            run_web_research(),
-            run_synthesis(),
-        )
-    except KeyboardInterrupt:
-        logger.info("Shutting down all agents...")
+    print("Agent worker starting...", flush=True)
+    while True:
+        try:
+            print("Starting all 6 agents...", flush=True)
+            await asyncio.gather(
+                run_orchestrator(),
+                run_document_parser(),
+                run_financial_analyst(),
+                run_legal_risk(),
+                run_web_research(),
+                run_synthesis(),
+            )
+        except KeyboardInterrupt:
+            print("Shutting down agents...")
+            break
+        except Exception as e:
+            print(f"Agent crash: {e} — restarting in 5s...", flush=True)
+            await asyncio.sleep(5)
 
 
 if __name__ == "__main__":
