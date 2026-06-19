@@ -493,33 +493,19 @@ async def _post_band_document_uploaded(room_id: str, file_path: str) -> bool:
 
 
 async def _post_band_user_message(room_id: str, message: str) -> None:
-    orchestrator_agent_id = "1771a605-be42-431c-8003-dbddd3a25b35"
     headers = {
-        "X-API-Key": "band_a_1781367850_Bgxwnc0IosTAioUFrOGWIt-u88UOHqVS",
+        "X-API-Key": "band_a_1781367928_k2iCRHCt18tKbpoYFPLAkMbvOtPIPxLf",
         "Content-Type": "application/json",
     }
-    mention_id = orchestrator_agent_id
-    async with httpx.AsyncClient() as client:
-        participants_url = f"https://app.thenvoi.com/api/v1/agent/chats/{room_id}/participants"
-        part_resp = await client.get(participants_url, headers=headers, timeout=10.0)
-        if part_resp.status_code == 200:
-            data = part_resp.json()
-            participants = data.get("data", data) if isinstance(data, dict) else data
-            if not isinstance(participants, list):
-                participants = []
-            for p in participants:
-                if p.get("agent_id") == orchestrator_agent_id:
-                    mention_id = p.get("participant_id") or p.get("id") or mention_id
-                    break
-
-        url = f"https://app.thenvoi.com/api/v1/agent/chats/{room_id}/messages"
-        payload = {
-            "message": {
-                "content": f"USER FOLLOW-UP: {message}",
-                "mentions": [{"id": mention_id}],
-            }
+    url = f"https://app.thenvoi.com/api/v1/agent/chats/{room_id}/messages"
+    payload = {
+        "message": {
+            "content": f"USER FOLLOW-UP: {message}",
+            "mentions": [{"id": "1771a605-be42-431c-8003-dbddd3a25b35"}],
         }
-        print(f"DEBUG mention payload: {payload}", flush=True)
+    }
+    print(f"DEBUG mention payload: {payload}", flush=True)
+    async with httpx.AsyncClient() as client:
         resp = await client.post(url, headers=headers, json=payload, timeout=10.0)
     if resp.status_code not in (200, 201):
         raise HTTPException(status_code=502, detail=resp.text)
