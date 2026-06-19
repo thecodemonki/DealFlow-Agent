@@ -3093,6 +3093,90 @@ function recommendationBadgeClass(rec) {
   return 'deal-card__badge--conditional';
 }
 
+function parseScore1To10(value) {
+  if (value == null || value === '') return null;
+  var s = typeof value === 'string' ? parseFloat(value) : value;
+  if (typeof s !== 'number' || isNaN(s)) return null;
+  if (s > 10) s = s / 10;
+  return Math.round(Math.max(1, Math.min(10, s)) * 10) / 10;
+}
+
+function seededUnitRandom(seedStr) {
+  var hash = 0;
+  var s = String(seedStr || '');
+  for (var i = 0; i < s.length; i++) {
+    hash = ((hash << 5) - hash) + s.charCodeAt(i);
+    hash |= 0;
+  }
+  return (Math.abs(hash) % 10000) / 10000;
+}
+
+function derivedOverallScoreFromRecommendation(rec, companyName) {
+  var r = String(rec || 'CONDITIONAL').toUpperCase();
+  var min;
+  var max;
+  if (r === 'INVEST') {
+    min = 7.5;
+    max = 9.0;
+  } else if (r === 'PASS' || r === 'FAIL') {
+    min = 2.0;
+    max = 4.5;
+  } else {
+    min = 5.0;
+    max = 7.0;
+  }
+  var t = seededUnitRandom(companyName);
+  return Math.round((min + t * (max - min)) * 10) / 10;
+}
+
+var MEMO_AXIS_FIELDS = [
+  { field: 'legal_score', key: 'legal_risk' },
+  { field: 'financial_score', key: 'financial_health' },
+  { field: 'market_score', key: 'market_position' },
+  { field: 'regulatory_score', key: 'regulatory_exposure' },
+  { field: 'team_score', key: 'team_ip_strength' }
+];
+
+function applyMemoScoresToEntry(entry, memo) {
+  if (!entry || !memo) return entry;
+  ['overall_score', 'legal_score', 'financial_score', 'market_score', 'regulatory_score', 'team_score'].forEach(function (f) {
+    if (memo[f] != null && memo[f] !== '') entry[f] = memo[f];
+  });
+  return entry;
+}
+
+function dealSubScoresFromDeal(deal) {
+  if (!deal) return null;
+  var out = {};
+  var hasAny = false;
+  MEMO_AXIS_FIELDS.forEach(function (m) {
+    var v = parseScore1To10(deal[m.field]);
+    if (v == null && deal.axis_scores && deal.axis_scores[m.key] != null) {
+      v = parseScore1To10(deal.axis_scores[m.key]);
+    }
+    if (v != null) {
+      out[m.key] = v;
+      hasAny = true;
+    }
+  });
+  return hasAny ? out : null;
+}
+
+function dealCardOverallScore(deal) {
+  if (!deal) return null;
+  var stored = parseScore1To10(deal.overall_score);
+  if (stored != null) return stored;
+  return derivedOverallScoreFromRecommendation(
+    normalizeRecommendation(deal),
+    deal.company_name || ''
+  );
+}
+
+function formatDealScoreDisplay(value) {
+  if (value == null || typeof value !== 'number' || isNaN(value)) return '—';
+  return value.toFixed(1) + ' / 10';
+}
+
 function normalizeDealScore1To10(value) {
   var s = typeof value === 'string' ? parseFloat(value) : value;
   if (typeof s !== 'number' || isNaN(s)) return 6.5;
@@ -3105,33 +3189,39 @@ function formatDealScore1To10(value) {
 }
 
 function dealCardScore(deal) {
-  if (deal && deal.score != null && deal.score !== '') {
-    return normalizeDealScore1To10(deal.score);
-  }
-  if (deal && deal.deal_score != null && deal.deal_score !== '') {
-    return normalizeDealScore1To10(deal.deal_score);
-  }
-  return 6.5;
+  return dealCardOverallScore(deal);
 }
 
 function dealCardAxisScores(deal) {
-  var stored = deal && deal.axis_scores;
-  if (stored && typeof stored === 'object') {
-    var ok = true;
-    RADAR_AXES.forEach(function (a) {
-      if (isNaN(parseFloat(stored[a.key]))) ok = false;
-    });
-    if (ok) return stored;
-  }
-  return defaultAxisScores(dealCardScore(deal));
+  return dealSubScoresFromDeal(deal);
+}
+
+function dealCardAxisScoresForRadar(deal) {
+  var scores = dealSubScoresFromDeal(deal);
+  if (!scores) return null;
+  var complete = true;
+  RADAR_AXES.forEach(function (a) {
+    if (scores[a.key] == null || isNaN(scores[a.key])) complete = false;
+  });
+  return complete ? scores : null;
 }
 
 function dealCardAxisHtml(deal) {
-  var scores = dealCardAxisScores(deal);
+  var scores = dealSubScoresFromDeal(deal);
   return RADAR_AXES.map(function (a) {
-    var v = parseFloat(scores[a.key]);
-    if (isNaN(v)) v = 0;
-    return '<span class="deal-card__axis">' + escapeHtml(a.short) + ' ' + v.toFixed(1) + '</span>';
+    var v = scores ? scores[a.key] : null;
+    var label = v != null ? v.toFixed(1) : '—';
+    return '<span class="deal-card__axis">' + escapeHtml(a.short) + ' ' + label + '</span>';
+  }).join('');
+}
+
+function dealCardAxisLegendHtml(deal) {
+  var scores = dealSubScoresFromDeal(deal);
+  return RADAR_AXES.map(function (a) {
+    var v = scores ? scores[a.key] : null;
+    var label = v != null ? v.toFixed(1) + ' / 10' : '—';
+    return '<li><span class="memo-view__radar-legend-label">' + escapeHtml(a.label) +
+      '</span><span class="memo-view__radar-legend-val">' + label + '</span></li>';
   }).join('');
 }
 
@@ -3219,7 +3309,7 @@ function renderDealTable(deals, isFilteredView) {
         '<span class="deal-table__company">' + logoHtml +
           '<span class="deal-table__company-name">' + escapeHtml(companyRaw) + '</span></span></span></td>' +
       '<td class="deal-table__td">' + escapeHtml(deal.industry || '—') + '</td>' +
-      '<td class="deal-table__td">' + escapeHtml(formatDealScore1To10(score) + ' / 10') + '</td>' +
+      '<td class="deal-table__td">' + escapeHtml(formatDealScoreDisplay(score)) + '</td>' +
       '<td class="deal-table__td"><span class="deal-card__badge ' + recommendationBadgeClass(rec) + '">' + escapeHtml(rec) + '</span></td>' +
       '<td class="deal-table__td deal-table__analyzed" data-timestamp="' + escapeHtml(ts) + '">' + escapeHtml(formatRelativeTime(ts) || '—') + '</td>' +
       '<td class="deal-table__td"><button type="button" class="deal-table__open-btn" data-deal-id="' + escapeHtml(id) + '">Open</button></td>';
@@ -3740,7 +3830,7 @@ function fillFormFromEntry(entry, deal) {
   if (document.getElementById('companyName')) document.getElementById('companyName').value = company;
   setIndustryInputValue(industry);
 }
-function updateStoredEntryVerdict(dealId, verdict, score) {
+function updateStoredEntryVerdict(dealId, verdict, score, memo) {
   if (!dealId) return;
   var chats = loadChatsFromStorage();
   var changed = false;
@@ -3748,6 +3838,7 @@ function updateStoredEntryVerdict(dealId, verdict, score) {
     if (c.dealId === dealId) {
       if (verdict) c.dealVerdict = verdict;
       if (score != null) c.dealScore = score;
+      if (memo) applyMemoScoresToEntry(c, memo);
       changed = true;
     }
   });
@@ -3887,7 +3978,7 @@ function buildRadarSvgHtml(axisScores) {
   for (var di = 0; di < n; di++) {
     var axis = RADAR_AXES[di];
     var score = parseFloat(axisScores[axis.key]);
-    if (isNaN(score)) score = 6.5;
+    if (isNaN(score)) score = 0;
     score = Math.max(0, Math.min(10, score));
     var dAngle = -Math.PI / 2 + di * 2 * Math.PI / n;
     var dr = R * (score / 10);
@@ -3911,9 +4002,9 @@ function buildRadarLegendHtml(axisScores) {
   if (!axisScores) return '';
   return RADAR_AXES.map(function (axis) {
     var s = parseFloat(axisScores[axis.key]);
-    if (isNaN(s)) s = 6.5;
+    var label = isNaN(s) ? '—' : s.toFixed(1) + ' / 10';
     return '<li><span class="memo-view__radar-legend-label">' + escapeHtml(axis.label) +
-      '</span><span class="memo-view__radar-legend-val">' + s.toFixed(1) + ' / 10</span></li>';
+      '</span><span class="memo-view__radar-legend-val">' + label + '</span></li>';
   }).join('');
 }
 
@@ -3936,14 +4027,17 @@ function renderCompareColumn(container, deal) {
     : '';
   var displayScore = dealCardScore(deal);
   var rec = normalizeRecommendation(deal);
+  var scoreParts = formatDealScoreDisplay(displayScore).split(' / ');
+  var scoreNum = scoreParts[0];
+  var scoreDenom = scoreParts.length > 1 ? scoreParts[1] : '';
   container.innerHTML =
     '<div class="dashboard-compare-col__identity">' + logoHtml +
       '<h3 class="dashboard-compare-col__company">' + escapeHtml(companyRaw) + '</h3>' +
     '</div>' +
     '<div class="dashboard-compare-col__meta">' +
       '<div class="deal-card__score-row">' +
-        '<span class="deal-card__score-num">' + formatDealScore1To10(displayScore) + '</span>' +
-        '<span class="deal-card__score-denom">/ 10</span>' +
+        '<span class="deal-card__score-num">' + escapeHtml(scoreNum) + '</span>' +
+        (scoreDenom ? '<span class="deal-card__score-denom">/ ' + escapeHtml(scoreDenom) + '</span>' : '') +
       '</div>' +
       '<span class="deal-card__badge ' + recommendationBadgeClass(rec) + '">' + escapeHtml(rec) + '</span>' +
     '</div>' +
@@ -3951,11 +4045,15 @@ function renderCompareColumn(container, deal) {
       '<svg class="memo-view__radar-svg compare-radar-svg" viewBox="0 0 240 240" role="img" aria-label="Due diligence radar chart"></svg>' +
       '<ul class="memo-view__radar-legend compare-radar-legend"></ul>' +
     '</div>';
-  renderRadarChartInElements(
-    container.querySelector('.compare-radar-svg'),
-    container.querySelector('.compare-radar-legend'),
-    dealCardAxisScores(deal)
-  );
+  var radarScores = dealCardAxisScoresForRadar(deal);
+  var radarSvg = container.querySelector('.compare-radar-svg');
+  var radarLegend = container.querySelector('.compare-radar-legend');
+  if (radarScores) {
+    renderRadarChartInElements(radarSvg, radarLegend, radarScores);
+  } else {
+    if (radarSvg) radarSvg.innerHTML = '';
+    if (radarLegend) radarLegend.innerHTML = dealCardAxisLegendHtml(deal);
+  }
 }
 
 function renderDashboardComparePanel() {
@@ -4214,7 +4312,10 @@ function onDealStreamPayload(data, eventName) {
   }
   if (eventName === 'investment_memo' || content.indexOf('SIGNAL:investment_memo') === 0) {
     var memo = parseInvestmentMemoContent(content);
-    if (memo && currentDealId) postDealComplete(currentDealId, memo);
+    if (memo && currentDealId) {
+      updateStoredEntryVerdict(currentDealId, memo.deal_verdict, memo.deal_score, memo);
+      postDealComplete(currentDealId, memo);
+    }
     return;
   }
   if (content.indexOf('SIGNAL:') === 0) return;
@@ -4390,7 +4491,9 @@ function chatEntryToDashboardDeal(entry) {
   var rec = entry.dealVerdict
     ? String(entry.dealVerdict).toUpperCase()
     : (score != null ? verdictFromScore(score) : 'CONDITIONAL');
-  var normalizedScore = score != null ? normalizeDealScore1To10(score) : 6.5;
+  if (rec === 'FAIL') rec = 'PASS';
+  var overall = parseScore1To10(entry.overall_score);
+  if (overall == null && score != null) overall = parseScore1To10(score);
   return {
     id: entry.dealId,
     deal_id: entry.dealId,
@@ -4400,10 +4503,15 @@ function chatEntryToDashboardDeal(entry) {
     created_at: entry.timestamp,
     status: 'complete',
     saved: !!(entry.saved || entry.bookmarked),
-    score: normalizedScore,
+    overall_score: entry.overall_score != null ? entry.overall_score : overall,
+    legal_score: entry.legal_score,
+    financial_score: entry.financial_score,
+    market_score: entry.market_score,
+    regulatory_score: entry.regulatory_score,
+    team_score: entry.team_score,
+    score: overall,
     deal_score: score,
     recommendation: rec,
-    axis_scores: typeof defaultAxisScores === 'function' ? defaultAxisScores(normalizedScore) : null,
     _chatEntryId: entry.id
   };
 }
@@ -4540,6 +4648,7 @@ function enrichRecentEntriesFromServer() {
           c.dealScore = score;
           c.dealVerdict = d.deal_verdict || (d.memo_summary && d.memo_summary.deal_verdict) || verdictFromScore(score);
           c.dealStatus = 'complete';
+          if (d.memo_summary) applyMemoScoresToEntry(c, d.memo_summary);
           changed = true;
         });
         if (changed) {
@@ -4912,6 +5021,7 @@ function showResults() {
           stored[si].dealVerdict = lastDealScore.verdict;
           stored[si].dealScore = lastDealScore.score;
           stored[si].dealStatus = 'complete';
+          applyMemoScoresToEntry(stored[si], j);
           break;
         }
       }
