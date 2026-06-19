@@ -820,27 +820,58 @@ async def deal_stream(deal_id: str):
     async def event_generator():
         seen_ids: set[str] = set()
         start_time = time.time()
-        url = (
+        debug_logged = False
+        base_url = (
             f"https://app.thenvoi.com/api/v1/agent/chats/{room_id}/messages"
-            f"?status=all&page_size=100"
+            f"?status=all&page_size=100&sort=desc"
         )
         headers = {"X-API-Key": LIBRARIAN_BAND_API_KEY}
+
+        async def fetch_page(client: httpx.AsyncClient, page: int) -> tuple[list, dict]:
+            resp = await client.get(f"{base_url}&page={page}", headers=headers, timeout=10.0)
+            if resp.status_code != 200:
+                return [], {}
+            body = resp.json()
+            messages = body.get("data", []) if isinstance(body, dict) else []
+            if not isinstance(messages, list):
+                messages = []
+            metadata = body.get("metadata", {}) if isinstance(body, dict) else {}
+            if not isinstance(metadata, dict):
+                metadata = {}
+            return messages, metadata
 
         while True:
             try:
                 async with httpx.AsyncClient() as client:
-                    resp = await client.get(url, headers=headers, timeout=10.0)
-                if resp.status_code == 200:
-                    body = resp.json()
-                    messages = body.get("data", []) if isinstance(body, dict) else []
-                    if not isinstance(messages, list):
-                        messages = []
+                    messages, metadata = await fetch_page(client, 1)
+                    total_pages = metadata.get("total_pages") or 1
+                    try:
+                        total_pages = int(total_pages)
+                    except (TypeError, ValueError):
+                        total_pages = 1
+                    if total_pages > 1:
+                        messages, metadata = await fetch_page(client, total_pages)
+
+                    messages.sort(
+                        key=lambda m: _band_message_unix_ts(m) or 0,
+                        reverse=True,
+                    )
+
+                    if not debug_logged and messages:
+                        inserted_at = messages[0].get("inserted_at")
+                        msg_time = _band_message_unix_ts(messages[0])
+                        print(
+                            f"DEBUG start_time={start_time} first_msg_time={msg_time} inserted_at={inserted_at}",
+                            flush=True,
+                        )
+                        debug_logged = True
+
                     for msg in messages:
                         msg_id = msg.get("id")
                         if not msg_id or msg_id in seen_ids:
                             continue
                         msg_ts = _band_message_unix_ts(msg)
-                        if msg_ts is not None and msg_ts <= start_time:
+                        if msg_ts is not None and msg_ts <= start_time - 2:
                             continue
                         content = msg.get("content") or ""
                         sender_name = msg.get("sender_name") or "Agent"
@@ -853,6 +884,10 @@ async def deal_stream(deal_id: str):
                         if content.startswith("SIGNAL:"):
                             continue
                         seen_ids.add(msg_id)
+                        print(
+                            f"DEBUG SSE emit sender={sender_name} id={msg_id} content={content[:80]}",
+                            flush=True,
+                        )
                         payload = json.dumps({
                             "type": "agent_message",
                             "sender": sender_name,
