@@ -802,6 +802,7 @@
       margin: 0;
     }
     .dashboard-compare-toggle {
+      flex-shrink: 0;
       padding: 8px 16px;
       font-size: 13px;
       font-weight: 600;
@@ -932,6 +933,7 @@
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
+      margin-left: auto;
     }
     .dashboard-filter-btn {
       padding: 8px 14px;
@@ -993,6 +995,7 @@
       .deal-card-grid { grid-template-columns: 1fr; }
     }
     .deal-card {
+      position: relative;
       background: #fff;
       border-radius: 16px;
       padding: 22px 22px 20px;
@@ -1011,6 +1014,22 @@
     .deal-card--selected {
       border-color: #4f6ef7;
       box-shadow: 0 0 0 2px rgba(79, 110, 247, 0.25);
+    }
+    .deal-card__check {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #4f6ef7;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 24px;
+      text-align: center;
+      pointer-events: none;
+      z-index: 1;
     }
     .deal-card--compare-mode:hover {
       transform: none;
@@ -2084,11 +2103,11 @@
     <div id="dealDashboard" hidden>
       <div class="dashboard-header">
         <h1>Deals Dashboard</h1>
-        <button type="button" id="dashboardCompareToggle" class="dashboard-compare-toggle">Compare</button>
       </div>
       <div class="dashboard-toolbar" id="dashboardToolbar">
         <input type="search" id="dashboardSearch" class="dashboard-search"
                placeholder="Search by company name…" autocomplete="off" />
+        <button type="button" id="dashboardCompareToggle" class="dashboard-compare-toggle">Compare</button>
         <div class="dashboard-filters" id="dashboardFilters">
           <button type="button" class="dashboard-filter-btn" data-filter="INVEST">INVEST</button>
           <button type="button" class="dashboard-filter-btn" data-filter="CONDITIONAL">CONDITIONAL</button>
@@ -2701,6 +2720,8 @@ function toggleCompareSelection(dealId) {
 
 function clearCompareSelection() {
   dashboardCompareSelection = [];
+  dashboardCompareMode = false;
+  syncCompareToggleUi();
   renderDashboard();
 }
 
@@ -2818,12 +2839,14 @@ function renderDealCards(deals, isFilteredView) {
     var rec = normalizeRecommendation(deal);
     var score = dealCardScore(deal);
     var scorePct = (score / 10) * 100;
+    var isSelected = dashboardCompareSelection.indexOf(id) !== -1;
     var card = document.createElement('article');
     card.className = 'deal-card';
-    if (dashboardCompareSelection.indexOf(id) !== -1) card.className += ' deal-card--selected';
+    if (isSelected) card.className += ' deal-card--selected';
     if (dashboardCompareMode) card.className += ' deal-card--compare-mode';
     card.setAttribute('data-deal-id', id);
     card.innerHTML =
+      (isSelected ? '<span class="deal-card__check" aria-hidden="true">✓</span>' : '') +
       '<div class="deal-card__top">' +
         '<div class="deal-card__identity">' +
           '<span class="deal-card__avatar ' + avatar.colorClass + '" aria-hidden="true">' + escapeHtml(avatar.letter) + '</span>' +
