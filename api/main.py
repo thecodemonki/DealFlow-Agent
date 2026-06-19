@@ -823,7 +823,7 @@ async def deal_stream(deal_id: str):
         debug_logged = False
         base_url = (
             f"https://app.thenvoi.com/api/v1/agent/chats/{room_id}/messages"
-            f"?status=all&page_size=100&sort=desc"
+            f"?status=all&page_size=100"
         )
         headers = {"X-API-Key": LIBRARIAN_BAND_API_KEY}
 
