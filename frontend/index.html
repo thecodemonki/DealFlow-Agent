@@ -885,8 +885,12 @@
       font-weight: 700;
       color: #111827;
     }
-    .dashboard-compare-col__gauge {
-      margin: 0;
+    .dashboard-compare-col__meta {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
     }
     .dashboard-compare-col__radar {
       width: 100%;
@@ -1028,6 +1032,18 @@
       font-weight: 700;
       line-height: 24px;
       text-align: center;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .deal-card__select-hint {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid #c7d2fe;
+      background: #fff;
       pointer-events: none;
       z-index: 1;
     }
@@ -2119,7 +2135,7 @@
       <div id="dashboardComparePanel" class="dashboard-compare-panel" hidden>
         <div class="dashboard-compare-panel__header">
           <h2>Compare deals</h2>
-          <button type="button" id="dashboardCompareClear" class="dashboard-compare-clear">Clear</button>
+          <button type="button" id="dashboardCompareClear" class="dashboard-compare-clear">Clear selection</button>
         </div>
         <div class="dashboard-compare-panel__cols">
           <div class="dashboard-compare-col" id="dashboardCompareCol0"></div>
@@ -2461,7 +2477,7 @@ function refreshActiveDealRoomId(dealId) {
 }
 var dashboardDeals = [];
 var dashboardSearchQuery = '';
-var dashboardRecFilter = null;
+var dashboardRecFilters = [];
 var dashboardCompareMode = false;
 var dashboardCompareSelection = [];
 var currentAppView = 'submit';
@@ -2578,7 +2594,10 @@ function computeDashboardStats(deals) {
 function getFilteredDashboardDeals() {
   var q = (dashboardSearchQuery || '').trim().toLowerCase();
   return dashboardDeals.filter(function (d) {
-    if (dashboardRecFilter && normalizeRecommendation(d) !== dashboardRecFilter) return false;
+    if (dashboardRecFilters.length) {
+      var rec = normalizeRecommendation(d);
+      if (dashboardRecFilters.indexOf(rec) === -1) return false;
+    }
     if (!q) return true;
     return String(d.company_name || '').toLowerCase().indexOf(q) !== -1;
   });
@@ -2616,7 +2635,7 @@ function syncDashboardFilterButtons() {
   if (!filters) return;
   Array.prototype.forEach.call(filters.querySelectorAll('.dashboard-filter-btn'), function (btn) {
     var f = btn.getAttribute('data-filter');
-    btn.classList.toggle('dashboard-filter-btn--active', f === dashboardRecFilter);
+    btn.classList.toggle('dashboard-filter-btn--active', dashboardRecFilters.indexOf(f) !== -1);
   });
 }
 
@@ -2674,6 +2693,7 @@ function renderDashboardEmptyState(isFiltered) {
 
 function renderDashboard() {
   syncCompareToggleUi();
+  syncDashboardFilterButtons();
   var toolbar = document.getElementById('dashboardToolbar');
   var hasDeals = dashboardDeals.length > 0;
   if (toolbar) toolbar.hidden = !hasDeals;
@@ -2684,19 +2704,32 @@ function renderDashboard() {
     return;
   }
   renderDashboardStats(dashboardDeals);
-  syncDashboardFilterButtons();
   var filtered = getFilteredDashboardDeals();
-  renderDealCards(filtered, true);
+  var hasActiveFilters = dashboardRecFilters.length > 0 || !!(dashboardSearchQuery || '').trim();
+  renderDealCards(filtered, hasActiveFilters);
   renderDashboardComparePanel();
 }
 
+function normalizeDealId(id) {
+  return id == null ? '' : String(id);
+}
+
 function getDashboardDealById(id) {
+  var needle = normalizeDealId(id);
+  if (!needle) return null;
   var list = dashboardDeals && dashboardDeals.length ? dashboardDeals : loadDashboardDealsFromStorage();
   for (var i = 0; i < list.length; i++) {
     var d = list[i];
-    if ((d.id || d.deal_id) === id) return d;
+    if (normalizeDealId(d.id || d.deal_id) === needle) return d;
   }
   return null;
+}
+
+function getDashboardDealWithFallback(id) {
+  var deal = getDashboardDealById(id);
+  if (deal) return deal;
+  var entry = findChatEntryByDealId(id);
+  return entry ? chatEntryToDashboardDeal(entry) : null;
 }
 
 function syncCompareToggleUi() {
@@ -2705,6 +2738,7 @@ function syncCompareToggleUi() {
 }
 
 function toggleCompareSelection(dealId) {
+  dealId = normalizeDealId(dealId);
   if (!dealId) return;
   var idx = dashboardCompareSelection.indexOf(dealId);
   if (idx !== -1) {
@@ -2720,8 +2754,6 @@ function toggleCompareSelection(dealId) {
 
 function clearCompareSelection() {
   dashboardCompareSelection = [];
-  dashboardCompareMode = false;
-  syncCompareToggleUi();
   renderDashboard();
 }
 
@@ -2827,7 +2859,7 @@ function renderDealCards(deals, isFilteredView) {
     return;
   }
   deals.forEach(function (deal) {
-    var id = deal.id || deal.deal_id || '';
+    var id = normalizeDealId(deal.id || deal.deal_id);
     var companyRaw = deal.company_name || 'Unknown company';
     var company = escapeHtml(companyRaw);
     var avatar = companyAvatarMeta(companyRaw);
@@ -2845,8 +2877,14 @@ function renderDealCards(deals, isFilteredView) {
     if (isSelected) card.className += ' deal-card--selected';
     if (dashboardCompareMode) card.className += ' deal-card--compare-mode';
     card.setAttribute('data-deal-id', id);
+    var overlayHtml = '';
+    if (dashboardCompareMode) {
+      overlayHtml = isSelected
+        ? '<span class="deal-card__check" aria-hidden="true">✓</span>'
+        : '<span class="deal-card__select-hint" aria-hidden="true"></span>';
+    }
     card.innerHTML =
-      (isSelected ? '<span class="deal-card__check" aria-hidden="true">✓</span>' : '') +
+      overlayHtml +
       '<div class="deal-card__top">' +
         '<div class="deal-card__identity">' +
           '<span class="deal-card__avatar ' + avatar.colorClass + '" aria-hidden="true">' + escapeHtml(avatar.letter) + '</span>' +
@@ -3578,28 +3616,22 @@ function renderCompareColumn(container, deal) {
     ? '<img class="deal-card__logo dashboard-compare-col__logo" src="https://logo.clearbit.com/' + escapeHtml(logoDomain) + '.com" alt="" width="40" height="40" onerror="this.style.display=\'none\'">'
     : '';
   var displayScore = dealCardScore(deal);
-  var score100 = Math.round(displayScore * 10);
-  var verdict = verdictFromScore(score100);
-  var bandClass = dealScoreBandClass(verdict);
+  var rec = normalizeRecommendation(deal);
   container.innerHTML =
     '<div class="dashboard-compare-col__identity">' + logoHtml +
       '<h3 class="dashboard-compare-col__company">' + escapeHtml(companyRaw) + '</h3>' +
     '</div>' +
-    '<div class="results-score-cluster ' + bandClass + ' dashboard-compare-col__gauge">' +
-      '<div class="results-ring-wrap">' +
-        '<svg class="results-ring-svg" viewBox="0 0 120 120" aria-hidden="true">' +
-          '<circle class="results-ring-track" cx="60" cy="60" r="52" fill="none" stroke-width="9"/>' +
-          '<circle class="results-ring-progress compare-score-progress" cx="60" cy="60" r="52" fill="none" stroke-width="9" stroke-linecap="round"/>' +
-        '</svg>' +
-        '<span class="results-ring-num compare-score-num">' + formatDealScore1To10(displayScore) + '</span>' +
+    '<div class="dashboard-compare-col__meta">' +
+      '<div class="deal-card__score-row">' +
+        '<span class="deal-card__score-num">' + formatDealScore1To10(displayScore) + '</span>' +
+        '<span class="deal-card__score-denom">/ 10</span>' +
       '</div>' +
-      '<span class="results-verdict compare-score-verdict">' + escapeHtml(verdict) + '</span>' +
+      '<span class="deal-card__badge ' + recommendationBadgeClass(rec) + '">' + escapeHtml(rec) + '</span>' +
     '</div>' +
     '<div class="dashboard-compare-col__radar">' +
       '<svg class="memo-view__radar-svg compare-radar-svg" viewBox="0 0 240 240" role="img" aria-label="Due diligence radar chart"></svg>' +
       '<ul class="memo-view__radar-legend compare-radar-legend"></ul>' +
     '</div>';
-  updateDealScoreRing(container.querySelector('.compare-score-progress'), score100);
   renderRadarChartInElements(
     container.querySelector('.compare-radar-svg'),
     container.querySelector('.compare-radar-legend'),
@@ -3617,9 +3649,10 @@ function renderDashboardComparePanel() {
   panel.hidden = false;
   for (var i = 0; i < 2; i++) {
     var col = document.getElementById('dashboardCompareCol' + i);
-    var deal = getDashboardDealById(dashboardCompareSelection[i]);
+    var deal = getDashboardDealWithFallback(dashboardCompareSelection[i]);
     renderCompareColumn(col, deal);
   }
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function renderMemoRadarChart(axisScores) {
@@ -4012,9 +4045,10 @@ function saveChatsToStorage(arr) {
 
 function findChatEntryByDealId(dealId) {
   if (!dealId) return null;
+  var needle = normalizeDealId(dealId);
   var chats = loadChatsFromStorage();
   for (var i = 0; i < chats.length; i++) {
-    if (chats[i].dealId === dealId) return chats[i];
+    if (normalizeDealId(chats[i].dealId) === needle) return chats[i];
   }
   return null;
 }
@@ -4769,7 +4803,7 @@ document.getElementById('dealCardGrid').addEventListener('click', function (e) {
   var btn = e.target.closest('.deal-card__view-btn');
   var card = e.target.closest('.deal-card');
   if (!btn && !card) return;
-  var dealId = (btn || card).getAttribute('data-deal-id');
+  var dealId = normalizeDealId((btn || card).getAttribute('data-deal-id'));
   if (!dealId) return;
   if (dashboardCompareMode) {
     toggleCompareSelection(dealId);
@@ -4809,7 +4843,9 @@ if (dashboardFiltersEl) {
     if (!btn) return;
     var f = btn.getAttribute('data-filter');
     if (!f) return;
-    dashboardRecFilter = dashboardRecFilter === f ? null : f;
+    var idx = dashboardRecFilters.indexOf(f);
+    if (idx === -1) dashboardRecFilters.push(f);
+    else dashboardRecFilters.splice(idx, 1);
     if (currentAppView === 'dashboard') renderDashboard();
   });
 }
