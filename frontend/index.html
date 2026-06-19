@@ -2457,17 +2457,6 @@ function visibleDashboardDeals(deals) {
   });
 }
 
-function postDealSave(dealId, saved) {
-  return fetch(API + '/deals/' + encodeURIComponent(dealId) + '/save', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ saved: !!saved })
-  }).then(function (r) {
-    if (!r.ok) throw new Error('save failed');
-    return r.json();
-  });
-}
-
 function syncBookmarkButtons(saved) {
   currentDealSaved = !!saved;
   var bookmarkBtn = document.getElementById('dealBookmarkBtn');
@@ -2508,110 +2497,37 @@ function refreshDealSavedState(dealId) {
     updateSaveButtonState(false);
     return Promise.resolve(false);
   }
-  return fetch(API + '/deals/' + encodeURIComponent(dealId))
-    .then(function (r) { return r.ok ? r.json() : null; })
-    .catch(function () { return null; })
-    .then(function (d) {
-      var saved = !!(d && d.saved);
-      syncBookmarkButtons(saved);
-      updateSaveButtonState(saved);
-      return saved;
-    });
-}
-
-function buildLocalDealSnapshot() {
-  var companyEl = document.getElementById('companyName');
-  var company = (companyEl && companyEl.value ? companyEl.value : '').trim() || 'Unknown company';
-  var score = lastDealScore ? normalizeDealScore1To10(lastDealScore.score) : 6.5;
-  var rec = lastDealScore && lastDealScore.verdict
-    ? String(lastDealScore.verdict).toUpperCase()
-    : (score >= 7 ? 'INVEST' : score >= 5 ? 'CONDITIONAL' : 'PASS');
-  return {
-    id: currentDealId,
-    company_name: company,
-    completed_at: new Date().toISOString(),
-    status: 'complete',
-    saved: true,
-    score: score,
-    recommendation: rec,
-    axis_scores: typeof defaultAxisScores === 'function' ? defaultAxisScores(score) : null
-  };
-}
-
-function patchLocalDealSaved(dealId, saved) {
-  if (!dealId) return;
-  if (saved) {
-    var found = false;
-    dashboardDeals = dashboardDeals.map(function (d) {
-      if ((d.id || d.deal_id) === dealId) {
-        found = true;
-        return Object.assign({}, d, { saved: true });
-      }
-      return d;
-    });
-    if (!found) {
-      dashboardDeals = [buildLocalDealSnapshot()].concat(dashboardDeals);
-    }
-  } else {
-    dashboardDeals = dashboardDeals.filter(function (d) {
-      return (d.id || d.deal_id) !== dealId;
-    });
-  }
-  if (currentAppView === 'dashboard') renderDashboard();
+  var saved = isDealSavedInStorage(dealId);
+  syncBookmarkButtons(saved);
+  updateSaveButtonState(saved);
+  return Promise.resolve(saved);
 }
 
 function toggleDealSaved() {
   if (!currentDealId) return;
   var next = !currentDealSaved;
-  var prev = currentDealSaved;
-  var dashSnapshot = dashboardDeals.slice();
   syncBookmarkButtons(next);
   updateSaveButtonState(next);
-  patchLocalDealSaved(currentDealId, next);
-  postDealSave(currentDealId, next)
-    .then(function () {
-      refreshDashboard();
-    })
-    .catch(function () {
-      syncBookmarkButtons(prev);
-      updateSaveButtonState(prev);
-      dashboardDeals = dashSnapshot;
-      if (currentAppView === 'dashboard') renderDashboard();
-    });
+  setChatEntrySavedFlag(currentDealId, next);
+  refreshDashboard();
 }
 
 function addDealToDashboard() {
   if (!currentDealId || currentDealSaved) return;
   var btn = document.getElementById('resultsDashboardBtn');
-  var dashSnapshot = dashboardDeals.slice();
   syncBookmarkButtons(true);
-  patchLocalDealSaved(currentDealId, true);
+  setChatEntrySavedFlag(currentDealId, true);
   if (btn) {
     btn.disabled = true;
     btn.textContent = '✓ Added';
     btn.classList.add('results-dashboard-link--added');
+    if (saveButtonConfirmTimer) clearTimeout(saveButtonConfirmTimer);
+    saveButtonConfirmTimer = setTimeout(function () {
+      saveButtonConfirmTimer = null;
+      updateSaveButtonState(true);
+    }, 2000);
   }
-  postDealSave(currentDealId, true)
-    .then(function () {
-      if (btn) {
-        if (saveButtonConfirmTimer) clearTimeout(saveButtonConfirmTimer);
-        saveButtonConfirmTimer = setTimeout(function () {
-          saveButtonConfirmTimer = null;
-          updateSaveButtonState(true);
-        }, 2000);
-      }
-      refreshDashboard();
-    })
-    .catch(function () {
-      syncBookmarkButtons(false);
-      updateSaveButtonState(false);
-      dashboardDeals = dashSnapshot;
-      if (currentAppView === 'dashboard') renderDashboard();
-      if (btn) {
-        btn.disabled = false;
-        btn.classList.remove('results-dashboard-link--added');
-      }
-    });
+  refreshDashboard();
 }
 
 function fetchDeals() {
@@ -2756,14 +2672,10 @@ function renderDashboard() {
 }
 
 function getDashboardDealById(id) {
-  var pools = [window.dealsCache, dashboardDeals];
-  for (var p = 0; p < pools.length; p++) {
-    var list = pools[p];
-    if (!list) continue;
-    for (var i = 0; i < list.length; i++) {
-      var d = list[i];
-      if ((d.id || d.deal_id) === id) return d;
-    }
+  var list = dashboardDeals && dashboardDeals.length ? dashboardDeals : loadDashboardDealsFromStorage();
+  for (var i = 0; i < list.length; i++) {
+    var d = list[i];
+    if ((d.id || d.deal_id) === id) return d;
   }
   return null;
 }
@@ -2866,7 +2778,7 @@ function showSubmitForm() {
 function showDealDashboard(deals, skipHistory) {
   currentAppView = 'dashboard';
   syncChatPanelForView();
-  dashboardDeals = visibleDashboardDeals(deals || dashboardDeals);
+  dashboardDeals = deals || loadDashboardDealsFromStorage();
   var arena = document.getElementById('arena');
   if (arena) {
     arena.classList.remove('arena--running', 'arena--deal-complete', 'arena--memo-view', 'arena--network-view', 'arena--home-blobs', 'arena--viewing-history');
@@ -2935,11 +2847,9 @@ function renderDealCards(deals, isFilteredView) {
 }
 
 function refreshDashboard() {
-  return fetchDeals().then(function (deals) {
-    dashboardDeals = visibleDashboardDeals(deals);
-    if (currentAppView === 'dashboard') renderDashboard();
-    return dashboardDeals;
-  });
+  dashboardDeals = loadDashboardDealsFromStorage();
+  if (currentAppView === 'dashboard') renderDashboard();
+  return Promise.resolve(dashboardDeals);
 }
 
 function openDealFromDashboard(dealId) {
@@ -2954,7 +2864,26 @@ function openDealFromDashboard(dealId) {
     var state = { view: 'deal', dealId: dealId };
     history.pushState(state, '', '#deal/' + dealId);
   }
-  openRecentDeal({ dealId: dealId });
+  var entry = findChatEntryByDealId(dealId);
+  if (entry && dealLooksCompleted(null, entry)) {
+    var summary = entry.dealScore != null ? {
+      deal_id: dealId,
+      company_name: entry.company || 'Unknown company',
+      deal_score: entry.dealScore,
+      deal_verdict: entry.dealVerdict || verdictFromScore(entry.dealScore),
+      risks_flagged_count: 0,
+      has_memo_pdf: false
+    } : null;
+    restoreCompletedDeal(
+      { id: dealId, company_name: entry.company, industry: entry.industry },
+      entry,
+      summary
+    );
+  } else if (entry) {
+    restoreChatFromHistory(entry);
+  } else {
+    addSystemChat('No saved analysis found for this deal.');
+  }
 }
 
 function returnToDashboard(skipHistory) {
@@ -2964,30 +2893,25 @@ function returnToDashboard(skipHistory) {
   document.getElementById('chatFeed').innerHTML = '';
   updateChatEmpty();
   closeDealStream();
-  fetchDeals().then(function (deals) {
-    var visible = visibleDashboardDeals(deals);
-    showDealDashboard(visible, skipHistory);
-  });
+  showDealDashboard(loadDashboardDealsFromStorage(), skipHistory);
 }
 
 function maybeShowDashboardOnLoad() {
-  return fetchDeals().then(function (deals) {
-    var visible = visibleDashboardDeals(deals);
-    dashboardDeals = visible;
-    var hash = (window.location.hash || '').replace(/^#/, '');
-    historyPushing = true;
-    if (hash.indexOf('deal/') === 0) {
-      var dealId = decodeURIComponent(hash.slice(5));
-      if (dealId) {
-        openDealFromDashboard(dealId);
-        historyPushing = false;
-        return visible;
-      }
+  var visible = loadDashboardDealsFromStorage();
+  dashboardDeals = visible;
+  var hash = (window.location.hash || '').replace(/^#/, '');
+  historyPushing = true;
+  if (hash.indexOf('deal/') === 0) {
+    var dealId = decodeURIComponent(hash.slice(5));
+    if (dealId) {
+      openDealFromDashboard(dealId);
+      historyPushing = false;
+      return Promise.resolve(visible);
     }
-    showDealDashboard(visible, true);
-    historyPushing = false;
-    return visible;
-  });
+  }
+  showDealDashboard(visible, true);
+  historyPushing = false;
+  return Promise.resolve(visible);
 }
 
 function parseInvestmentMemoContent(content) {
@@ -4062,6 +3986,104 @@ function loadChatsFromStorage() {
 function saveChatsToStorage(arr) {
   try { localStorage.setItem(CHATS_KEY, JSON.stringify(arr)); } catch (e) {}
 }
+
+function findChatEntryByDealId(dealId) {
+  if (!dealId) return null;
+  var chats = loadChatsFromStorage();
+  for (var i = 0; i < chats.length; i++) {
+    if (chats[i].dealId === dealId) return chats[i];
+  }
+  return null;
+}
+
+function isDealSavedInStorage(dealId) {
+  var entry = findChatEntryByDealId(dealId);
+  return !!(entry && (entry.saved || entry.bookmarked));
+}
+
+function chatEntryIsCompleted(entry) {
+  if (!entry || !entry.dealId) return false;
+  return entry.dealStatus === 'complete' || entry.dealScore != null;
+}
+
+function chatEntryToDashboardDeal(entry) {
+  if (!chatEntryIsCompleted(entry)) return null;
+  var company = (entry.company || '').trim();
+  if (!company) return null;
+  var score = entry.dealScore;
+  var rec = entry.dealVerdict
+    ? String(entry.dealVerdict).toUpperCase()
+    : (score != null ? verdictFromScore(score) : 'CONDITIONAL');
+  var normalizedScore = score != null ? normalizeDealScore1To10(score) : 6.5;
+  return {
+    id: entry.dealId,
+    deal_id: entry.dealId,
+    company_name: company,
+    completed_at: entry.timestamp,
+    created_at: entry.timestamp,
+    status: 'complete',
+    saved: !!(entry.saved || entry.bookmarked),
+    score: normalizedScore,
+    deal_score: score,
+    recommendation: rec,
+    axis_scores: typeof defaultAxisScores === 'function' ? defaultAxisScores(normalizedScore) : null,
+    _chatEntryId: entry.id
+  };
+}
+
+function loadDashboardDealsFromStorage() {
+  var chats = loadChatsFromStorage();
+  var all = [];
+  chats.forEach(function (entry) {
+    var deal = chatEntryToDashboardDeal(entry);
+    if (deal) all.push(deal);
+  });
+  all.sort(function (a, b) {
+    return String(b.completed_at || '').localeCompare(String(a.completed_at || ''));
+  });
+  var saved = all.filter(function (d) { return d.saved; });
+  var result = saved.length ? saved : all;
+  window.dealsCache = result;
+  return result;
+}
+
+function setChatEntrySavedFlag(dealId, saved) {
+  if (!dealId) return false;
+  var chats = loadChatsFromStorage();
+  var found = false;
+  for (var i = 0; i < chats.length; i++) {
+    if (chats[i].dealId === dealId) {
+      chats[i].saved = !!saved;
+      if (saved) chats[i].bookmarked = true;
+      else delete chats[i].bookmarked;
+      found = true;
+      break;
+    }
+  }
+  if (saved && !found) {
+    var companyEl = document.getElementById('companyName');
+    var industryEl = document.getElementById('industry');
+    var company = (companyEl && companyEl.value ? companyEl.value : '').trim() || 'Unknown company';
+    var industry = industryEl && industryEl.value ? industryEl.value.trim() : '';
+    chats.unshift({
+      id: String(Date.now()),
+      company: company,
+      industry: industry,
+      timestamp: new Date().toISOString(),
+      messages: typeof serializeChatFeed === 'function' ? serializeChatFeed() : [],
+      starred: false,
+      saved: true,
+      bookmarked: true,
+      dealId: dealId,
+      dealVerdict: lastDealScore ? lastDealScore.verdict : 'CONDITIONAL',
+      dealScore: lastDealScore ? lastDealScore.score : 62,
+      dealStatus: 'complete'
+    });
+  }
+  saveChatsToStorage(chats);
+  return true;
+}
+
 function formatRelativeTime(timestamp) {
   var t;
   if (timestamp == null || timestamp === '') return '';
@@ -4532,9 +4554,7 @@ document.getElementById('dealBookmarkBtn').addEventListener('click', function ()
   toggleDealSaved();
 });
 document.getElementById('sidebarDashboardBtn').addEventListener('click', function () {
-  fetchDeals().then(function (deals) {
-    showDealDashboard(visibleDashboardDeals(deals));
-  });
+  showDealDashboard(loadDashboardDealsFromStorage());
 });
 document.getElementById('dealViewTabs').addEventListener('click', function (e) {
   var btn = e.target.closest('.deal-view-tab');
