@@ -768,7 +768,7 @@
       transform: translate(-50%, -50%);
       width: 480px;
       max-width: calc(100% - 32px);
-      padding: 40px;
+      padding: 32px;
       background: #ffffff;
       border-radius: 20px;
       box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
@@ -933,6 +933,27 @@
       border-color: #4f6ef7;
       box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.18);
     }
+    .dashboard-sector-filter {
+      flex: 0 1 200px;
+      min-width: 140px;
+      padding: 10px 32px 10px 14px;
+      font-size: 14px;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      outline: none;
+      color: #111827;
+      background: #fff;
+      font-family: inherit;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236b7280' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      cursor: pointer;
+    }
+    .dashboard-sector-filter:focus {
+      border-color: #4f6ef7;
+      box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.18);
+    }
     .dashboard-filters {
       display: flex;
       flex-wrap: wrap;
@@ -968,28 +989,124 @@
       border-color: #fca5a5;
       color: #991b1b;
     }
-    .dashboard-stats {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px 20px;
-      margin-bottom: 20px;
-      padding: 14px 18px;
+    .deal-table-wrap {
+      overflow-x: auto;
       background: #fff;
       border: 1px solid #e5e7eb;
-      border-radius: 12px;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
     }
-    .dashboard-stats__item {
-      font-size: 13px;
-      color: #6b7280;
+    .deal-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
     }
-    .dashboard-stats__item strong {
-      color: #111827;
+    .deal-table__th {
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 12px;
       font-weight: 700;
-      margin-right: 4px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #6b7280;
+      background: #f9fafb;
+      border-bottom: 1px solid #e5e7eb;
+      white-space: nowrap;
     }
-    .dashboard-stats__item--invest strong { color: #059669; }
-    .dashboard-stats__item--conditional strong { color: #d97706; }
-    .dashboard-stats__item--pass strong { color: #dc2626; }
+    .deal-table__th--sortable {
+      cursor: pointer;
+      user-select: none;
+    }
+    .deal-table__th--sortable:hover { color: #374151; }
+    .deal-table__th--active { color: #4f46e5; }
+    .deal-table__sort-indicator {
+      font-size: 11px;
+      color: #4f6ef7;
+    }
+    .deal-table__td {
+      padding: 14px 16px;
+      border-bottom: 1px solid #f3f4f6;
+      color: #374151;
+      vertical-align: middle;
+    }
+    .deal-table__row:last-child .deal-table__td { border-bottom: none; }
+    .deal-table__row:hover .deal-table__td { background: #fafbff; }
+    .deal-table__row--compare-mode { cursor: pointer; }
+    .deal-table__row--selected .deal-table__td {
+      background: #eef2ff;
+    }
+    .deal-table__row--selected .deal-table__td:first-child {
+      box-shadow: inset 3px 0 0 #4f6ef7;
+    }
+    .deal-table__td--company {
+      min-width: 180px;
+    }
+    .deal-table__company-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .deal-table__company {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .deal-table__logo {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      object-fit: contain;
+      background: #f9fafb;
+      flex-shrink: 0;
+    }
+    .deal-table__company-name {
+      font-weight: 600;
+      color: #111827;
+    }
+    .deal-table__check {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #4f6ef7;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+    .deal-table__select-hint {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid #c7d2fe;
+      background: #fff;
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+    .deal-table__open-btn {
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background: #fff;
+      color: #4f6ef7;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .deal-table__open-btn:hover {
+      border-color: #c7d2fe;
+      background: #f5f7ff;
+    }
+    .deal-table__empty-row td {
+      padding: 0;
+      border: none;
+    }
     .deal-card-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -1195,10 +1312,17 @@
       padding: 40px 16px;
       font-size: 14px;
     }
-    #inputCard h1 { font-size: 24px; font-weight: 700; color: #111827; margin-bottom: 22px; }
-    #inputCard .input-card-fields input[type="text"] {
+    #inputCard h1 { font-size: 24px; font-weight: 700; color: #111827; margin-bottom: 16px; }
+    #inputCard .input-card-fields {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    #inputCard .input-card-fields input[type="text"],
+    #inputCard .input-card-fields select {
       width: 100%;
-      padding: 14px 14px;
+      padding: 12px 14px;
       margin-bottom: 0;
       font-size: 16px;
       border: 1px solid #e5e7eb;
@@ -1206,43 +1330,53 @@
       outline: none;
       color: #111827;
       background: #fff;
+      font-family: inherit;
+    }
+    #inputCard .input-card-fields select {
+      padding-right: 40px;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236b7280' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      cursor: pointer;
     }
     #inputCard .input-card-fields input[type="text"]::placeholder { color: #9ca3af; }
-    #inputCard .input-card-fields input:focus { border-color: #4f6ef7; box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.18); }
-    .input-card-field { margin-bottom: 4px; }
-    .input-card-helper {
-      margin: 6px 0 14px;
-      font-size: 12px;
-      line-height: 1.4;
-      color: #6b7280;
-    }
-    .input-card-attach { font-size: 13px; color: #9ca3af; margin-bottom: 22px; }
-    .input-card-attach label { color: #6b7280; cursor: pointer; text-decoration: underline; }
-    .input-card-attach label:hover { color: #4f6ef7; }
+    #inputCard .input-card-fields input:focus,
+    #inputCard .input-card-fields select:focus { border-color: #4f6ef7; box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.18); }
+    .input-card-field { margin-bottom: 0; }
     .doc-upload-zone {
       position: relative;
       border: 2px dashed #c7d2fe;
       border-radius: 12px;
-      padding: 16px 18px;
-      margin-bottom: 10px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
       cursor: pointer;
       background: #fafbff;
       transition: border-color 0.15s ease, background 0.15s ease;
     }
     .doc-upload-zone:hover { border-color: #4f6ef7; background: #f5f7ff; }
-    .doc-upload-zone__inner { pointer-events: none; display: flex; flex-direction: column; gap: 4px; }
+    .doc-upload-zone__inner { pointer-events: none; display: flex; flex-direction: column; gap: 2px; }
     .doc-upload-zone__title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       font-size: 14px;
       font-weight: 600;
       color: #374151;
+    }
+    .doc-upload-zone__icon {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      color: #6b7280;
     }
     .doc-upload-badge {
       display: inline-block;
       font-size: 12px;
       font-weight: 600;
-      padding: 6px 12px;
+      padding: 5px 10px;
       border-radius: 999px;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       max-width: 100%;
       line-height: 1.35;
     }
@@ -1258,7 +1392,7 @@
     }
     .btn-run-analysis {
       width: 100%;
-      padding: 14px 20px;
+      padding: 12px 20px;
       font-size: 16px;
       font-weight: 600;
       color: #fff;
@@ -1287,6 +1421,25 @@
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.5s ease 0.15s;
+    }
+    .arena-line {
+      stroke: #b8c4dc;
+      stroke-width: 1.2;
+      vector-effect: non-scaling-stroke;
+      fill: none;
+    }
+    .arena-line--branch {
+      stroke: #c5cfe0;
+      stroke-width: 1;
+      opacity: 0.85;
+    }
+    .arena-line-pulse {
+      fill: #2563eb;
+      animation: arena-pulse-glow 1.4s ease-in-out infinite;
+    }
+    @keyframes arena-pulse-glow {
+      0%, 100% { opacity: 0.65; }
+      50% { opacity: 1; }
     }
     #arena.arena--running .arena-lines { opacity: 1; }
     #arena.arena--home-blobs .blob-layer {
@@ -1335,7 +1488,7 @@
       transition: filter 0.35s ease;
     }
     .blob-wrap .blob-agent img {
-      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15)) drop-shadow(0 0 12px rgba(var(--accent-rgb), 0.55));
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.12));
     }
     .blob-layer .blob-wrap:nth-of-type(1) .blob-agent { animation-delay: 0s; }
     .blob-layer .blob-wrap:nth-of-type(2) .blob-agent { animation-delay: 0.5s; }
@@ -1343,30 +1496,46 @@
     .blob-layer .blob-wrap:nth-of-type(4) .blob-agent { animation-delay: 1.5s; }
     .blob-layer .blob-wrap:nth-of-type(5) .blob-agent { animation-delay: 2s; }
     .blob-layer .blob-wrap:nth-of-type(6) .blob-agent { animation-delay: 2.5s; }
+    @keyframes agent-active-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(var(--accent-rgb), 0.3); }
+      50% { box-shadow: 0 0 24px 8px rgba(var(--accent-rgb), 0.28); }
+    }
     .blob-wrap--active .blob-agent {
-      animation-name: blob-float-fast;
-      animation-duration: 1.2s;
+      animation: blob-float-fast 1.2s ease-in-out infinite, agent-active-pulse 2s ease-in-out infinite;
+      border-radius: 50%;
     }
     .blob-wrap--active .blob-agent img {
-      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15)) drop-shadow(0 0 14px rgba(var(--accent-rgb), 0.7)) drop-shadow(0 0 26px rgba(var(--accent-rgb), 0.4));
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15)) drop-shadow(0 0 16px rgba(var(--accent-rgb), 0.55));
+    }
+    .blob-wrap--done .blob-agent {
+      border-radius: 50%;
+      box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.42);
     }
     .blob-wrap--done .blob-agent img {
-      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15)) drop-shadow(0 0 10px rgba(var(--accent-rgb), 0.45)) brightness(1.08);
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.12));
     }
     .blob-label { margin-top: 10px; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; text-align: center; max-width: 120px; line-height: 1.2; }
-    .blob-check {
+    .blob-status-badge {
       position: absolute;
-      top: -6px;
-      font-size: 17px;
-      color: #16a34a;
+      top: -4px;
+      right: -4px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #16a34a;
+      color: #fff;
+      font-size: 12px;
       font-weight: 800;
+      line-height: 22px;
+      text-align: center;
       opacity: 0;
       transform: scale(0.5);
       transition: opacity 0.3s ease, transform 0.3s ease;
       z-index: 6;
-      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+      box-shadow: 0 1px 4px rgba(22, 163, 74, 0.35);
+      pointer-events: none;
     }
-    .blob-wrap--done .blob-check { opacity: 1; transform: scale(1); }
+    .blob-wrap--done .blob-status-badge { opacity: 1; transform: scale(1); }
     .speech-bubble {
       position: absolute;
       bottom: calc(100% + 10px);
@@ -1567,6 +1736,9 @@
     #arena.arena--deal-complete .blob-layer {
       top: 49px;
     }
+    #arena.arena--network-view {
+      background: radial-gradient(ellipse 92% 82% at 50% 45%, #f8fbff 0%, #eef3fa 48%, #dce4f0 100%);
+    }
     #arena.arena--network-view .blob-layer {
       opacity: 1;
       visibility: visible;
@@ -1578,7 +1750,6 @@
     }
     #arena.arena--network-view .blob-agent,
     #arena.arena--network-view .blob-label,
-    #arena.arena--network-view .blob-check,
     #arena.arena--network-view .speech-bubble {
       opacity: 1 !important;
       visibility: visible;
@@ -1601,7 +1772,6 @@
     }
     #arena.arena--memo-view .blob-agent,
     #arena.arena--memo-view .blob-label,
-    #arena.arena--memo-view .blob-check,
     #arena.arena--memo-view .speech-bubble {
       opacity: 0 !important;
       visibility: hidden;
@@ -2098,18 +2268,23 @@
       <div class="input-card-fields">
         <div class="input-card-field">
           <input type="text" id="companyName" placeholder="e.g. Stripe, OpenAI, Figma" autocomplete="organization" />
-          <p class="input-card-helper">Enter the company you want to evaluate for M&amp;A due diligence</p>
         </div>
         <div class="input-card-field">
-          <input type="text" id="industry" placeholder="e.g. B2B SaaS, fintech, healthtech, logistics" />
-          <p class="input-card-helper">Helps agents focus market research and benchmarking</p>
+          <select id="industry" aria-label="Sector category">
+            <option value="" disabled selected>Select sector…</option>
+          </select>
         </div>
       </div>
       <input type="file" id="docUpload" accept=".pdf,.csv,.txt" style="display:none" />
       <div class="doc-upload-zone" id="docUploadZone" role="button" tabindex="0" onclick="document.getElementById('docUpload').click()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();document.getElementById('docUpload').click();}">
         <div class="doc-upload-zone__inner">
-          <span class="doc-upload-zone__title">Upload Pitch Deck or Financials (PDF, CSV, TXT)</span>
-          <span id="docUploadFilename" style="display:none;margin-top:8px;font-size:13px;font-weight:600;color:#334155"></span>
+          <span class="doc-upload-zone__title">
+            <svg class="doc-upload-zone__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+            </svg>
+            Attach documents
+          </span>
+          <span id="docUploadFilename" style="display:none;margin-top:6px;font-size:13px;font-weight:600;color:#334155"></span>
         </div>
       </div>
       <div id="docUploadBadge" role="status" class="doc-upload-badge doc-upload-badge--muted">No documents — analysis from public data only</div>
@@ -2123,6 +2298,9 @@
       <div class="dashboard-toolbar" id="dashboardToolbar">
         <input type="search" id="dashboardSearch" class="dashboard-search"
                placeholder="Search by company name…" autocomplete="off" />
+        <select id="dashboardSectorFilter" class="dashboard-sector-filter" aria-label="Filter by sector">
+          <option value="">All sectors</option>
+        </select>
         <button type="button" id="dashboardCompareToggle" class="dashboard-compare-toggle">Compare</button>
         <div class="dashboard-filters" id="dashboardFilters">
           <button type="button" class="dashboard-filter-btn" data-filter="INVEST">INVEST</button>
@@ -2130,8 +2308,21 @@
           <button type="button" class="dashboard-filter-btn" data-filter="PASS">PASS</button>
         </div>
       </div>
-      <div class="dashboard-stats" id="dashboardStats" hidden></div>
-      <div id="dealCardGrid" class="deal-card-grid"></div>
+      <div class="deal-table-wrap" id="dealTableWrap">
+        <table class="deal-table" id="dealTable">
+          <thead>
+            <tr>
+              <th class="deal-table__th deal-table__th--sortable" data-sort="company">Company</th>
+              <th class="deal-table__th deal-table__th--sortable" data-sort="sector">Sector</th>
+              <th class="deal-table__th deal-table__th--sortable" data-sort="score">Score</th>
+              <th class="deal-table__th deal-table__th--sortable" data-sort="recommendation">Recommendation</th>
+              <th class="deal-table__th deal-table__th--sortable" data-sort="analyzed">Analyzed</th>
+              <th class="deal-table__th">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="dealTableBody"></tbody>
+        </table>
+      </div>
       <div id="dashboardComparePanel" class="dashboard-compare-panel" hidden>
         <div class="dashboard-compare-panel__header">
           <h2>Compare deals</h2>
@@ -2144,48 +2335,85 @@
       </div>
     </div>
     <svg class="arena-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-      <line x1="50" y1="45" x2="30" y2="15" stroke="#c7d2fe" stroke-width="1.5" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>
-      <line x1="50" y1="45" x2="70" y2="15" stroke="#c7d2fe" stroke-width="1.5" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>
-      <line x1="50" y1="45" x2="30" y2="72" stroke="#c7d2fe" stroke-width="1.5" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>
-      <line x1="50" y1="45" x2="70" y2="72" stroke="#c7d2fe" stroke-width="1.5" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>
-      <line x1="30" y1="72" x2="50" y2="92" stroke="#c7d2fe" stroke-width="1.5" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>
-      <line x1="70" y1="72" x2="50" y2="92" stroke="#c7d2fe" stroke-width="1.5" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>
+      <defs>
+        <filter id="arena-pulse-glow" x="-80%" y="-80%" width="260%" height="260%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="1.4" result="blur"/>
+          <feMerge>
+            <feMergeNode in="blur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+      <line class="arena-line" x1="30" y1="15" x2="50" y2="45"/>
+      <line class="arena-line" x1="70" y1="15" x2="50" y2="45"/>
+      <line class="arena-line" x1="30" y1="72" x2="50" y2="45"/>
+      <line class="arena-line" x1="70" y1="72" x2="50" y2="45"/>
+      <line class="arena-line" x1="50" y1="92" x2="50" y2="45"/>
+      <line class="arena-line arena-line--branch" x1="30" y1="72" x2="50" y2="92"/>
+      <line class="arena-line arena-line--branch" x1="70" y1="72" x2="50" y2="92"/>
+      <circle class="arena-line-pulse" r="1.8" filter="url(#arena-pulse-glow)">
+        <animateMotion dur="2.6s" repeatCount="indefinite" path="M 30 15 L 50 45"/>
+      </circle>
+      <circle class="arena-line-pulse" r="1.8" filter="url(#arena-pulse-glow)">
+        <animateMotion dur="2.6s" begin="0.5s" repeatCount="indefinite" path="M 70 15 L 50 45"/>
+      </circle>
+      <circle class="arena-line-pulse" r="1.8" filter="url(#arena-pulse-glow)">
+        <animateMotion dur="2.8s" begin="1s" repeatCount="indefinite" path="M 30 72 L 50 45"/>
+      </circle>
+      <circle class="arena-line-pulse" r="1.8" filter="url(#arena-pulse-glow)">
+        <animateMotion dur="2.8s" begin="1.5s" repeatCount="indefinite" path="M 70 72 L 50 45"/>
+      </circle>
+      <circle class="arena-line-pulse" r="1.8" filter="url(#arena-pulse-glow)">
+        <animateMotion dur="3s" begin="0.8s" repeatCount="indefinite" path="M 50 92 L 50 45"/>
+      </circle>
     </svg>
     <div class="blob-layer">
       <div class="blob-wrap blob-wrap--orchestrator" id="blob-orchestrator" data-agent="orchestrator">
         <div class="speech-bubble"><span class="speech-bubble__text"></span></div>
-        <div class="blob-check">✓</div>
-        <div class="blob-agent"><img src="/characters/conductor.png" alt="Conductor" width="90" height="90" /></div>
+        <div class="blob-agent">
+          <span class="blob-status-badge" aria-hidden="true">✓</span>
+          <img src="/characters/conductor.png" alt="Conductor" width="90" height="90" />
+        </div>
         <div class="blob-label">Conductor</div>
       </div>
       <div class="blob-wrap blob-wrap--webresearch" id="blob-webresearch" data-agent="webresearch">
         <div class="speech-bubble"><span class="speech-bubble__text"></span></div>
-        <div class="blob-check">✓</div>
-        <div class="blob-agent"><img src="/characters/detective.png" alt="Detective" width="90" height="90" /></div>
+        <div class="blob-agent">
+          <span class="blob-status-badge" aria-hidden="true">✓</span>
+          <img src="/characters/detective.png" alt="Detective" width="90" height="90" />
+        </div>
         <div class="blob-label">Detective</div>
       </div>
       <div class="blob-wrap blob-wrap--documentparser" id="blob-documentparser" data-agent="documentparser">
         <div class="speech-bubble"><span class="speech-bubble__text"></span></div>
-        <div class="blob-check">✓</div>
-        <div class="blob-agent"><img src="/characters/librarian.png" alt="Librarian" width="90" height="90" /></div>
+        <div class="blob-agent">
+          <span class="blob-status-badge" aria-hidden="true">✓</span>
+          <img src="/characters/librarian.png" alt="Librarian" width="90" height="90" />
+        </div>
         <div class="blob-label">Librarian</div>
       </div>
       <div class="blob-wrap blob-wrap--financialanalyst" id="blob-financialanalyst" data-agent="financialanalyst">
         <div class="speech-bubble"><span class="speech-bubble__text"></span></div>
-        <div class="blob-check">✓</div>
-        <div class="blob-agent"><img src="/characters/banker.png" alt="Banker" width="90" height="90" /></div>
+        <div class="blob-agent">
+          <span class="blob-status-badge" aria-hidden="true">✓</span>
+          <img src="/characters/banker.png" alt="Banker" width="90" height="90" />
+        </div>
         <div class="blob-label">Banker</div>
       </div>
       <div class="blob-wrap blob-wrap--legalrisk" id="blob-legalrisk" data-agent="legalrisk">
         <div class="speech-bubble"><span class="speech-bubble__text"></span></div>
-        <div class="blob-check">✓</div>
-        <div class="blob-agent"><img src="/characters/judge.png" alt="Judge" width="90" height="90" /></div>
+        <div class="blob-agent">
+          <span class="blob-status-badge" aria-hidden="true">✓</span>
+          <img src="/characters/judge.png" alt="Judge" width="90" height="90" />
+        </div>
         <div class="blob-label">Judge</div>
       </div>
       <div class="blob-wrap blob-wrap--synthesis" id="blob-synthesis" data-agent="synthesis">
         <div class="speech-bubble"><span class="speech-bubble__text"></span></div>
-        <div class="blob-check">✓</div>
-        <div class="blob-agent"><img src="/characters/wizard.png" alt="Wizard" width="90" height="90" /></div>
+        <div class="blob-agent">
+          <span class="blob-status-badge" aria-hidden="true">✓</span>
+          <img src="/characters/wizard.png" alt="Wizard" width="90" height="90" />
+        </div>
         <div class="blob-label">Wizard</div>
       </div>
     </div>
@@ -2477,7 +2705,10 @@ function refreshActiveDealRoomId(dealId) {
 }
 var dashboardDeals = [];
 var dashboardSearchQuery = '';
-var dashboardRecFilters = [];
+var dashboardSectorFilter = '';
+var dashboardRecFilter = null;
+var dashboardSortColumn = 'analyzed';
+var dashboardSortDir = 'desc';
 var dashboardCompareMode = false;
 var dashboardCompareSelection = [];
 var currentAppView = 'submit';
@@ -2591,13 +2822,57 @@ function computeDashboardStats(deals) {
   return stats;
 }
 
+var INDUSTRY_CATEGORIES = [
+  'AI / Machine Learning',
+  'B2B SaaS',
+  'Fintech',
+  'Healthtech',
+  'Cybersecurity',
+  'Developer Tools',
+  'Enterprise Software',
+  'Logistics / Supply Chain',
+  'Consumer Tech',
+  'E-commerce'
+];
+
+function populateIndustrySelect(selectEl, includeAllOption) {
+  if (!selectEl) return;
+  var current = selectEl.value;
+  var html = includeAllOption ? '<option value="">All sectors</option>' : '<option value="" disabled>Select sector…</option>';
+  INDUSTRY_CATEGORIES.forEach(function (cat) {
+    html += '<option value="' + escapeHtml(cat) + '">' + escapeHtml(cat) + '</option>';
+  });
+  selectEl.innerHTML = html;
+  if (current && (includeAllOption ? true : INDUSTRY_CATEGORIES.indexOf(current) !== -1)) {
+    selectEl.value = current;
+  } else if (includeAllOption) {
+    selectEl.value = '';
+  }
+}
+
+function getIndustryInputValue() {
+  var el = document.getElementById('industry');
+  return el && el.value ? String(el.value).trim() : '';
+}
+
+function setIndustryInputValue(value) {
+  var el = document.getElementById('industry');
+  if (!el) return;
+  var v = String(value || '').trim();
+  if (v && INDUSTRY_CATEGORIES.indexOf(v) === -1) {
+    var opt = document.createElement('option');
+    opt.value = v;
+    opt.textContent = v;
+    el.appendChild(opt);
+  }
+  el.value = v;
+}
+
 function getFilteredDashboardDeals() {
   var q = (dashboardSearchQuery || '').trim().toLowerCase();
   return dashboardDeals.filter(function (d) {
-    if (dashboardRecFilters.length) {
-      var rec = normalizeRecommendation(d);
-      if (dashboardRecFilters.indexOf(rec) === -1) return false;
-    }
+    if (dashboardRecFilter && normalizeRecommendation(d) !== dashboardRecFilter) return false;
+    if (dashboardSectorFilter && String(d.industry || '').trim() !== dashboardSectorFilter) return false;
     if (!q) return true;
     return String(d.company_name || '').toLowerCase().indexOf(q) !== -1;
   });
@@ -2630,31 +2905,21 @@ function companyAvatarMeta(name) {
   };
 }
 
+function filterCountForType(stats, f) {
+  if (f === 'INVEST') return stats.invest;
+  if (f === 'PASS') return stats.pass;
+  return stats.conditional;
+}
+
 function syncDashboardFilterButtons() {
   var filters = document.getElementById('dashboardFilters');
   if (!filters) return;
+  var stats = computeDashboardStats(dashboardDeals);
   Array.prototype.forEach.call(filters.querySelectorAll('.dashboard-filter-btn'), function (btn) {
     var f = btn.getAttribute('data-filter');
-    btn.classList.toggle('dashboard-filter-btn--active', dashboardRecFilters.indexOf(f) !== -1);
+    btn.classList.toggle('dashboard-filter-btn--active', f === dashboardRecFilter);
+    btn.textContent = f + ' (' + filterCountForType(stats, f) + ')';
   });
-}
-
-function renderDashboardStats(deals) {
-  var el = document.getElementById('dashboardStats');
-  if (!el) return;
-  var stats = computeDashboardStats(deals);
-  if (!stats.total) {
-    el.hidden = true;
-    el.innerHTML = '';
-    return;
-  }
-  el.hidden = false;
-  el.innerHTML =
-    '<span class="dashboard-stats__item"><strong>' + stats.total + '</strong>' +
-      (stats.total === 1 ? ' deal analyzed' : ' deals analyzed') + '</span>' +
-    '<span class="dashboard-stats__item dashboard-stats__item--invest"><strong>' + stats.invest + '</strong> INVEST</span>' +
-    '<span class="dashboard-stats__item dashboard-stats__item--conditional"><strong>' + stats.conditional + '</strong> CONDITIONAL</span>' +
-    '<span class="dashboard-stats__item dashboard-stats__item--pass"><strong>' + stats.pass + '</strong> PASS</span>';
 }
 
 var DASHBOARD_EMPTY_BLOB_SVG =
@@ -2691,6 +2956,71 @@ function renderDashboardEmptyState(isFiltered) {
     '</div>';
 }
 
+function recommendationSortKey(rec) {
+  var r = String(rec || 'CONDITIONAL').toUpperCase();
+  if (r === 'INVEST') return 0;
+  if (r === 'PASS') return 2;
+  return 1;
+}
+
+function sortDashboardDeals(deals) {
+  var col = dashboardSortColumn;
+  var mult = dashboardSortDir === 'asc' ? 1 : -1;
+  return (deals || []).slice().sort(function (a, b) {
+    var cmp = 0;
+    if (col === 'company') {
+      cmp = String(a.company_name || '').toLowerCase().localeCompare(String(b.company_name || '').toLowerCase());
+    } else if (col === 'sector') {
+      cmp = String(a.industry || '').toLowerCase().localeCompare(String(b.industry || '').toLowerCase());
+    } else if (col === 'score') {
+      var as = dealCardScore(a);
+      var bs = dealCardScore(b);
+      cmp = as < bs ? -1 : as > bs ? 1 : 0;
+    } else if (col === 'recommendation') {
+      cmp = recommendationSortKey(normalizeRecommendation(a)) - recommendationSortKey(normalizeRecommendation(b));
+    } else {
+      var at = Date.parse(a.completed_at || a.created_at || '') || 0;
+      var bt = Date.parse(b.completed_at || b.created_at || '') || 0;
+      cmp = at < bt ? -1 : at > bt ? 1 : 0;
+    }
+    return cmp * mult;
+  });
+}
+
+function syncDealTableSortHeaders() {
+  var table = document.getElementById('dealTable');
+  if (!table) return;
+  Array.prototype.forEach.call(table.querySelectorAll('.deal-table__th--sortable'), function (th) {
+    var col = th.getAttribute('data-sort');
+    var indicator = th.querySelector('.deal-table__sort-indicator');
+    if (!indicator) {
+      indicator = document.createElement('span');
+      indicator.className = 'deal-table__sort-indicator';
+      indicator.setAttribute('aria-hidden', 'true');
+      th.appendChild(document.createTextNode(' '));
+      th.appendChild(indicator);
+    }
+    if (col === dashboardSortColumn) {
+      th.classList.add('deal-table__th--active');
+      indicator.textContent = dashboardSortDir === 'asc' ? '↑' : '↓';
+    } else {
+      th.classList.remove('deal-table__th--active');
+      indicator.textContent = '';
+    }
+  });
+}
+
+function handleDashboardSortClick(col) {
+  if (!col) return;
+  if (col === dashboardSortColumn) {
+    dashboardSortDir = dashboardSortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    dashboardSortColumn = col;
+    dashboardSortDir = col === 'analyzed' ? 'desc' : 'asc';
+  }
+  if (currentAppView === 'dashboard') renderDashboard();
+}
+
 function renderDashboard() {
   syncCompareToggleUi();
   syncDashboardFilterButtons();
@@ -2698,15 +3028,14 @@ function renderDashboard() {
   var hasDeals = dashboardDeals.length > 0;
   if (toolbar) toolbar.hidden = !hasDeals;
   if (!hasDeals) {
-    renderDashboardStats([]);
-    renderDealCards([], false);
+    renderDealTable([], false);
     renderDashboardComparePanel();
     return;
   }
-  renderDashboardStats(dashboardDeals);
   var filtered = getFilteredDashboardDeals();
-  var hasActiveFilters = dashboardRecFilters.length > 0 || !!(dashboardSearchQuery || '').trim();
-  renderDealCards(filtered, hasActiveFilters);
+  var hasActiveFilters = !!dashboardRecFilter || !!dashboardSectorFilter || !!(dashboardSearchQuery || '').trim();
+  var sorted = sortDashboardDeals(filtered);
+  renderDealTable(sorted, hasActiveFilters);
   renderDashboardComparePanel();
 }
 
@@ -2850,60 +3179,51 @@ function showDealDashboard(deals, skipHistory) {
   }
 }
 
-function renderDealCards(deals, isFilteredView) {
-  var grid = document.getElementById('dealCardGrid');
-  if (!grid) return;
-  grid.innerHTML = '';
+function renderDealTable(deals, isFilteredView) {
+  var tbody = document.getElementById('dealTableBody');
+  if (!tbody) return;
+  syncDealTableSortHeaders();
+  tbody.innerHTML = '';
   if (!deals.length) {
-    grid.innerHTML = renderDashboardEmptyState(!!isFilteredView);
+    var emptyTr = document.createElement('tr');
+    emptyTr.className = 'deal-table__empty-row';
+    emptyTr.innerHTML = '<td colspan="6">' + renderDashboardEmptyState(!!isFilteredView) + '</td>';
+    tbody.appendChild(emptyTr);
     return;
   }
   deals.forEach(function (deal) {
     var id = normalizeDealId(deal.id || deal.deal_id);
     var companyRaw = deal.company_name || 'Unknown company';
-    var company = escapeHtml(companyRaw);
-    var avatar = companyAvatarMeta(companyRaw);
     var logoDomain = companyLogoDomain(companyRaw);
     var logoHtml = logoDomain
-      ? '<img class="deal-card__logo" src="https://logo.clearbit.com/' + escapeHtml(logoDomain) + '.com" alt="" width="40" height="40" onerror="this.style.display=\'none\'">'
+      ? '<img class="deal-table__logo" src="https://logo.clearbit.com/' + escapeHtml(logoDomain) + '.com" alt="" width="28" height="28" onerror="this.style.display=\'none\'">'
       : '';
-    var dateStr = formatAnalyzedDate(deal.completed_at || deal.created_at);
+    var isSelected = dashboardCompareSelection.indexOf(id) !== -1;
     var rec = normalizeRecommendation(deal);
     var score = dealCardScore(deal);
-    var scorePct = (score / 10) * 100;
-    var isSelected = dashboardCompareSelection.indexOf(id) !== -1;
-    var card = document.createElement('article');
-    card.className = 'deal-card';
-    if (isSelected) card.className += ' deal-card--selected';
-    if (dashboardCompareMode) card.className += ' deal-card--compare-mode';
-    card.setAttribute('data-deal-id', id);
-    var overlayHtml = '';
+    var ts = deal.completed_at || deal.created_at || '';
+    var compareMark = '';
     if (dashboardCompareMode) {
-      overlayHtml = isSelected
-        ? '<span class="deal-card__check" aria-hidden="true">✓</span>'
-        : '<span class="deal-card__select-hint" aria-hidden="true"></span>';
+      compareMark = isSelected
+        ? '<span class="deal-table__check" aria-hidden="true">✓</span>'
+        : '<span class="deal-table__select-hint" aria-hidden="true"></span>';
     }
-    card.innerHTML =
-      overlayHtml +
-      '<div class="deal-card__top">' +
-        '<div class="deal-card__identity">' +
-          '<span class="deal-card__avatar ' + avatar.colorClass + '" aria-hidden="true">' + escapeHtml(avatar.letter) + '</span>' +
-          '<div>' + logoHtml + '<h2 class="deal-card__company">' + company + '</h2>' +
-          (dateStr ? '<p class="deal-card__date">' + escapeHtml(dateStr) + '</p>' : '') +
-          '</div>' +
-        '</div>' +
-        '<span class="deal-card__badge ' + recommendationBadgeClass(rec) + '">' + escapeHtml(rec) + '</span>' +
-      '</div>' +
-      '<div class="deal-card__score">' +
-        '<div class="deal-card__score-row">' +
-          '<span class="deal-card__score-num">' + formatDealScore1To10(score) + '</span>' +
-          '<span class="deal-card__score-denom">/ 10</span>' +
-        '</div>' +
-        '<div class="deal-card__score-bar"><div class="deal-card__score-fill" style="width:' + scorePct + '%"></div></div>' +
-      '</div>' +
-      '<div class="deal-card__axes">' + dealCardAxisHtml(deal) + '</div>' +
-      '<button type="button" class="deal-card__view-btn" data-deal-id="' + escapeHtml(id) + '">View Analysis →</button>';
-    grid.appendChild(card);
+    var tr = document.createElement('tr');
+    tr.className = 'deal-table__row';
+    if (isSelected) tr.className += ' deal-table__row--selected';
+    if (dashboardCompareMode) tr.className += ' deal-table__row--compare-mode';
+    tr.setAttribute('data-deal-id', id);
+    tr.innerHTML =
+      '<td class="deal-table__td deal-table__td--company">' +
+        '<span class="deal-table__company-cell">' + compareMark +
+        '<span class="deal-table__company">' + logoHtml +
+          '<span class="deal-table__company-name">' + escapeHtml(companyRaw) + '</span></span></span></td>' +
+      '<td class="deal-table__td">' + escapeHtml(deal.industry || '—') + '</td>' +
+      '<td class="deal-table__td">' + escapeHtml(formatDealScore1To10(score) + ' / 10') + '</td>' +
+      '<td class="deal-table__td"><span class="deal-card__badge ' + recommendationBadgeClass(rec) + '">' + escapeHtml(rec) + '</span></td>' +
+      '<td class="deal-table__td deal-table__analyzed" data-timestamp="' + escapeHtml(ts) + '">' + escapeHtml(formatRelativeTime(ts) || '—') + '</td>' +
+      '<td class="deal-table__td"><button type="button" class="deal-table__open-btn" data-deal-id="' + escapeHtml(id) + '">Open</button></td>';
+    tbody.appendChild(tr);
   });
 }
 
@@ -3249,11 +3569,10 @@ function gatherAgentSummariesForMemo() {
 
 function gatherMemoPrintData() {
   var companyEl = document.getElementById('companyName');
-  var industryEl = document.getElementById('industry');
   var company = memoTextFrom('memoViewCompany')
     || (companyEl && companyEl.value ? companyEl.value.trim() : '')
     || 'Unknown company';
-  var industry = industryEl && industryEl.value ? industryEl.value.trim() : '';
+  var industry = getIndustryInputValue();
   var bundle = lastDealScore || {};
   var score = formatDealScore1To10(bundle.score != null ? bundle.score : 6.5);
   var recommendation = memoTextFrom('memoVerdict')
@@ -3419,7 +3738,7 @@ function fillFormFromEntry(entry, deal) {
   var company = (entry && entry.company) || (deal && deal.company_name) || '';
   var industry = (entry && entry.industry) || (deal && deal.industry) || '';
   if (document.getElementById('companyName')) document.getElementById('companyName').value = company;
-  if (document.getElementById('industry')) document.getElementById('industry').value = industry;
+  setIndustryInputValue(industry);
 }
 function updateStoredEntryVerdict(dealId, verdict, score) {
   if (!dealId) return;
@@ -4076,6 +4395,7 @@ function chatEntryToDashboardDeal(entry) {
     id: entry.dealId,
     deal_id: entry.dealId,
     company_name: company,
+    industry: (entry.industry || '').trim(),
     completed_at: entry.timestamp,
     created_at: entry.timestamp,
     status: 'complete',
@@ -4119,9 +4439,8 @@ function setChatEntrySavedFlag(dealId, saved) {
   }
   if (saved && !found) {
     var companyEl = document.getElementById('companyName');
-    var industryEl = document.getElementById('industry');
     var company = (companyEl && companyEl.value ? companyEl.value : '').trim() || 'Unknown company';
-    var industry = industryEl && industryEl.value ? industryEl.value.trim() : '';
+    var industry = getIndustryInputValue();
     chats.unshift({
       id: String(Date.now()),
       company: company,
@@ -4168,11 +4487,15 @@ function formatRelativeTime(timestamp) {
 }
 function updateRecentListRelativeTimes() {
   var recentList = document.getElementById('recentList');
-  if (!recentList) return;
-  Array.prototype.forEach.call(recentList.querySelectorAll('.recent-row[data-timestamp]'), function (row) {
-    var el = row.querySelector('.recent-row__date');
-    if (!el) return;
-    el.textContent = formatRelativeTime(row.getAttribute('data-timestamp'));
+  if (recentList) {
+    Array.prototype.forEach.call(recentList.querySelectorAll('.recent-row[data-timestamp]'), function (row) {
+      var el = row.querySelector('.recent-row__date');
+      if (!el) return;
+      el.textContent = formatRelativeTime(row.getAttribute('data-timestamp'));
+    });
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.deal-table__analyzed[data-timestamp]'), function (cell) {
+    cell.textContent = formatRelativeTime(cell.getAttribute('data-timestamp')) || '—';
   });
 }
 function formatAnalyzedDate(iso) {
@@ -4309,7 +4632,7 @@ function restoreChatFromHistory(entry) {
   updateChatEmpty();
   feed.scrollTop = 0;
   if (document.getElementById('companyName')) document.getElementById('companyName').value = entry.company || '';
-  if (document.getElementById('industry')) document.getElementById('industry').value = entry.industry || '';
+  setIndustryInputValue(entry.industry || '');
 }
 function restoreCompletedDeal(deal, entry, summary) {
   clearDealPoll();
@@ -4513,7 +4836,7 @@ function showResults() {
   window.bandRoomId = window.bandRoomId || DEFAULT_BAND_ROOM_ID;
   currentBandRoomId = currentBandRoomId || DEFAULT_BAND_ROOM_ID;
   var company = (document.getElementById('companyName').value || '').trim() || 'Unknown company';
-  var industry = (document.getElementById('industry').value || '').trim() || 'your industry';
+  var industry = getIndustryInputValue() || 'your industry';
   var nFiles = (pendingDocFile || dealUploadOk) ? 1 : 0;
   var demoBundle = { score: 62, verdict: 'CONDITIONAL', risksFlagged: 3 };
   lastDealScore = demoBundle;
@@ -4656,7 +4979,7 @@ function resetToInputCard(opts) {
   var du = document.getElementById('docUpload');
   var fnEl = document.getElementById('docUploadFilename');
   if (cn) cn.value = '';
-  if (ind) ind.value = '';
+  if (ind) setIndustryInputValue('');
   if (du) du.value = '';
   if (fnEl) { fnEl.textContent = ''; fnEl.style.display = 'none'; }
   pendingDocFile = null;
@@ -4755,8 +5078,8 @@ async function startAnalysis() {
     }
     var fd = new FormData();
     fd.append('company_name', company);
-    fd.append('industry', document.getElementById('industry').value);
-    fd.append('notes', 'Industry: ' + document.getElementById('industry').value);
+    fd.append('industry', getIndustryInputValue());
+    fd.append('notes', 'Industry: ' + getIndustryInputValue());
     if (currentDealId) fd.append('deal_id', currentDealId);
     var resp = await fetch(API + '/analyze', { method: 'POST', body: fd });
     var dealJson = null;
@@ -4799,18 +5122,31 @@ window.bandRoomId = DEFAULT_BAND_ROOM_ID;
 currentBandRoomId = DEFAULT_BAND_ROOM_ID;
 syncFollowUpInputState();
 initAgentShowcase();
-document.getElementById('dealCardGrid').addEventListener('click', function (e) {
-  var btn = e.target.closest('.deal-card__view-btn');
-  var card = e.target.closest('.deal-card');
-  if (!btn && !card) return;
-  var dealId = normalizeDealId((btn || card).getAttribute('data-deal-id'));
-  if (!dealId) return;
-  if (dashboardCompareMode) {
-    toggleCompareSelection(dealId);
-    return;
-  }
-  openDealFromDashboard(dealId);
-});
+var dealTableWrapEl = document.getElementById('dealTableWrap');
+if (dealTableWrapEl) {
+  dealTableWrapEl.addEventListener('click', function (e) {
+    var sortTh = e.target.closest('.deal-table__th--sortable');
+    if (sortTh) {
+      handleDashboardSortClick(sortTh.getAttribute('data-sort'));
+      return;
+    }
+    var openBtn = e.target.closest('.deal-table__open-btn');
+    if (openBtn) {
+      var openId = normalizeDealId(openBtn.getAttribute('data-deal-id'));
+      if (openId) openDealFromDashboard(openId);
+      return;
+    }
+    var row = e.target.closest('.deal-table__row');
+    if (!row) return;
+    var dealId = normalizeDealId(row.getAttribute('data-deal-id'));
+    if (!dealId) return;
+    if (dashboardCompareMode) {
+      toggleCompareSelection(dealId);
+      return;
+    }
+    openDealFromDashboard(dealId);
+  });
+}
 ['downloadPdfBtn', 'downloadBtn', 'modalPdfBtn'].forEach(function (id) {
   var el = document.getElementById(id);
   if (el) el.addEventListener('click', openInvestmentMemoWindow);
@@ -4836,6 +5172,15 @@ if (dashboardSearchEl) {
     if (currentAppView === 'dashboard') renderDashboard();
   });
 }
+var dashboardSectorFilterEl = document.getElementById('dashboardSectorFilter');
+if (dashboardSectorFilterEl) {
+  populateIndustrySelect(dashboardSectorFilterEl, true);
+  dashboardSectorFilterEl.addEventListener('change', function () {
+    dashboardSectorFilter = dashboardSectorFilterEl.value || '';
+    if (currentAppView === 'dashboard') renderDashboard();
+  });
+}
+populateIndustrySelect(document.getElementById('industry'), false);
 var dashboardFiltersEl = document.getElementById('dashboardFilters');
 if (dashboardFiltersEl) {
   dashboardFiltersEl.addEventListener('click', function (e) {
@@ -4843,9 +5188,7 @@ if (dashboardFiltersEl) {
     if (!btn) return;
     var f = btn.getAttribute('data-filter');
     if (!f) return;
-    var idx = dashboardRecFilters.indexOf(f);
-    if (idx === -1) dashboardRecFilters.push(f);
-    else dashboardRecFilters.splice(idx, 1);
+    dashboardRecFilter = dashboardRecFilter === f ? null : f;
     if (currentAppView === 'dashboard') renderDashboard();
   });
 }
