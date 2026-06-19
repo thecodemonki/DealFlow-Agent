@@ -828,10 +828,20 @@ async def deal_stream(deal_id: str):
         headers = {"X-API-Key": LIBRARIAN_BAND_API_KEY}
 
         async def fetch_page(client: httpx.AsyncClient, page: int) -> tuple[list, dict]:
-            resp = await client.get(f"{base_url}&page={page}", headers=headers, timeout=10.0)
+            url = f"{base_url}&page={page}"
+            resp = await client.get(url, headers=headers, timeout=10.0)
+            raw_preview = (resp.text or "")[:500]
+            print(
+                f"DEBUG band GET page={page} status={resp.status_code} body={raw_preview}",
+                flush=True,
+            )
             if resp.status_code != 200:
                 return [], {}
-            body = resp.json()
+            try:
+                body = resp.json()
+            except Exception as e:
+                print(f"DEBUG band GET page={page} json parse error: {e}", flush=True)
+                return [], {}
             messages = body.get("data", []) if isinstance(body, dict) else []
             if not isinstance(messages, list):
                 messages = []
