@@ -14,11 +14,14 @@ import asyncio
 import json
 import logging
 import os
+import subprocess
+import sys
 import time
 import uuid
 from pathlib import Path
 from datetime import datetime
 
+import dateutil.parser
 import httpx
 from contextlib import asynccontextmanager
 from typing import Any, Optional
@@ -513,6 +516,19 @@ async def _post_band_user_message(room_id: str, message: str) -> None:
         raise HTTPException(status_code=502, detail=resp.text)
 
 
+async def _ensure_agents_running():
+    """Restart agents if they're not running, so they can handle follow-ups."""
+    try:
+        subprocess.Popen(
+            [sys.executable, "run_agents.py"],
+            cwd=str(BASE_DIR),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except Exception as e:
+        logger.warning("Could not restart agents: %s", e)
+
+
 # -------------------------------------------------------------------
 # Routes
 # -------------------------------------------------------------------
@@ -794,6 +810,7 @@ async def post_deal_message(deal_id: str, body: DealMessageBody):
         logger.warning("POST /deals/%s/message: empty message", deal_id)
         raise HTTPException(status_code=400, detail="Message is required")
     await _post_band_user_message(BAND_ROOM_ID, body.message)
+    await _ensure_agents_running()
     return {"status": "sent"}
 
 
@@ -805,8 +822,8 @@ def _band_message_unix_ts(msg: dict[str, Any]) -> Optional[float]:
     if not raw or not isinstance(raw, str):
         return None
     try:
-        return datetime.fromisoformat(raw.replace("Z", "+00:00")).timestamp()
-    except ValueError:
+        return dateutil.parser.parse(raw).timestamp()
+    except (ValueError, TypeError, OverflowError):
         return None
 
 
