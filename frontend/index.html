@@ -2874,15 +2874,17 @@ function saveDealChatToServer(dealId, messages, company, industry) {
 }
 function scoreBundleFromSummary(summary) {
   if (!summary) return null;
-  var ds = summary.deal_score;
-  if (typeof ds === 'string') ds = parseInt(ds, 10);
+  var ds = summary.score != null && summary.score !== '' ? summary.score : summary.deal_score;
+  if (typeof ds === 'string') ds = parseFloat(ds);
   if (typeof ds !== 'number' || isNaN(ds)) return null;
+  var normalized = normalizeDealScore1To10(ds);
+  var ringScore = Math.round(normalized * 10);
   var rc = summary.risks_flagged_count;
   if (typeof rc === 'string') rc = parseInt(rc, 10);
   if (typeof rc !== 'number' || isNaN(rc)) rc = 0;
   return {
-    score: ds,
-    verdict: summary.deal_verdict || verdictFromScore(ds),
+    score: ringScore,
+    verdict: summary.deal_verdict || verdictFromScore(ringScore),
     risksFlagged: rc
   };
 }
@@ -2980,8 +2982,8 @@ function updateDealScoreRing(progressEl, score) {
 function applyDealScoreUI(bundle) {
   bundle = bundle || lastDealScore;
   if (!bundle) return;
-  var score = parseInt(bundle.score, 10);
-  if (isNaN(score)) score = 62;
+  var displayScore = normalizeDealScore1To10(bundle.score);
+  var score = Math.round(displayScore * 10);
   score = Math.max(0, Math.min(100, score));
   var verdict = verdictFromScore(score);
   var risks = parseInt(bundle.risksFlagged, 10);
@@ -2994,9 +2996,9 @@ function applyDealScoreUI(bundle) {
   updateDealScoreRing(document.getElementById('memoScoreProgress'), score);
   updateDealScoreRing(document.getElementById('resultsScoreProgress'), score);
   var mn = document.getElementById('memoScoreNum');
-  if (mn) mn.textContent = String(score);
+  if (mn) mn.textContent = formatDealScore1To10(displayScore);
   var rn = document.getElementById('resultsScoreNum');
-  if (rn) rn.textContent = String(score);
+  if (rn) rn.textContent = formatDealScore1To10(displayScore);
   var mv = document.getElementById('memoVerdict');
   if (mv) mv.textContent = verdict;
   var rv = document.getElementById('resultsVerdict');
@@ -3241,6 +3243,45 @@ function updateChatEmpty() {
 function escapeHtml(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
+var CHAT_INTERNAL_KEYWORDS = [
+  'Extract all financial data',
+  'SIGNAL:',
+  'recruit all specialist agents',
+  '@mention'
+];
+var CHAT_AGENT_HANDLE_RE = /^@\s*(?:documentparser|webresearch|financialanalyst|legalrisk|synthesis|orchestrator|conductor|librarian|detective|banker|judge|wizard)\b\s*/i;
+function truncateAgentRoutingMessage(text) {
+  if (text.length <= 300) return text;
+  var lower = text.toLowerCase();
+  var cutAt = -1;
+  CHAT_INTERNAL_KEYWORDS.forEach(function (kw) {
+    var idx = lower.indexOf(kw.toLowerCase());
+    if (idx !== -1 && (cutAt === -1 || idx < cutAt)) cutAt = idx;
+  });
+  if (cutAt === -1) return text;
+  var before = text.slice(0, cutAt).trim();
+  if (!before) return text.slice(0, cutAt).trim();
+  var lineEnd = before.indexOf('\n');
+  var sentenceMatch = before.match(/[.!?](?=\s|$)/);
+  var sentenceEnd = sentenceMatch ? sentenceMatch.index : -1;
+  if (lineEnd !== -1 && (sentenceEnd === -1 || lineEnd < sentenceEnd)) {
+    return before.slice(0, lineEnd).trim();
+  }
+  if (sentenceEnd !== -1) {
+    return before.slice(0, sentenceEnd + 1).trim();
+  }
+  return before;
+}
+function formatAgentChatHtml(rawText) {
+  var text = String(rawText == null ? '' : rawText);
+  text = text.replace(/@\[\[[^\]]+\]\]/g, '').trim();
+  text = text.replace(CHAT_AGENT_HANDLE_RE, '').trim();
+  text = truncateAgentRoutingMessage(text);
+  var html = escapeHtml(text);
+  html = html.replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  return html;
+}
 function displayCompanyName(company) {
   var c = company == null ? '' : String(company).trim();
   if (!c) return 'Untitled';
@@ -3307,7 +3348,7 @@ function onDealStreamPayload(data, eventName) {
   if (content.indexOf('SIGNAL:') === 0) return;
   var agentId = data.agent_id || data.agentId || streamSenderToAgentId(sender);
   if (!agentId) agentId = inferAgentFromHtml(content);
-  var html = escapeHtml(content).replace(/\n/g, '<br>');
+  var html = formatAgentChatHtml(content);
   addFeedItem(null, html, agentId, null);
 }
 function attachDealStreamHandlers(es) {
@@ -3502,17 +3543,19 @@ function computeDealLogStats(deals) {
   var conditional = 0;
   var fail = 0;
   deals.forEach(function (d) {
-    var score = d.deal_score;
-    if (typeof score === 'string') score = parseInt(score, 10);
-    if (typeof score === 'number' && !isNaN(score)) total += score;
-    var v = (d.deal_verdict || verdictFromScore(score) || '').toUpperCase();
+    var raw = d.score != null && d.score !== '' ? d.score : d.deal_score;
+    if (typeof raw === 'string') raw = parseFloat(raw);
+    var normalized = typeof raw === 'number' && !isNaN(raw) ? normalizeDealScore1To10(raw) : null;
+    if (normalized != null) total += normalized;
+    var ringScore = normalized != null ? Math.round(normalized * 10) : 0;
+    var v = (d.deal_verdict || (normalized != null ? verdictFromScore(ringScore) : '') || '').toUpperCase();
     if (v === 'PASS') pass++;
     else if (v === 'FAIL') fail++;
     else conditional++;
   });
   return {
     count: count,
-    avgScore: Math.round(total / count),
+    avgScore: Math.round((total / count) * 10) / 10,
     pass: pass,
     conditional: conditional,
     fail: fail
@@ -3527,7 +3570,7 @@ function renderDealLogStats(deals) {
     el.textContent = '';
     return;
   }
-  var parts = [stats.count + (stats.count === 1 ? ' deal' : ' deals'), 'Avg score ' + stats.avgScore];
+  var parts = [stats.count + (stats.count === 1 ? ' deal' : ' deals'), 'Avg score ' + formatDealScore1To10(stats.avgScore)];
   if (stats.pass) parts.push(stats.pass + ' PASS');
   if (stats.conditional) parts.push(stats.conditional + ' CONDITIONAL');
   if (stats.fail) parts.push(stats.fail + ' FAIL');
@@ -3554,9 +3597,11 @@ function renderDealLog(deals) {
   list.innerHTML = '';
   if (section) section.classList.toggle('deal-log-section--empty', !deals.length);
   deals.forEach(function (deal) {
-    var score = deal.deal_score;
-    if (typeof score === 'string') score = parseInt(score, 10);
-    var verdict = (deal.deal_verdict || (typeof score === 'number' && !isNaN(score) ? verdictFromScore(score) : '') || '').toUpperCase();
+    var rawScore = deal.score != null && deal.score !== '' ? deal.score : deal.deal_score;
+    if (typeof rawScore === 'string') rawScore = parseFloat(rawScore);
+    var normalized = typeof rawScore === 'number' && !isNaN(rawScore) ? normalizeDealScore1To10(rawScore) : null;
+    var ringScore = normalized != null ? Math.round(normalized * 10) : null;
+    var verdict = (deal.deal_verdict || (ringScore != null ? verdictFromScore(ringScore) : '') || '').toUpperCase();
     var row = document.createElement('div');
     row.className = 'deal-log-row';
     row.setAttribute('data-deal-id', deal.id || '');
@@ -3565,7 +3610,7 @@ function renderDealLog(deals) {
     row.innerHTML =
       '<div class="deal-log-row__top">' +
         '<span class="deal-log-row__name">' + escapeHtml(displayCompanyName(deal.company_name || 'Unknown company')) + '</span>' +
-        (typeof score === 'number' && !isNaN(score) ? '<span class="deal-log-row__score">' + score + '</span>' : '') +
+        (normalized != null ? '<span class="deal-log-row__score">' + formatDealScore1To10(normalized) + ' / 10</span>' : '') +
         (verdict ? '<span class="recent-row__badge ' + verdictBadgeClass(verdict) + '">' + escapeHtml(verdict) + '</span>' : '') +
       '</div>' +
       '<div class="deal-log-row__meta">' +
@@ -3704,7 +3749,7 @@ function appendHistoryMessage(m) {
     return;
   }
   var aid = m.agentId || nameToAgentId(m.name) || inferAgentFromHtml('<strong>' + m.name + '</strong> ' + m.text);
-  var safe = escapeHtml(m.text).replace(/\n/g, '<br>');
+  var safe = formatAgentChatHtml(m.text);
   addFeedItem(null, safe, aid, null);
 }
 function restoreChatFromHistory(entry) {
