@@ -1820,6 +1820,28 @@
       text-decoration: none;
     }
     .results-band-link:hover { color: #737373; text-decoration: underline; }
+    .results-dashboard-link {
+      display: block;
+      width: 100%;
+      margin-top: 12px;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #4f6ef7;
+      text-align: center;
+      text-decoration: none;
+      background: #eef2ff;
+      border: 1px solid #c7d2fe;
+      border-radius: 10px;
+      cursor: pointer;
+      box-sizing: border-box;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    .results-dashboard-link:hover {
+      background: #e0e7ff;
+      border-color: #a5b4fc;
+      color: #4338ca;
+    }
     .results-close {
       margin-top: 18px;
       width: 100%;
@@ -2123,6 +2145,7 @@
           <span>Download investment memo PDF</span>
         </a>
         <a class="results-band-link" id="bandRoomLink" href="https://band.ai" target="_blank" rel="noopener noreferrer">View in Band →</a>
+        <button type="button" class="results-dashboard-link" id="resultsDashboardBtn">→ View in Dashboard</button>
         <a id="modalPdfBtn" href="#" target="_blank" rel="noopener noreferrer"
            style="display:none; align-items:center; justify-content:center; gap:8px;
                   padding:10px 20px; margin-top:12px; width:100%; box-sizing:border-box;
@@ -4023,6 +4046,11 @@ function showResults() {
 }
 document.getElementById('resultsCloseBtn').addEventListener('click', function () {
   enterCompletedDealView('memo');
+});
+document.getElementById('resultsDashboardBtn').addEventListener('click', function () {
+  fetchDeals().then(function (deals) {
+    showDealDashboard(visibleDashboardDeals(deals));
+  });
 });
 document.getElementById('dealViewTabs').addEventListener('click', function (e) {
   var btn = e.target.closest('.deal-view-tab');
