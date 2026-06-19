@@ -788,11 +788,123 @@
       padding: 28px 24px 48px;
       box-sizing: border-box;
     }
+    .dashboard-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
     .dashboard-header h1 {
       font-size: 26px;
       font-weight: 700;
       color: #111827;
-      margin: 0 0 20px;
+      margin: 0;
+    }
+    .dashboard-compare-toggle {
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid #e5e7eb;
+      border-radius: 999px;
+      background: #fff;
+      color: #6b7280;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+    .dashboard-compare-toggle:hover { border-color: #c7d2fe; color: #374151; }
+    .dashboard-compare-toggle--active {
+      background: #eef2ff;
+      border-color: #4f6ef7;
+      color: #4f46e5;
+    }
+    .dashboard-compare-panel {
+      margin-top: 24px;
+      padding: 24px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    }
+    .dashboard-compare-panel__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .dashboard-compare-panel__header h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      color: #111827;
+    }
+    .dashboard-compare-clear {
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background: #fff;
+      color: #6b7280;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .dashboard-compare-clear:hover { border-color: #c7d2fe; color: #374151; }
+    .dashboard-compare-panel__cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 720px) {
+      .dashboard-compare-panel__cols { grid-template-columns: 1fr; }
+    }
+    .dashboard-compare-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 16px;
+      border: 1px solid #f3f4f6;
+      border-radius: 12px;
+      background: #fafafa;
+    }
+    .dashboard-compare-col__identity {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      text-align: center;
+    }
+    .dashboard-compare-col__logo { margin-bottom: 0; }
+    .dashboard-compare-col__company {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 700;
+      color: #111827;
+    }
+    .dashboard-compare-col__gauge {
+      margin: 0;
+    }
+    .dashboard-compare-col__radar {
+      width: 100%;
+      max-width: 280px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .dashboard-compare-col__radar .memo-view__radar-svg {
+      width: 100%;
+      max-width: 240px;
+      height: auto;
+    }
+    .dashboard-compare-col__radar .memo-view__radar-legend {
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      list-style: none;
     }
     .dashboard-toolbar {
       display: flex;
@@ -895,6 +1007,13 @@
     .deal-card:hover {
       box-shadow: 0 6px 24px rgba(79, 110, 247, 0.12);
       transform: translateY(-1px);
+    }
+    .deal-card--selected {
+      border-color: #4f6ef7;
+      box-shadow: 0 0 0 2px rgba(79, 110, 247, 0.25);
+    }
+    .deal-card--compare-mode:hover {
+      transform: none;
     }
     .deal-card__top {
       display: flex;
@@ -1964,6 +2083,7 @@
     <div id="dealDashboard" hidden>
       <div class="dashboard-header">
         <h1>Deals Dashboard</h1>
+        <button type="button" id="dashboardCompareToggle" class="dashboard-compare-toggle">Compare</button>
       </div>
       <div class="dashboard-toolbar" id="dashboardToolbar">
         <input type="search" id="dashboardSearch" class="dashboard-search"
@@ -1976,6 +2096,16 @@
       </div>
       <div class="dashboard-stats" id="dashboardStats" hidden></div>
       <div id="dealCardGrid" class="deal-card-grid"></div>
+      <div id="dashboardComparePanel" class="dashboard-compare-panel" hidden>
+        <div class="dashboard-compare-panel__header">
+          <h2>Compare deals</h2>
+          <button type="button" id="dashboardCompareClear" class="dashboard-compare-clear">Clear</button>
+        </div>
+        <div class="dashboard-compare-panel__cols">
+          <div class="dashboard-compare-col" id="dashboardCompareCol0"></div>
+          <div class="dashboard-compare-col" id="dashboardCompareCol1"></div>
+        </div>
+      </div>
     </div>
     <svg class="arena-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
       <line x1="50" y1="45" x2="30" y2="15" stroke="#c7d2fe" stroke-width="1.5" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>
@@ -2312,6 +2442,8 @@ function refreshActiveDealRoomId(dealId) {
 var dashboardDeals = [];
 var dashboardSearchQuery = '';
 var dashboardRecFilter = null;
+var dashboardCompareMode = false;
+var dashboardCompareSelection = [];
 var currentAppView = 'submit';
 var historyPushing = false;
 var dealCompletePosted = {};
@@ -2484,7 +2616,11 @@ function addDealToDashboard() {
 function fetchDeals() {
   return fetch(API + '/deals')
     .then(function (r) { return r.ok ? r.json() : []; })
-    .catch(function () { return []; });
+    .catch(function () { return []; })
+    .then(function (deals) {
+      window.dealsCache = deals;
+      return deals;
+    });
 }
 
 function normalizeRecommendation(deal) {
@@ -2601,18 +2737,58 @@ function renderDashboardEmptyState(isFiltered) {
 }
 
 function renderDashboard() {
+  syncCompareToggleUi();
   var toolbar = document.getElementById('dashboardToolbar');
   var hasDeals = dashboardDeals.length > 0;
   if (toolbar) toolbar.hidden = !hasDeals;
   if (!hasDeals) {
     renderDashboardStats([]);
     renderDealCards([], false);
+    renderDashboardComparePanel();
     return;
   }
   renderDashboardStats(dashboardDeals);
   syncDashboardFilterButtons();
   var filtered = getFilteredDashboardDeals();
   renderDealCards(filtered, true);
+  renderDashboardComparePanel();
+}
+
+function getDashboardDealById(id) {
+  var pools = [window.dealsCache, dashboardDeals];
+  for (var p = 0; p < pools.length; p++) {
+    var list = pools[p];
+    if (!list) continue;
+    for (var i = 0; i < list.length; i++) {
+      var d = list[i];
+      if ((d.id || d.deal_id) === id) return d;
+    }
+  }
+  return null;
+}
+
+function syncCompareToggleUi() {
+  var btn = document.getElementById('dashboardCompareToggle');
+  if (btn) btn.classList.toggle('dashboard-compare-toggle--active', dashboardCompareMode);
+}
+
+function toggleCompareSelection(dealId) {
+  if (!dealId) return;
+  var idx = dashboardCompareSelection.indexOf(dealId);
+  if (idx !== -1) {
+    dashboardCompareSelection.splice(idx, 1);
+  } else if (dashboardCompareSelection.length < 2) {
+    dashboardCompareSelection.push(dealId);
+  } else {
+    dashboardCompareSelection.shift();
+    dashboardCompareSelection.push(dealId);
+  }
+  renderDashboard();
+}
+
+function clearCompareSelection() {
+  dashboardCompareSelection = [];
+  renderDashboard();
 }
 
 function recommendationBadgeClass(rec) {
@@ -2731,6 +2907,8 @@ function renderDealCards(deals, isFilteredView) {
     var scorePct = (score / 10) * 100;
     var card = document.createElement('article');
     card.className = 'deal-card';
+    if (dashboardCompareSelection.indexOf(id) !== -1) card.className += ' deal-card--selected';
+    if (dashboardCompareMode) card.className += ' deal-card--compare-mode';
     card.setAttribute('data-deal-id', id);
     card.innerHTML =
       '<div class="deal-card__top">' +
@@ -3214,16 +3392,8 @@ function axisScoresFromSummary(apiSummary, dealRecord) {
   else if (dealRecord && dealRecord.deal_score != null) overall = normalizeDealScore1To10(dealRecord.deal_score);
   return defaultAxisScores(overall);
 }
-function renderMemoRadarChart(axisScores) {
-  var section = document.getElementById('memoRadarSection');
-  var svg = document.getElementById('memoRadarSvg');
-  var legend = document.getElementById('memoRadarLegend');
-  if (!section || !svg || !legend) return;
-  if (!axisScores) {
-    section.hidden = true;
-    return;
-  }
-  section.hidden = false;
+function buildRadarSvgHtml(axisScores) {
+  if (!axisScores) return '';
   var cx = 120;
   var cy = 120;
   var R = 88;
@@ -3267,13 +3437,92 @@ function renderMemoRadarChart(axisScores) {
       RADAR_AXES[li].short + '</text>'
     );
   }
-  svg.innerHTML = parts.join('');
-  legend.innerHTML = RADAR_AXES.map(function (axis) {
+  return parts.join('');
+}
+
+function buildRadarLegendHtml(axisScores) {
+  if (!axisScores) return '';
+  return RADAR_AXES.map(function (axis) {
     var s = parseFloat(axisScores[axis.key]);
     if (isNaN(s)) s = 6.5;
     return '<li><span class="memo-view__radar-legend-label">' + escapeHtml(axis.label) +
       '</span><span class="memo-view__radar-legend-val">' + s.toFixed(1) + ' / 10</span></li>';
   }).join('');
+}
+
+function renderRadarChartInElements(svgEl, legendEl, axisScores) {
+  if (!svgEl || !axisScores) return;
+  svgEl.innerHTML = buildRadarSvgHtml(axisScores);
+  if (legendEl) legendEl.innerHTML = buildRadarLegendHtml(axisScores);
+}
+
+function renderCompareColumn(container, deal) {
+  if (!container) return;
+  if (!deal) {
+    container.innerHTML = '';
+    return;
+  }
+  var companyRaw = deal.company_name || 'Unknown company';
+  var logoDomain = companyLogoDomain(companyRaw);
+  var logoHtml = logoDomain
+    ? '<img class="deal-card__logo dashboard-compare-col__logo" src="https://logo.clearbit.com/' + escapeHtml(logoDomain) + '.com" alt="" width="40" height="40" onerror="this.style.display=\'none\'">'
+    : '';
+  var displayScore = dealCardScore(deal);
+  var score100 = Math.round(displayScore * 10);
+  var verdict = verdictFromScore(score100);
+  var bandClass = dealScoreBandClass(verdict);
+  container.innerHTML =
+    '<div class="dashboard-compare-col__identity">' + logoHtml +
+      '<h3 class="dashboard-compare-col__company">' + escapeHtml(companyRaw) + '</h3>' +
+    '</div>' +
+    '<div class="results-score-cluster ' + bandClass + ' dashboard-compare-col__gauge">' +
+      '<div class="results-ring-wrap">' +
+        '<svg class="results-ring-svg" viewBox="0 0 120 120" aria-hidden="true">' +
+          '<circle class="results-ring-track" cx="60" cy="60" r="52" fill="none" stroke-width="9"/>' +
+          '<circle class="results-ring-progress compare-score-progress" cx="60" cy="60" r="52" fill="none" stroke-width="9" stroke-linecap="round"/>' +
+        '</svg>' +
+        '<span class="results-ring-num compare-score-num">' + formatDealScore1To10(displayScore) + '</span>' +
+      '</div>' +
+      '<span class="results-verdict compare-score-verdict">' + escapeHtml(verdict) + '</span>' +
+    '</div>' +
+    '<div class="dashboard-compare-col__radar">' +
+      '<svg class="memo-view__radar-svg compare-radar-svg" viewBox="0 0 240 240" role="img" aria-label="Due diligence radar chart"></svg>' +
+      '<ul class="memo-view__radar-legend compare-radar-legend"></ul>' +
+    '</div>';
+  updateDealScoreRing(container.querySelector('.compare-score-progress'), score100);
+  renderRadarChartInElements(
+    container.querySelector('.compare-radar-svg'),
+    container.querySelector('.compare-radar-legend'),
+    dealCardAxisScores(deal)
+  );
+}
+
+function renderDashboardComparePanel() {
+  var panel = document.getElementById('dashboardComparePanel');
+  if (!panel) return;
+  if (dashboardCompareSelection.length !== 2) {
+    panel.hidden = true;
+    return;
+  }
+  panel.hidden = false;
+  for (var i = 0; i < 2; i++) {
+    var col = document.getElementById('dashboardCompareCol' + i);
+    var deal = getDashboardDealById(dashboardCompareSelection[i]);
+    renderCompareColumn(col, deal);
+  }
+}
+
+function renderMemoRadarChart(axisScores) {
+  var section = document.getElementById('memoRadarSection');
+  var svg = document.getElementById('memoRadarSvg');
+  var legend = document.getElementById('memoRadarLegend');
+  if (!section || !svg || !legend) return;
+  if (!axisScores) {
+    section.hidden = true;
+    return;
+  }
+  section.hidden = false;
+  renderRadarChartInElements(svg, legend, axisScores);
 }
 function populateMemoView(company, industry, rec, nFiles, durationSec, apiSummary, dealRecord) {
   var bundle = lastDealScore || { score: 62, verdict: 'CONDITIONAL', risksFlagged: 3 };
@@ -4320,8 +4569,27 @@ document.getElementById('dealCardGrid').addEventListener('click', function (e) {
   var card = e.target.closest('.deal-card');
   if (!btn && !card) return;
   var dealId = (btn || card).getAttribute('data-deal-id');
-  if (dealId) openDealFromDashboard(dealId);
+  if (!dealId) return;
+  if (dashboardCompareMode) {
+    toggleCompareSelection(dealId);
+    return;
+  }
+  openDealFromDashboard(dealId);
 });
+var dashboardCompareToggleEl = document.getElementById('dashboardCompareToggle');
+if (dashboardCompareToggleEl) {
+  dashboardCompareToggleEl.addEventListener('click', function () {
+    dashboardCompareMode = !dashboardCompareMode;
+    if (!dashboardCompareMode) dashboardCompareSelection = [];
+    if (currentAppView === 'dashboard') renderDashboard();
+  });
+}
+var dashboardCompareClearEl = document.getElementById('dashboardCompareClear');
+if (dashboardCompareClearEl) {
+  dashboardCompareClearEl.addEventListener('click', function () {
+    clearCompareSelection();
+  });
+}
 var dashboardSearchEl = document.getElementById('dashboardSearch');
 if (dashboardSearchEl) {
   dashboardSearchEl.addEventListener('input', function () {
