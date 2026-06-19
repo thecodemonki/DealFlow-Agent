@@ -1013,7 +1013,7 @@ async def save_deal(deal_id: str, body: DealSaveBody):
         raise HTTPException(status_code=404, detail="Deal not found")
     deals[deal_id]["saved"] = bool(body.saved)
     _save_deals_index()
-    return {"deal_id": deal_id, "saved": deals[deal_id]["saved"]}
+    return {"status": "ok", "saved": deals[deal_id]["saved"]}
 
 
 @app.post("/deals/{deal_id}/chat")

@@ -565,7 +565,6 @@
       border-bottom: none;
     }
     .app-grid.chat-collapsed .chat-header-title > span:last-of-type { display: none; }
-    .app-grid.chat-collapsed .chat-header-title .deal-bookmark-btn { display: none; }
     .app-grid.chat-collapsed .chat-header-meta { display: none; }
     .app-grid.chat-collapsed .chat-toggle { margin-right: 0; }
     .chat-header {
@@ -586,7 +585,6 @@
     }
     .chat-header-title { display: flex; align-items: center; min-width: 0; flex: 1; gap: 8px; }
     .chat-header-title > span:last-of-type { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .chat-header-title .deal-bookmark-btn { margin-left: auto; }
     .chat-header-meta { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 500; color: #6b7280; }
     .chat-live-wrap { display: none; align-items: center; gap: 6px; }
     .app-running .chat-live-wrap { display: flex; }
@@ -997,6 +995,19 @@
       cursor: pointer;
     }
     .deal-card__view-btn:hover { color: #3d5bd9; text-decoration: underline; }
+    .deal-card__axes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 10px;
+      margin-top: 2px;
+      font-size: 11px;
+      line-height: 1.4;
+      color: #6b7280;
+    }
+    .deal-card__axis {
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
     .deal-dashboard-empty {
       grid-column: 1 / -1;
       display: flex;
@@ -1357,11 +1368,15 @@
       right: 0;
       z-index: 21;
       display: flex;
+      align-items: center;
       gap: 8px;
       padding: 12px 24px;
       background: rgba(255, 255, 255, 0.95);
       border-bottom: 1px solid #e5e7eb;
       backdrop-filter: blur(6px);
+    }
+    .deal-view-tabs__bookmark {
+      margin-left: auto;
     }
     .deal-view-tabs[hidden] { display: none !important; }
     .deal-view-tab {
@@ -1916,6 +1931,7 @@
     <nav id="dealViewTabs" class="deal-view-tabs" hidden aria-label="Deal view">
       <button type="button" class="deal-view-tab deal-view-tab--active" data-tab="memo">Memo</button>
       <button type="button" class="deal-view-tab" data-tab="network">Agent Network</button>
+      <button type="button" class="deal-bookmark-btn deal-view-tabs__bookmark" id="dealBookmarkBtn" hidden aria-label="Bookmark deal" title="Add to dashboard">☆</button>
     </nav>
     <div id="inputCard">
       <h1>What company are you evaluating?</h1>
@@ -2093,7 +2109,6 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline class="chev" points="15 6 9 12 15 18"/></svg>
           </button>
           <span>Agent Chat</span>
-          <button type="button" class="deal-bookmark-btn" id="chatBookmarkBtn" hidden aria-label="Bookmark deal" title="Add to dashboard">☆</button>
         </div>
         <div class="chat-header-meta">
           <div class="chat-live-wrap"><span class="chat-live-dot" aria-hidden="true"></span><span>Live</span></div>
@@ -2313,13 +2328,13 @@ function postDealSave(dealId, saved) {
 
 function syncBookmarkButtons(saved) {
   currentDealSaved = !!saved;
-  var chatBtn = document.getElementById('chatBookmarkBtn');
-  if (!chatBtn) return;
-  chatBtn.hidden = !currentDealId;
-  chatBtn.textContent = saved ? '★' : '☆';
-  chatBtn.classList.toggle('deal-bookmark-btn--saved', saved);
-  chatBtn.setAttribute('aria-pressed', saved ? 'true' : 'false');
-  chatBtn.title = saved ? 'Remove from dashboard' : 'Add to dashboard';
+  var bookmarkBtn = document.getElementById('dealBookmarkBtn');
+  if (!bookmarkBtn) return;
+  bookmarkBtn.hidden = !currentDealId;
+  bookmarkBtn.textContent = saved ? '★' : '☆';
+  bookmarkBtn.classList.toggle('deal-bookmark-btn--saved', saved);
+  bookmarkBtn.setAttribute('aria-pressed', saved ? 'true' : 'false');
+  bookmarkBtn.title = saved ? 'Remove from dashboard' : 'Add to dashboard';
 }
 
 function syncSidebarNavActive() {
@@ -2362,28 +2377,81 @@ function refreshDealSavedState(dealId) {
     });
 }
 
+function buildLocalDealSnapshot() {
+  var companyEl = document.getElementById('companyName');
+  var company = (companyEl && companyEl.value ? companyEl.value : '').trim() || 'Unknown company';
+  var score = lastDealScore ? normalizeDealScore1To10(lastDealScore.score) : 6.5;
+  var rec = lastDealScore && lastDealScore.verdict
+    ? String(lastDealScore.verdict).toUpperCase()
+    : (score >= 7 ? 'INVEST' : score >= 5 ? 'CONDITIONAL' : 'PASS');
+  return {
+    id: currentDealId,
+    company_name: company,
+    completed_at: new Date().toISOString(),
+    status: 'complete',
+    saved: true,
+    score: score,
+    recommendation: rec,
+    axis_scores: typeof defaultAxisScores === 'function' ? defaultAxisScores(score) : null
+  };
+}
+
+function patchLocalDealSaved(dealId, saved) {
+  if (!dealId) return;
+  if (saved) {
+    var found = false;
+    dashboardDeals = dashboardDeals.map(function (d) {
+      if ((d.id || d.deal_id) === dealId) {
+        found = true;
+        return Object.assign({}, d, { saved: true });
+      }
+      return d;
+    });
+    if (!found) {
+      dashboardDeals = [buildLocalDealSnapshot()].concat(dashboardDeals);
+    }
+  } else {
+    dashboardDeals = dashboardDeals.filter(function (d) {
+      return (d.id || d.deal_id) !== dealId;
+    });
+  }
+  if (currentAppView === 'dashboard') renderDashboard();
+}
+
 function toggleDealSaved() {
   if (!currentDealId) return;
   var next = !currentDealSaved;
+  var prev = currentDealSaved;
+  var dashSnapshot = dashboardDeals.slice();
+  syncBookmarkButtons(next);
+  updateSaveButtonState(next);
+  patchLocalDealSaved(currentDealId, next);
   postDealSave(currentDealId, next)
     .then(function () {
-      syncBookmarkButtons(next);
-      updateSaveButtonState(next);
       refreshDashboard();
     })
-    .catch(function () {});
+    .catch(function () {
+      syncBookmarkButtons(prev);
+      updateSaveButtonState(prev);
+      dashboardDeals = dashSnapshot;
+      if (currentAppView === 'dashboard') renderDashboard();
+    });
 }
 
 function addDealToDashboard() {
   if (!currentDealId || currentDealSaved) return;
   var btn = document.getElementById('resultsDashboardBtn');
-  if (btn) btn.disabled = true;
+  var dashSnapshot = dashboardDeals.slice();
+  syncBookmarkButtons(true);
+  patchLocalDealSaved(currentDealId, true);
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '✓ Added';
+    btn.classList.add('results-dashboard-link--added');
+  }
   postDealSave(currentDealId, true)
     .then(function () {
-      syncBookmarkButtons(true);
       if (btn) {
-        btn.textContent = '✓ Added';
-        btn.classList.add('results-dashboard-link--added');
         if (saveButtonConfirmTimer) clearTimeout(saveButtonConfirmTimer);
         saveButtonConfirmTimer = setTimeout(function () {
           saveButtonConfirmTimer = null;
@@ -2393,7 +2461,14 @@ function addDealToDashboard() {
       refreshDashboard();
     })
     .catch(function () {
-      if (btn) btn.disabled = false;
+      syncBookmarkButtons(false);
+      updateSaveButtonState(false);
+      dashboardDeals = dashSnapshot;
+      if (currentAppView === 'dashboard') renderDashboard();
+      if (btn) {
+        btn.disabled = false;
+        btn.classList.remove('results-dashboard-link--added');
+      }
     });
 }
 
@@ -2553,6 +2628,27 @@ function dealCardScore(deal) {
   return 6.5;
 }
 
+function dealCardAxisScores(deal) {
+  var stored = deal && deal.axis_scores;
+  if (stored && typeof stored === 'object') {
+    var ok = true;
+    RADAR_AXES.forEach(function (a) {
+      if (isNaN(parseFloat(stored[a.key]))) ok = false;
+    });
+    if (ok) return stored;
+  }
+  return defaultAxisScores(dealCardScore(deal));
+}
+
+function dealCardAxisHtml(deal) {
+  var scores = dealCardAxisScores(deal);
+  return RADAR_AXES.map(function (a) {
+    var v = parseFloat(scores[a.key]);
+    if (isNaN(v)) v = 0;
+    return '<span class="deal-card__axis">' + escapeHtml(a.short) + ' ' + v.toFixed(1) + '</span>';
+  }).join('');
+}
+
 function syncChatPanelForView() {
   var g = document.getElementById('appGrid');
   if (!g) return;
@@ -2634,6 +2730,7 @@ function renderDealCards(deals, isFilteredView) {
         '</div>' +
         '<div class="deal-card__score-bar"><div class="deal-card__score-fill" style="width:' + scorePct + '%"></div></div>' +
       '</div>' +
+      '<div class="deal-card__axes">' + dealCardAxisHtml(deal) + '</div>' +
       '<button type="button" class="deal-card__view-btn" data-deal-id="' + escapeHtml(id) + '">View Analysis →</button>';
     grid.appendChild(card);
   });
@@ -4000,7 +4097,7 @@ document.getElementById('resultsCloseBtn').addEventListener('click', function ()
 document.getElementById('resultsDashboardBtn').addEventListener('click', function () {
   addDealToDashboard();
 });
-document.getElementById('chatBookmarkBtn').addEventListener('click', function () {
+document.getElementById('dealBookmarkBtn').addEventListener('click', function () {
   toggleDealSaved();
 });
 document.getElementById('sidebarDashboardBtn').addEventListener('click', function () {
