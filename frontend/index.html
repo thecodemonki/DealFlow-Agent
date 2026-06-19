@@ -930,6 +930,15 @@
     .deal-card__avatar--c5 { background: #dc2626; }
     .deal-card__avatar--c6 { background: #0891b2; }
     .deal-card__avatar--c7 { background: #4b5563; }
+    .deal-card__logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      object-fit: contain;
+      display: block;
+      background: #f9fafb;
+    }
     .deal-card__company {
       font-size: 20px;
       font-weight: 700;
@@ -2503,6 +2512,12 @@ function getFilteredDashboardDeals() {
   });
 }
 
+function companyLogoDomain(name) {
+  return String(name || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+}
+
 function companyAvatarMeta(name) {
   var raw = String(name || '').trim();
   var letter = '?';
@@ -2706,6 +2721,10 @@ function renderDealCards(deals, isFilteredView) {
     var companyRaw = deal.company_name || 'Unknown company';
     var company = escapeHtml(companyRaw);
     var avatar = companyAvatarMeta(companyRaw);
+    var logoDomain = companyLogoDomain(companyRaw);
+    var logoHtml = logoDomain
+      ? '<img class="deal-card__logo" src="https://logo.clearbit.com/' + escapeHtml(logoDomain) + '.com" alt="" width="40" height="40" onerror="this.style.display=\'none\'">'
+      : '';
     var dateStr = formatAnalyzedDate(deal.completed_at || deal.created_at);
     var rec = normalizeRecommendation(deal);
     var score = dealCardScore(deal);
@@ -2717,7 +2736,7 @@ function renderDealCards(deals, isFilteredView) {
       '<div class="deal-card__top">' +
         '<div class="deal-card__identity">' +
           '<span class="deal-card__avatar ' + avatar.colorClass + '" aria-hidden="true">' + escapeHtml(avatar.letter) + '</span>' +
-          '<div><h2 class="deal-card__company">' + company + '</h2>' +
+          '<div>' + logoHtml + '<h2 class="deal-card__company">' + company + '</h2>' +
           (dateStr ? '<p class="deal-card__date">' + escapeHtml(dateStr) + '</p>' : '') +
           '</div>' +
         '</div>' +
