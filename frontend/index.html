@@ -1584,6 +1584,54 @@
       background: #eef2ff;
       color: #3d5bd9;
     }
+    .memo-view__radar-section {
+      max-width: 520px;
+      margin: 0 auto 8px;
+      padding: 20px 24px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    }
+    .memo-view__radar-title {
+      margin: 0 0 14px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #6b7280;
+    }
+    .memo-view__radar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .memo-view__radar-svg {
+      width: 200px;
+      height: 200px;
+      flex-shrink: 0;
+    }
+    .memo-view__radar-legend {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      flex: 1;
+      min-width: 160px;
+    }
+    .memo-view__radar-legend li {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      padding: 5px 0;
+      border-bottom: 1px solid #f3f4f6;
+      font-size: 12px;
+    }
+    .memo-view__radar-legend li:last-child { border-bottom: none; }
+    .memo-view__radar-legend-label { color: #374151; font-weight: 500; }
+    .memo-view__radar-legend-val { color: #4f6ef7; font-weight: 700; font-variant-numeric: tabular-nums; }
     .memo-view__body {
       max-width: 720px;
       margin: 0 auto;
@@ -1886,6 +1934,13 @@
           </div>
         </div>
       </header>
+      <section class="memo-view__radar-section" id="memoRadarSection" hidden>
+        <h2 class="memo-view__radar-title">Due Diligence Profile</h2>
+        <div class="memo-view__radar-wrap">
+          <svg id="memoRadarSvg" class="memo-view__radar-svg" viewBox="0 0 240 240" role="img" aria-label="Five-axis due diligence radar chart"></svg>
+          <ul class="memo-view__radar-legend" id="memoRadarLegend"></ul>
+        </div>
+      </section>
       <div class="memo-view__body">
         <section class="memo-view__section">
           <span class="memo-view__label">Executive Summary</span>
@@ -2512,7 +2567,9 @@ function dealSummaryFromRecord(deal) {
     market_position: ms.market_position,
     legal_risks: ms.legal_risks,
     red_flags: ms.red_flags || [],
-    investment_thesis: ms.investment_thesis || ms.deal_terms_suggested || ms.recommendation
+    investment_thesis: ms.investment_thesis || ms.deal_terms_suggested || ms.recommendation,
+    score: deal.score,
+    axis_scores: deal.axis_scores
   };
 }
 function saveDealChatToServer(dealId, messages, company, industry) {
@@ -2658,7 +2715,112 @@ function applyDealScoreUI(bundle) {
   var rr = document.getElementById('resultsRisksLine');
   if (rr) rr.textContent = riskStr;
 }
-function populateMemoView(company, industry, rec, nFiles, durationSec, apiSummary) {
+var RADAR_AXES = [
+  { key: 'legal_risk', label: 'Legal Risk', short: 'Legal' },
+  { key: 'financial_health', label: 'Financial Health', short: 'Financial' },
+  { key: 'market_position', label: 'Market Position', short: 'Market' },
+  { key: 'regulatory_exposure', label: 'Regulatory Exposure', short: 'Regulatory' },
+  { key: 'team_ip_strength', label: 'Team/IP Strength', short: 'Team/IP' }
+];
+var AXIS_DEFAULT_OFFSETS = {
+  legal_risk: -0.5,
+  financial_health: 0,
+  market_position: 0.3,
+  regulatory_exposure: -0.8,
+  team_ip_strength: 0.2
+};
+function defaultAxisScores(overall) {
+  var base = parseFloat(overall);
+  if (isNaN(base)) base = 6.5;
+  base = Math.max(1, Math.min(10, base));
+  var out = {};
+  RADAR_AXES.forEach(function (a) {
+    var off = AXIS_DEFAULT_OFFSETS[a.key] || 0;
+    out[a.key] = Math.round(Math.max(1, Math.min(10, base + off)) * 10) / 10;
+  });
+  return out;
+}
+function axisScoresFromSummary(apiSummary, dealRecord) {
+  var stored = (apiSummary && apiSummary.axis_scores) || (dealRecord && dealRecord.axis_scores);
+  if (stored && typeof stored === 'object') {
+    var ok = true;
+    var out = {};
+    RADAR_AXES.forEach(function (a) {
+      var v = parseFloat(stored[a.key]);
+      if (isNaN(v)) ok = false;
+      else out[a.key] = Math.round(Math.max(0, Math.min(10, v)) * 10) / 10;
+    });
+    if (ok) return out;
+  }
+  var overall = 6.5;
+  if (apiSummary && apiSummary.score != null) overall = apiSummary.score;
+  else if (dealRecord && dealRecord.score != null) overall = dealRecord.score;
+  else if (apiSummary && apiSummary.deal_score != null) overall = apiSummary.deal_score / 10;
+  else if (dealRecord && dealRecord.deal_score != null) overall = dealRecord.deal_score / 10;
+  return defaultAxisScores(overall);
+}
+function renderMemoRadarChart(axisScores) {
+  var section = document.getElementById('memoRadarSection');
+  var svg = document.getElementById('memoRadarSvg');
+  var legend = document.getElementById('memoRadarLegend');
+  if (!section || !svg || !legend) return;
+  if (!axisScores) {
+    section.hidden = true;
+    return;
+  }
+  section.hidden = false;
+  var cx = 120;
+  var cy = 120;
+  var R = 88;
+  var n = RADAR_AXES.length;
+  var parts = [];
+  [0.25, 0.5, 0.75, 1.0].forEach(function (frac) {
+    var pts = [];
+    for (var gi = 0; gi < n; gi++) {
+      var gAngle = -Math.PI / 2 + gi * 2 * Math.PI / n;
+      pts.push((cx + Math.cos(gAngle) * R * frac).toFixed(1) + ',' + (cy + Math.sin(gAngle) * R * frac).toFixed(1));
+    }
+    parts.push('<polygon points="' + pts.join(' ') + '" fill="none" stroke="#e5e7eb" stroke-width="1"/>');
+  });
+  for (var si = 0; si < n; si++) {
+    var sAngle = -Math.PI / 2 + si * 2 * Math.PI / n;
+    parts.push(
+      '<line x1="' + cx + '" y1="' + cy + '" x2="' +
+      (cx + Math.cos(sAngle) * R).toFixed(1) + '" y2="' +
+      (cy + Math.sin(sAngle) * R).toFixed(1) +
+      '" stroke="#e5e7eb" stroke-width="1"/>'
+    );
+  }
+  var dataPts = [];
+  for (var di = 0; di < n; di++) {
+    var axis = RADAR_AXES[di];
+    var score = parseFloat(axisScores[axis.key]);
+    if (isNaN(score)) score = 6.5;
+    score = Math.max(0, Math.min(10, score));
+    var dAngle = -Math.PI / 2 + di * 2 * Math.PI / n;
+    var dr = R * (score / 10);
+    dataPts.push((cx + Math.cos(dAngle) * dr).toFixed(1) + ',' + (cy + Math.sin(dAngle) * dr).toFixed(1));
+  }
+  parts.push('<polygon points="' + dataPts.join(' ') + '" fill="rgba(79,110,247,0.25)" stroke="#4f6ef7" stroke-width="2"/>');
+  for (var li = 0; li < n; li++) {
+    var lAngle = -Math.PI / 2 + li * 2 * Math.PI / n;
+    var lx = cx + Math.cos(lAngle) * (R + 16);
+    var ly = cy + Math.sin(lAngle) * (R + 16);
+    parts.push(
+      '<text x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) +
+      '" text-anchor="middle" dominant-baseline="middle" font-size="9" font-weight="600" fill="#64748b">' +
+      RADAR_AXES[li].short + '</text>'
+    );
+  }
+  svg.innerHTML = parts.join('');
+  legend.innerHTML = RADAR_AXES.map(function (axis) {
+    var s = parseFloat(axisScores[axis.key]);
+    if (isNaN(s)) s = 6.5;
+    return '<li><span class="memo-view__radar-legend-label">' + escapeHtml(axis.label) +
+      '</span><span class="memo-view__radar-legend-val">' + s.toFixed(1) + ' / 10</span></li>';
+  }).join('');
+}
+function populateMemoView(company, industry, rec, nFiles, durationSec, apiSummary, dealRecord) {
   var bundle = lastDealScore || { score: 62, verdict: 'CONDITIONAL', risksFlagged: 3 };
   if (apiSummary) {
     var fromSum = scoreBundleFromSummary(apiSummary);
@@ -2716,6 +2878,7 @@ function populateMemoView(company, industry, rec, nFiles, durationSec, apiSummar
   }
   var dealId = (apiSummary && apiSummary.deal_id) || currentDealId;
   setDownloadLinks(dealId);
+  renderMemoRadarChart(axisScoresFromSummary(apiSummary, dealRecord));
 }
 function stripHtml(html) { var d = document.createElement('div'); d.innerHTML = html; return d.textContent || d.innerText || ''; }
 function inferAgentFromHtml(html) {
@@ -3313,7 +3476,7 @@ function restoreCompletedDeal(deal, entry, summary) {
     };
   }
   if (lastDealScore) applyDealScoreUI(lastDealScore);
-  populateMemoView(company, industry, null, nFiles, durationSec, summary);
+  populateMemoView(company, industry, null, nFiles, durationSec, summary, deal);
   var msgs = (entry && entry.messages && entry.messages.length)
     ? entry.messages
     : (deal.chat_messages || []);

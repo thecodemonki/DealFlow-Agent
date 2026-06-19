@@ -148,6 +148,28 @@ LEGACY_DEALS_INDEX_PATH = UPLOAD_DIR / "deals_index.json"
 DEFAULT_SCORE = 6.5
 DEFAULT_RECOMMENDATION = "CONDITIONAL"
 
+AXIS_KEYS = (
+    "legal_risk",
+    "financial_health",
+    "market_position",
+    "regulatory_exposure",
+    "team_ip_strength",
+)
+AXIS_LABEL_PATTERNS = {
+    "legal_risk": r"legal\s*risk",
+    "financial_health": r"financial\s*health",
+    "market_position": r"market\s*position",
+    "regulatory_exposure": r"regulatory\s*exposure",
+    "team_ip_strength": r"team\s*/?\s*ip\s*strength",
+}
+AXIS_DEFAULT_OFFSETS = {
+    "legal_risk": -0.5,
+    "financial_health": 0.0,
+    "market_position": 0.3,
+    "regulatory_exposure": -0.8,
+    "team_ip_strength": 0.2,
+}
+
 
 def _deal_has_memo_pdf(d: dict[str, Any]) -> bool:
     return d.get("status") == "complete" and bool(d.get("memo_summary"))
@@ -310,6 +332,67 @@ def _parse_score_from_memo_text(text: str) -> Optional[float]:
     return round(max(1.0, min(10.0, value)), 1)
 
 
+def _clamp_axis_score(value: float) -> float:
+    return round(max(0.0, min(10.0, value)), 1)
+
+
+def _parse_axis_score(text: str, pattern: str) -> Optional[float]:
+    if not text:
+        return None
+    match = re.search(
+        rf"(?:{pattern})\s*:\s*(\d+(?:\.\d+)?)(?:\s*/\s*10)?",
+        text,
+        re.IGNORECASE,
+    )
+    if not match:
+        return None
+    try:
+        return _clamp_axis_score(float(match.group(1)))
+    except (TypeError, ValueError):
+        return None
+
+
+def _default_axis_scores(overall_score: float) -> dict[str, float]:
+    try:
+        base = float(overall_score)
+    except (TypeError, ValueError):
+        base = DEFAULT_SCORE
+    base = max(1.0, min(10.0, base))
+    return {
+        key: round(max(1.0, min(10.0, base + AXIS_DEFAULT_OFFSETS[key])), 1)
+        for key in AXIS_KEYS
+    }
+
+
+def _parse_axis_scores_from_memo_text(text: str, overall_score: float) -> dict[str, float]:
+    scores = _default_axis_scores(overall_score)
+    for key in AXIS_KEYS:
+        parsed = _parse_axis_score(text, AXIS_LABEL_PATTERNS[key])
+        if parsed is not None:
+            scores[key] = parsed
+    return scores
+
+
+def _axis_scores_for_deal(d: dict[str, Any]) -> dict[str, float]:
+    stored = d.get("axis_scores")
+    if isinstance(stored, dict):
+        try:
+            if all(k in stored for k in AXIS_KEYS):
+                return {
+                    key: _clamp_axis_score(float(stored[key]))
+                    for key in AXIS_KEYS
+                }
+        except (TypeError, ValueError):
+            pass
+    overall = d.get("score", DEFAULT_SCORE)
+    try:
+        overall_f = float(overall)
+    except (TypeError, ValueError):
+        overall_f = DEFAULT_SCORE
+    text = _memo_text_blob(dict(d.get("memo_summary") or {}))
+    return _parse_axis_scores_from_memo_text(text, overall_f)
+
+
 def _apply_memo_summary_to_deal(deal: dict[str, Any], memo_summary: Optional[dict[str, Any]]) -> None:
     if memo_summary is None:
         return
@@ -323,6 +406,7 @@ def _apply_memo_summary_to_deal(deal: dict[str, Any], memo_summary: Optional[dic
     parsed_rec = _parse_recommendation_from_memo_text(text)
     deal["score"] = parsed_score if parsed_score is not None else DEFAULT_SCORE
     deal["recommendation"] = parsed_rec if parsed_rec is not None else DEFAULT_RECOMMENDATION
+    deal["axis_scores"] = _parse_axis_scores_from_memo_text(text, deal["score"])
 
 
 def _append_deal_log(deal_id: str, deal: dict[str, Any]) -> None:
@@ -386,6 +470,7 @@ def _public_deal_row(deal_id: str, d: dict[str, Any]) -> dict[str, Any]:
     row["recommendation"] = _normalize_recommendation(
         d.get("recommendation") or _recommendation_from_verdict(scores.get("deal_verdict", ""))
     )
+    row["axis_scores"] = _axis_scores_for_deal(d)
     return row
 
 
@@ -477,6 +562,8 @@ def _full_deal_summary(deal_id: str) -> dict[str, Any]:
             or raw.get("recommendation"),
             "recommendation": raw.get("recommendation"),
             "confidence": raw.get("confidence"),
+            "score": d.get("score") if d.get("score") is not None else DEFAULT_SCORE,
+            "axis_scores": _axis_scores_for_deal(d),
         }
     )
     return out
