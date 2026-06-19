@@ -409,6 +409,12 @@ def _librarian_band_api_key_with_source() -> tuple[str, str]:
     return _librarian_key_cache
 
 
+def _document_parser_api_key_for_read() -> str:
+    """Band GET (SSE poll) key: DOCUMENT_PARSER_API_KEY env, else hardcoded Librarian."""
+    key = (os.environ.get("DOCUMENT_PARSER_API_KEY") or "").strip()
+    return key or LIBRARIAN_BAND_API_KEY_FALLBACK
+
+
 async def _band_http_client() -> httpx.AsyncClient:
     global _band_client
     if _band_client is None:
@@ -818,13 +824,14 @@ async def deal_stream(deal_id: str):
 
         async def fetch_page(client: httpx.AsyncClient, page: int) -> tuple[list, dict]:
             nonlocal sse_key_logged
-            api_key, key_source = _librarian_band_api_key_with_source()
+            api_key = _document_parser_api_key_for_read()
             headers = {"X-API-Key": api_key}
             if not sse_key_logged:
+                key_source = "env" if (os.environ.get("DOCUMENT_PARSER_API_KEY") or "").strip() else "fallback"
                 key_suffix = api_key[-4:] if len(api_key) >= 4 else "????"
                 print(
                     f"DEBUG band GET using key_source={key_source} key_suffix=...{key_suffix} "
-                    f"(DOCUMENT_PARSER / Librarian, not Orchestrator)",
+                    f"(DOCUMENT_PARSER_API_KEY, not ORCHESTRATOR_API_KEY)",
                     flush=True,
                 )
                 sse_key_logged = True
