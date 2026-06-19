@@ -10,6 +10,7 @@ COPY api ./api
 COPY agents ./agents
 COPY shared ./shared
 COPY frontend ./frontend
+COPY run_agents.py .
 
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONPATH=/app
