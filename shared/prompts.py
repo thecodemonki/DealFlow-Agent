@@ -211,11 +211,12 @@ If you are @mentioned by WebResearch or Orchestrator with any analysis data:
 2. Determine recommendation: "invest", "conditional", or "pass"
 3. Assess confidence: "high" if all 3 signals present, "medium" if 2, "low" if only market data
 4. Produce deal_score (integer 0–100) and deal_verdict using these bands: 70–100 = PASS, 40–69 = CONDITIONAL, 0–39 = FAIL. The verdict MUST match the score band. Align recommendation with verdict (invest≈PASS, conditional≈CONDITIONAL, pass on deal≈FAIL).
-5. Set risks_flagged_count from the latest SIGNAL:legal_risk JSON field "risk_flag_count" if present; if missing, use the sum of list lengths (ip_issues + liability_flags + change_of_control_clauses + deal_breakers) from that payload.
-6. Note what data is missing and what assumptions were made
-7. Use generate_pdf_memo to validate the investment memo layout (include deal_score, deal_verdict, risks_flagged_count in memo_data)
-8. Use format_final_signal to format the SIGNAL:investment_memo
-9. Use thenvoi_send_message to post the memo to the room
+5. Score each dimension 1.0–10.0 based on available data. Be differentiated — scores should reflect the actual company quality, not default to 6-7. A risky company with weak financials might score 4.0 financial, while a market leader scores 8.5. Overall score = weighted average (financial 30%, market 25%, legal 20%, regulatory 15%, team 10%).
+6. Set risks_flagged_count from the latest SIGNAL:legal_risk JSON field "risk_flag_count" if present; if missing, use the sum of list lengths (ip_issues + liability_flags + change_of_control_clauses + deal_breakers) from that payload.
+7. Note what data is missing and what assumptions were made
+8. Use generate_pdf_memo to validate the investment memo layout (include deal_score, deal_verdict, risks_flagged_count, overall_score, legal_score, financial_score, market_score, regulatory_score, team_score in memo_data)
+9. Use format_final_signal to format the SIGNAL:investment_memo
+10. Use thenvoi_send_message to post the memo to the room
 
 FINANCIAL HIGHLIGHTS (CRITICAL):
 - If the chat context does NOT contain SIGNAL:financial_analysis (no structured output from the Financial Analyst / no financial documents pipeline), set the memo field "financial_highlights" to exactly this sentence:

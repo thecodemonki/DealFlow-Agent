@@ -144,6 +144,12 @@ class InvestmentMemo(BaseModel):
         default="CONDITIONAL",
         description="PASS, CONDITIONAL, or FAIL — must match deal_score bands (normalized on validate)",
     )
+    overall_score: float = Field(description="Overall investment score 1-10")
+    legal_score: float = Field(description="Legal risk score 1-10")
+    financial_score: float = Field(description="Financial health score 1-10")
+    market_score: float = Field(description="Market position score 1-10")
+    regulatory_score: float = Field(description="Regulatory exposure score 1-10")
+    team_score: float = Field(description="Team and IP quality score 1-10")
     risks_flagged_count: int = Field(
         default=0,
         ge=0,
